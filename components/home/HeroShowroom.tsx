@@ -95,7 +95,7 @@ export function HeroShowroom({ consulta }: { consulta: string }) {
       <div className="relative flex flex-col px-5 pt-[88px] md:px-8 lg:grid lg:h-[100svh] lg:max-h-[1000px] lg:min-h-[780px] lg:grid-cols-[calc(36vw-64px)_1fr] lg:grid-rows-[1fr_auto] lg:gap-x-16 lg:pt-[96px]">
         <div className="-mx-5 bg-[linear-gradient(170deg,#521672,#2a0a3d)] px-5 pb-10 pt-8 md:-mx-8 md:px-8 lg:col-start-1 lg:row-start-2 lg:m-0 lg:self-end lg:bg-none lg:p-0 lg:pb-12">
           <h1 className="t-titulo text-[40px] md:text-[56px]">
-            <span className="block">Dinos cómo vives.</span>
+            <span className="block">Cuéntanos cómo vives.</span>
             <span className="block text-white/45">Te decimos qué carro.</span>
           </h1>
           <div className="mt-7">
