@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { fuenteBaseDatos } from '@/lib/db/url';
 import { adminConfigurado } from '@/lib/db/admin-inicial';
+import { cloudinaryConfigurado } from '@/lib/cloudinary';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,7 @@ export async function GET() {
       baseDeDatos: fuente?.nombre ?? null,
       JWT_SECRET: Boolean(process.env.JWT_SECRET),
       ANTHROPIC_API_KEY: Boolean(process.env.ANTHROPIC_API_KEY),
+      CLOUDINARY: cloudinaryConfigurado(),
       ADMIN_EMAIL: Boolean(process.env.ADMIN_EMAIL),
       ADMIN_PASSWORD_valida: Boolean(cfg),
     },
