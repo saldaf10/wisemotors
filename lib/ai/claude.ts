@@ -74,6 +74,11 @@ export async function pedirJson<T extends z.ZodType>(opts: {
   maxTokens?: number;
   /** Sonnet por defecto; Haiku solo para tareas no críticas. */
   modelo?: Modelo;
+  /** Para cancelar la llamada (y dejar de pagarla) si se acaba el tiempo. */
+  signal?: AbortSignal;
+  /** Tope de esta llamada (por defecto el del cliente: 120 s) y reintentos (1). */
+  timeoutMs?: number;
+  reintentos?: number;
 }): Promise<z.infer<T>> {
   let res;
   try {
@@ -83,6 +88,10 @@ export async function pedirJson<T extends z.ZodType>(opts: {
       ...(opts.system ? { system: opts.system } : {}),
       messages: [{ role: 'user', content: opts.prompt }],
       output_config: { format: betaZodOutputFormat(opts.schema) },
+    }, {
+      ...(opts.signal ? { signal: opts.signal } : {}),
+      ...(opts.timeoutMs ? { timeout: opts.timeoutMs } : {}),
+      ...(opts.reintentos !== undefined ? { maxRetries: opts.reintentos } : {}),
     });
   } catch (err) {
     throw new Error(explicarErrorClaude(err));

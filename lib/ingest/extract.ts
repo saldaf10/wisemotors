@@ -205,7 +205,9 @@ export async function extractFromPage(
   /** false = la persona no pidió versión y `version` es solo la de entrada que
    *  supuso la IA (puede ser de otro mercado: "LT" en un Blazer que en Colombia
    *  solo existe como RS). Entonces es una pista, no una regla. */
-  versionPedida = true
+  versionPedida = true,
+  /** Cancela la llamada si se acaba el tiempo de la ingesta. */
+  signal?: AbortSignal
 ): Promise<ResultadoExtraccion> {
   const c: Contenido = typeof contenido === 'string' ? { texto: contenido } : contenido;
   // Documentos (PDF o imagen): no hay texto contra el cual verificar la cita;
@@ -232,6 +234,12 @@ ${buildCatalog(soloKeys, fuelType)}
       // Una ficha técnica completa (PDF oficial) trae 100+ datos con su cita:
       // con 8000 la respuesta se cortaba y se perdía la mejor fuente entera.
       maxTokens: 24000,
+      signal,
+      // Una ficha completa tarda 2-3 min en escribirse: con el tope por defecto
+      // (120 s + 1 reintento) se cortaba y empezaba de cero. Cada fuente va en
+      // su propia petición de 300 s (pipeline por etapas): 270 s y sin reintento.
+      timeoutMs: 270_000,
+      reintentos: 0,
       prompt: esDocumento
         ? [
             'pdfBase64' in c

@@ -22,6 +22,7 @@ import { claude, MODELOS, pedirJson } from '@/lib/ai/claude';
 import { cloudinaryConfigurado, procesarFotoCarro } from '@/lib/cloudinary';
 import { fetchHtml, fetchImagen, htmlDescargado } from './fetcher';
 import type { DiscoveredSource, FotoDraft } from './types';
+import { medir } from './tiempos';
 
 export const ANGULOS = ['lado', 'tres_cuartos_frente', 'tres_cuartos_atras', 'frente', 'atras', 'interior', 'detalle', 'otro'] as const;
 export type Angulo = (typeof ANGULOS)[number];
@@ -220,9 +221,11 @@ export async function buscarFotos(opts: {
   const juntar = (pagina: string, oficial: boolean, urls: string[]) => {
     for (const u of urls) if (!origenDe.has(u)) origenDe.set(u, { pagina, oficial });
   };
-  for (const f of [...fuentes].sort((a, b) => a.tier - b.tier)) {
-    juntar(f.url, f.tier === 1, (await porPagina(f.url)).slice(0, 30));
-  }
+  await medir('fotos: html de las fuentes', async () => {
+    for (const f of [...fuentes].sort((a, b) => a.tier - b.tier)) {
+      juntar(f.url, f.tier === 1, (await porPagina(f.url)).slice(0, 30));
+    }
+  });
 
   // Descarga (valida que sea imagen de tamaño útil) hasta tener suficientes.
   const descargar = async () => {
@@ -235,12 +238,13 @@ export async function buscarFotos(opts: {
     }
     return out;
   };
-  let imagenes = await descargar();
+  if (process.env.INGESTA_TIEMPOS) console.log(`[t] fotos: ${origenDe.size} candidatas`);
+  let imagenes = await medir('fotos: descargar candidatas', descargar);
 
   if (imagenes.length < 4) {
     try {
-      for (const pagina of await paginasDeFotos(nombre)) juntar(pagina, /\.co\b|\/co\//.test(pagina), await porPagina(pagina));
-      imagenes = await descargar();
+      for (const pagina of await medir('fotos: búsqueda complementaria', () => paginasDeFotos(nombre))) juntar(pagina, /\.co\b|\/co\//.test(pagina), await porPagina(pagina));
+      imagenes = await medir('fotos: descargar candidatas (2)', descargar);
     } catch (err) {
       avisos.push(`La búsqueda complementaria de fotos falló: ${String(err).slice(0, 100)}`);
     }
@@ -250,7 +254,7 @@ export async function buscarFotos(opts: {
     return [];
   }
 
-  const clases = await clasificar(nombre, imagenes);
+  const clases = await medir(`fotos: clasificar ${imagenes.length} con visión`, () => clasificar(nombre, imagenes));
   // ¿Es este modelo? Lo decide el código con lo que Haiku dice ver (su sí/no
   // suelto no es estable): si nombra el modelo, sí; si no lo reconoce, se
   // respeta su veredicto.
@@ -296,7 +300,7 @@ export async function buscarFotos(opts: {
   }
 
   // Procesar las recomendadas ya, para verlas terminadas en la revisión.
-  await Promise.all(
+  await medir('fotos: procesar en Cloudinary', () => Promise.all(
     candidatas
       .filter(c => c.recomendada)
       .map(async c => {
@@ -306,7 +310,7 @@ export async function buscarFotos(opts: {
           c.error = `No se pudo procesar: ${String(err).slice(0, 100)}`;
         }
       })
-  );
+  ));
 
   // Recomendadas primero (en el orden buscado), luego el resto por calidad.
   const orden = (c: FotoDraft) => (c.recomendada ? VISTAS.indexOf(c.angulo) : 10 + (5 - c.calidad));

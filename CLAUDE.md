@@ -104,13 +104,19 @@ cobertura, migración, seeds, motor de cohortes.
   extraen como documento. Toda cita de página HTML se verifica contra el texto (si no
   aparece, el dato muere). Probado: Onix RS 33 datos, CX-30 36, Dolphin 41, ~50 s.
   La ruta de ingesta tiene `maxDuration: 300`.
-  Documentos, enlaces del equipo y búsqueda web corren EN PARALELO (el orden de
-  prioridad se arma después: documentos → enlaces → web). Presupuesto de tiempo en
-  `runIngestPipeline`: después de 150 s se salta la búsqueda de datos faltantes y
-  después de 250 s la verificación del precio (con aviso en el borrador). Cliente de
-  Anthropic con `timeout: 120 s` y `maxRetries: 1`. No volver a encadenar etapas en
-  serie: con 1 documento + 2 enlaces se pasaba de 300 s y Vercel respondía su página
-  de error en texto ("Unexpected token 'A'… not valid JSON" en la cola).
+  **Ingesta POR ETAPAS (5-oct-2026)** — una sola petición de 300 s no alcanzaba (una ficha
+  PDF completa tarda 2-3 min en extraerse). `lib/ingest/pipeline.ts` expone las etapas y el
+  panel (`IngestStudio.tsx`) las encadena contra `/api/admin/ingest` con `etapa`, cada una
+  en su propia petición de hasta 300 s y mostrando el avance: `preparar` (identidad +
+  fuentes) → `fuente` / `documento` (UNA por petición, todas en paralelo) + `fotos` en
+  paralelo → `faltantes` (2.ª búsqueda de datos CLAVE; corre siempre) → `fuente` con
+  `soloKeys` → `cerrar` (reconciliación + precio → borrador). `runIngestPipeline` encadena
+  lo mismo en un proceso (scripts). Extracción: `timeoutMs` 270 s y SIN reintento (con el
+  tope por defecto de 120 s + 1 reintento las fichas largas se cortaban y empezaban de
+  cero: de ahí los 221 s). Medir etapas: `INGESTA_TIEMPOS=1` (`lib/ingest/tiempos.ts`).
+  Probado: Blazer de 0 → 82 datos, faltan 2 de 37 clave. NO volver a meter todo en una
+  petición. Año: una fuente vieja solo se descarta si es de OTRA generación. Versión no
+  pedida: la de entrada que supone la IA es una pista (puede ser de otro mercado).
 - **Fotos en la ingesta (sep-2026):** `lib/ingest/fotos.ts` saca imágenes del HTML de las fuentes
   ya leídas (oficial primero); si hay < 4, Haiku busca una página de fotos (1 búsqueda). Haiku
   clasifica con visión (primero `queSeVe`, luego ángulo/estudio/calidad; si es el modelo lo decide

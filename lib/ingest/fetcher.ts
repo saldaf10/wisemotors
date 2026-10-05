@@ -27,20 +27,32 @@ export function htmlDescargado(url: string): string | null {
   return c && Date.now() - c.at < CACHE_TTL_MS ? c.html : null;
 }
 
+// Descargas en curso: las fotos y la extracción piden la misma página casi a la
+// vez; la segunda espera a la primera en vez de pedirla otra vez al sitio.
+const enVuelo = new Map<string, Promise<string | null>>();
+
 /** Descarga el HTML de una página (respetando robots.txt). null si no se pudo. Nunca lanza. */
 export async function fetchHtml(url: string): Promise<string | null> {
   const ya = htmlDescargado(url);
   if (ya) return ya;
-  try {
-    if (!(await isAllowedByRobots(url))) return null;
-    const res = await fetchWithTimeout(url, 'text/html');
-    if (!res.ok || !(res.headers.get('content-type') ?? '').includes('html')) return null;
-    const html = await res.text();
-    htmlCache.set(url, { at: Date.now(), html });
-    return html;
-  } catch {
-    return null;
-  }
+  const pendiente = enVuelo.get(url);
+  if (pendiente) return pendiente;
+  const p = (async () => {
+    try {
+      if (!(await isAllowedByRobots(url))) return null;
+      const res = await fetchWithTimeout(url, 'text/html');
+      if (!res.ok || !(res.headers.get('content-type') ?? '').includes('html')) return null;
+      const html = await res.text();
+      htmlCache.set(url, { at: Date.now(), html });
+      return html;
+    } catch {
+      return null;
+    } finally {
+      enVuelo.delete(url);
+    }
+  })();
+  enVuelo.set(url, p);
+  return p;
 }
 
 /** Descarga una imagen (bytes + tipo). null si no es imagen, es muy chica o muy grande. */
@@ -141,21 +153,12 @@ export async function fetchPageText(url: string): Promise<string | null> {
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.text;
 
   let text: string | null = null;
-  try {
-    if (await isAllowedByRobots(url)) {
-      const res = await fetchWithTimeout(url, 'text/html');
-      const contentType = res.headers.get('content-type') ?? '';
-      if (res.ok && contentType.includes('html')) {
-        const html = await res.text();
-        htmlCache.set(url, { at: Date.now(), html });
-        const full = htmlToText(html);
-        // Si la página es enorme, quedarse con la zona más densa en números
-        // (las tablas de especificaciones), no con el arranque del artículo.
-        text = full.length <= MAX_TEXT_CHARS ? full : denserWindow(full, MAX_TEXT_CHARS);
-      }
-    }
-  } catch {
-    text = null;
+  const html = await fetchHtml(url);
+  if (html) {
+    const full = htmlToText(html);
+    // Si la página es enorme, quedarse con la zona más densa en números
+    // (las tablas de especificaciones), no con el arranque del artículo.
+    text = full.length <= MAX_TEXT_CHARS ? full : denserWindow(full, MAX_TEXT_CHARS);
   }
   pageCache.set(url, { at: Date.now(), text });
   return text;

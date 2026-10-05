@@ -69,6 +69,50 @@ interface ItemCola {
   enlaces?: string[];
   /** Fotos del concesionario ya subidas y procesadas, por vista. */
   fotosPropias?: FotoRevision[];
+  /** Qué etapa de la ingesta va corriendo ("Leyendo fuentes 2 de 5…"). */
+  avance?: string;
+}
+
+// ── Ingesta por etapas (lib/ingest/pipeline.ts): cada etapa es su propia
+// petición de hasta 300 s, así una ficha larga se lee completa. ──
+type Ctx = Record<string, unknown>;
+type Fuente = { url: string; tier: number; nameEs: string };
+type Leida = { report: Draft['sourcesReport'][number]; facts: { key: string; value: unknown }[] };
+type FotosEtapa = { fotos: NonNullable<Draft['fotos']>; avisos: string[] };
+
+/** Llama una etapa. Lanza con `fatal` si es un error que no se arregla reintentando (saldo, sesión). */
+async function etapa<T>(cuerpo: Record<string, unknown> | FormData): Promise<T> {
+  const res = await adminFetch(
+    '/api/admin/ingest',
+    cuerpo instanceof FormData
+      ? { method: 'POST', body: cuerpo }
+      : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(cuerpo) }
+  );
+  // Si Vercel corta la función responde con su página de error en texto, no JSON.
+  const texto = await res.text();
+  let data: any;
+  try {
+    data = JSON.parse(texto);
+  } catch {
+    throw new Error(
+      res.status === 504 || /timeout|timed out|FUNCTION_INVOCATION/i.test(texto)
+        ? 'Una etapa se pasó del tiempo del servidor (5 min).'
+        : `El servidor respondió con un error (${res.status}).`
+    );
+  }
+  if (!res.ok) {
+    const auth = mensajeDeErrorDeAuth(res);
+    throw Object.assign(new Error(auth ?? data?.error ?? 'Falló la ingesta'), { fatal: !!auth || !!data?.fatal });
+  }
+  return data as T;
+}
+
+const esFatal = (err: unknown) => !!(err as { fatal?: boolean })?.fatal;
+
+/** Una fuente que no se pudo leer queda en el informe; la ingesta sigue. */
+function leidaFallida(url: string, nameEs: string, tier: number, err: unknown): Leida {
+  if (esFatal(err)) throw err;
+  return { report: { url, nameEs, tier, ok: false, note: `No se pudo leer (${err instanceof Error ? err.message : 'error'}). Reintenta el vehículo si era importante.` }, facts: [] };
 }
 
 /** Vercel corta el cuerpo en ~4,5 MB. */
@@ -299,54 +343,77 @@ export function IngestStudio() {
         if (item.documentos?.length && docs.length === 0) {
           throw new Error('Los documentos adjuntos se perdieron al recargar la página: quítalo de la cola y agrégalo de nuevo con sus archivos.');
         }
-        let res: Response;
-        if (docs.length > 0) {
-          const form = new FormData();
-          form.set('brand', item.parsed.brand ?? '');
-          form.set('model', item.parsed.model);
-          form.set('year', String(item.parsed.year));
-          form.set('country', country);
-          form.set('angulosCubiertos', (item.fotosPropias ?? []).map(f => f.angulo).join(','));
-          form.set('enlaces', (item.enlaces ?? []).join('\n'));
-          for (const f of docs) form.append('documentos', f);
-          res = await adminFetch('/api/admin/ingest', { method: 'POST', body: form });
-        } else {
-          res = await adminFetch('/api/admin/ingest', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              brand: item.parsed.brand,
-              model: item.parsed.model,
-              year: item.parsed.year,
-              country,
-              enlaces: item.enlaces ?? [],
-              angulosCubiertos: (item.fotosPropias ?? []).map(f => f.angulo),
-            }),
-          });
-        }
-        // Si Vercel corta la función (tiempo o memoria) responde con su página
-        // de error en texto, no JSON: se explica en vez de "Unexpected token".
-        const texto = await res.text();
-        let data: { error?: string; draft?: Draft } = {};
-        try {
-          data = JSON.parse(texto);
-        } catch {
-          throw new Error(
-            res.status === 504 || /timeout|timed out|FUNCTION_INVOCATION/i.test(texto) || /An error o/.test(texto)
-              ? 'El servidor cortó la ingesta por tiempo (más de 5 minutos). Reintenta; si vuelve a pasar, sube menos enlaces o documentos a la vez.'
-              : `El servidor respondió con un error (${res.status}). Reintenta en un momento.`
-          );
-        }
-        if (!res.ok) throw new Error(mensajeDeErrorDeAuth(res) ?? data.error ?? 'Falló la ingesta');
-        if (!data.draft) throw new Error('El servidor respondió sin borrador. Reintenta.');
-        const draft = data.draft;
+
+        // 1. Identidad + fuentes
+        actualizar({ avance: 'Identificando el carro y buscando fuentes…' });
+        const { ctx, fuentes } = await etapa<{ ctx: Ctx; fuentes: Fuente[] }>({
+          etapa: 'preparar',
+          brand: item.parsed.brand,
+          model: item.parsed.model,
+          year: item.parsed.year,
+          country,
+          enlaces: item.enlaces ?? [],
+        });
+
+        // 2. Documentos y fuentes, cada uno en su petición y todos a la vez; fotos en paralelo.
+        const fotosP = etapa<FotosEtapa>({
+          etapa: 'fotos',
+          ctx,
+          fuentes,
+          angulosCubiertos: (item.fotosPropias ?? []).map(f => f.angulo),
+        }).catch((err): FotosEtapa => {
+          if (esFatal(err)) throw err;
+          return { fotos: [], avisos: [`No se pudieron buscar fotos (${err instanceof Error ? err.message : 'error'}): súbelas en la revisión.`] };
+        });
+        fotosP.catch(() => {});
+        let leidasN = 0;
+        const leerTodas = async (titulo: string, tareas: (() => Promise<Leida>)[]) => {
+          leidasN = 0;
+          const avance = () => actualizar({ avance: `${titulo} ${leidasN} de ${tareas.length}…` });
+          avance();
+          return Promise.all(tareas.map(t => t().finally(() => { leidasN++; avance(); })));
+        };
+        const leidas = await leerTodas('Leyendo fuentes', [
+          ...docs.map(f => () => {
+            const form = new FormData();
+            form.set('etapa', 'documento');
+            form.set('ctx', JSON.stringify(ctx));
+            form.append('documento', f);
+            return etapa<Leida>(form).catch(err => leidaFallida(`concesionario://${f.name}`, `Concesionario: ${f.name}`, 1, err));
+          }),
+          ...fuentes.map(s => () => etapa<Leida>({ etapa: 'fuente', ctx, source: s }).catch(err => leidaFallida(s.url, s.nameEs, s.tier, err))),
+        ]);
+
+        // 3. Los datos CLAVE que no salieron: páginas nuevas, solo esos datos.
+        actualizar({ avance: 'Buscando los datos clave que faltan…' });
+        const faltantes = await etapa<{ fuentes: Fuente[]; soloKeys: string[] }>({
+          etapa: 'faltantes',
+          ctx,
+          facts: leidas.flatMap(l => l.facts.map(f => ({ key: f.key, value: f.value }))),
+          yaLeidas: fuentes.map(s => s.url),
+        }).catch(err => {
+          if (esFatal(err)) throw err;
+          return { fuentes: [], soloKeys: [] };
+        });
+        const extras = await leerTodas(
+          'Leyendo fuentes de los datos que faltaban',
+          faltantes.fuentes.map(s => () =>
+            etapa<Leida>({ etapa: 'fuente', ctx, source: s, soloKeys: faltantes.soloKeys }).catch(err => leidaFallida(s.url, s.nameEs, s.tier, err))
+          )
+        );
+
+        // 4. Reconciliar, validar y precio.
+        actualizar({ avance: 'Armando el borrador y revisando el precio…' });
+        const fotos = await fotosP;
+        const { draft } = await etapa<{ draft: Draft }>({ etapa: 'cerrar', ctx, leidas: [...leidas, ...extras], fotos });
+
         // Las fotos del concesionario van primero: ocupan su vista en la revisión.
         const draftConFotos = item.fotosPropias?.length
           ? { ...draft, fotos: [...item.fotosPropias, ...(draft.fotos ?? [])] }
           : draft;
-        actualizar({ estado: 'listo', draft: draftConFotos });
+        actualizar({ estado: 'listo', draft: draftConFotos, avance: undefined });
       } catch (err) {
-        actualizar({ estado: 'error', error: err instanceof Error ? err.message : 'Error inesperado' });
+        actualizar({ estado: 'error', avance: undefined, error: err instanceof Error ? err.message : 'Error inesperado' });
       } finally {
         corriendo.current = false;
         // Dispara el siguiente: el efecto depende de `cola`, que acaba de cambiar.
@@ -621,7 +688,7 @@ export function IngestStudio() {
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-tinta">Cola</h3>
               <span className="text-xs text-tinta-2">
-                {pendientes > 0 ? `${pendientes} por procesar · ~45 s cada uno` : 'Todo procesado'}
+                {pendientes > 0 ? `${pendientes} por procesar · ~2 a 3 min cada uno` : 'Todo procesado'}
               </span>
             </div>
             <ul className="divide-y divide-linea">
@@ -648,7 +715,7 @@ export function IngestStudio() {
                         : item.estado === 'error'
                           ? item.error
                           : item.estado === 'buscando'
-                            ? 'Buscando fuentes y extrayendo…'
+                            ? item.avance ?? 'Buscando fuentes y extrayendo…'
                             : item.estado === 'publicado'
                               ? 'Publicado'
                               : 'Esperando turno'}
