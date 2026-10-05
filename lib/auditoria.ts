@@ -14,7 +14,7 @@
 
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { ATTRIBUTE_REGISTRY } from '@/lib/attributes/registry';
+import { ATTRIBUTE_REGISTRY, attributeAppliesTo } from '@/lib/attributes/registry';
 import { computeCoverage } from '@/lib/attributes/coverage';
 import { specsDe } from '@/lib/vehiculo-datos';
 import { clavesFaltantes, sinDatoDeSpecs, valoresDeSpecs } from '@/lib/attributes/clave';
@@ -120,6 +120,16 @@ export async function colaDeAuditoria(): Promise<{ vehiculos: VehiculoPendiente[
   return { vehiculos: out, totalHechos: hechos.length };
 }
 
+/** El precio confirmado por una persona como hecho (crea la fila si el carro no la tenía). */
+export function upsertPrecioHecho(vehicleId: string, precio: number, userId: string, ahora = new Date()) {
+  const datos = { valueNum: precio, valueBool: null, valueText: null, confidence: 1, sourceTier: 1, verifiedBy: userId, verifiedAt: ahora, auditedBy: userId, auditedAt: ahora };
+  return prisma.vehicleAttribute.upsert({
+    where: { vehicleId_attributeKey: { vehicleId, attributeKey: 'commercial.priceCop' } },
+    create: { vehicleId, attributeKey: 'commercial.priceCop', ...datos },
+    update: datos,
+  });
+}
+
 /** Pone o quita un valor en el JSON por su path ('combustion.maxPower'). */
 function fijarEnSpecs(specs: Record<string, any>, key: string, valor: unknown | undefined) {
   const partes = key.split('.');
@@ -173,6 +183,10 @@ export async function escribirHechos(
   const s = specsDe(v.specifications);
   const ahora = new Date();
   const limpios = hechos
+    .filter(h => {
+      const d = DEF.get(h.key);
+      return !!d && attributeAppliesTo(d, v.fuelType);
+    })
     .map(h => ({ ...h, valor: valorAuditado(h.key, h.valor) }))
     .filter((h): h is typeof h & { valor: number | string | boolean } => h.valor !== null);
   if (limpios.length === 0) return { ok: false, error: 'Ningún valor válido (revisa unidades y rangos)' };
@@ -284,11 +298,8 @@ export async function aplicarAuditoria(a: AccionAuditoria, userId: string): Prom
     delete s.commercial.priceEstimated;
     delete s.commercial.priceReasoningEs;
     await prisma.$transaction([
-      prisma.vehicle.update({ where: { id: a.vehicleId }, data: { price: precio, specifications: JSON.stringify(s) } }),
-      prisma.vehicleAttribute.updateMany({
-        where: { vehicleId: a.vehicleId, attributeKey: 'commercial.priceCop' },
-        data: { valueNum: precio, confidence: 1, verifiedBy: userId, verifiedAt: ahora, auditedBy: userId, auditedAt: ahora },
-      }),
+      prisma.vehicle.update({ where: { id: a.vehicleId }, data: { price: precio, priceEstimated: false, specifications: JSON.stringify(s) } }),
+      upsertPrecioHecho(a.vehicleId, precio, userId, ahora),
     ]);
     return { ok: true };
   }

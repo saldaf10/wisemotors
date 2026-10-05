@@ -25,6 +25,8 @@ export async function POST(request: NextRequest) {
       price: Number(body?.price),
       priceEstimated: !!body?.priceEstimated,
       priceReasoningEs: body?.priceReasoningEs,
+      priceConfidence: Number(body?.priceConfidence) || undefined,
+      priceSourceUrl: typeof body?.priceSourceUrl === 'string' ? body.priceSourceUrl : undefined,
       facts: Array.isArray(body?.facts) ? body.facts : [],
       fotos: Array.isArray(body?.fotos) ? body.fotos : [],
       dealerIds: Array.isArray(body?.dealerIds) ? body.dealerIds : [],

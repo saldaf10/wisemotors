@@ -11,7 +11,7 @@
 // ============================================================================
 
 import { prisma } from '@/lib/prisma';
-import { escribirHechos, quitarHechos } from '@/lib/auditoria';
+import { escribirHechos, quitarHechos, upsertPrecioHecho } from '@/lib/auditoria';
 import { specsDe } from '@/lib/vehiculo-datos';
 
 export interface CambiosVehiculo {
@@ -90,14 +90,12 @@ export async function editarVehiculo(id: string, c: CambiosVehiculo, userId: str
     delete s.commercial.priceEstimated;
     delete s.commercial.priceReasoningEs;
     datos.price = p;
+    datos.priceEstimated = false;
     datos.specifications = JSON.stringify(s);
   }
   if (Object.keys(datos).length) await prisma.vehicle.update({ where: { id }, data: datos });
   if (c.precio !== undefined) {
-    await prisma.vehicleAttribute.updateMany({
-      where: { vehicleId: id, attributeKey: 'commercial.priceCop' },
-      data: { valueNum: Number(datos.price), confidence: 1, verifiedBy: userId, verifiedAt: new Date(), auditedBy: userId, auditedAt: new Date() },
-    });
+    await upsertPrecioHecho(id, Number(datos.price), userId);
   }
 
   // Datos: primero lo que se quita, después lo que se pone (una persona: confianza plena).

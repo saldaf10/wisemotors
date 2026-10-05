@@ -15,7 +15,7 @@ import { esErrorDeCuenta, explicarErrorClaude, pedirJson } from '@/lib/ai/claude
 import { fetchPageText } from './fetcher';
 import { buscarFotos, type Angulo } from './fotos';
 import { discoverSources } from './sources';
-import { buscarFuentes, buscarFuentesPara, leerConClaude, type Contenido } from './buscar-fuentes';
+import { buscarFuentes, buscarFuentesPara, leerConClaude, tierPorDominio, type Contenido } from './buscar-fuentes';
 import { clavesFaltantes } from '@/lib/attributes/clave';
 import { extractFromPage, resolveIdentity } from './extract';
 import { normalizarCop, verificarPrecio } from './price-check';
@@ -192,13 +192,13 @@ export function mesesDesde(vigencia: string | undefined, hoy = new Date()): numb
 // ---------------------------------------------------------------------------
 async function procesarFuente(
   source: DiscoveredSource,
-  ctx: { label: string; versionObjetivo: string; anio: number },
+  ctx: { label: string; versionObjetivo: string; anio: number; fuelType: string },
   soloKeys?: string[]
 ): Promise<{ source: DiscoveredSource; facts: RawFact[]; ok: boolean; note: string }> {
   const nota = (n: number, descartados: number, como: string) =>
     `${n} datos extraídos${como}${descartados ? ` · ${descartados} descartados por ser de otra versión` : ''}`;
   const extraer = async (c: string | Contenido) => {
-    const r = await extractFromPage(c, source.url, source.tier, ctx.label, ctx.versionObjetivo, soloKeys);
+    const r = await extractFromPage(c, source.url, source.tier, ctx.label, ctx.versionObjetivo, soloKeys, ctx.fuelType);
     const anioViejo = r.anioModeloFuente > 1990 && r.anioModeloFuente < ctx.anio - 1;
     return { ...r, facts: anioViejo ? [] : r.facts, anioViejo };
   };
@@ -322,13 +322,13 @@ export async function runIngestPipeline(input: {
   const leidosDocsP = Promise.allSettled(
     docs.map(async d => {
       const url = `concesionario://${d.nombre}`;
-      const r = await extractFromPage(d.contenido, url, 1, label, versionObjetivo);
+      const r = await extractFromPage(d.contenido, url, 1, label, versionObjetivo, undefined, identity.fuelType);
       const anioViejo = r.anioModeloFuente > 1990 && r.anioModeloFuente < input.year - 1;
       return { d, url, r, anioViejo };
     })
   );
   const procesar = (source: DiscoveredSource, soloKeys?: string[]) =>
-    procesarFuente(source, { label, versionObjetivo, anio: input.year }, soloKeys);
+    procesarFuente(source, { label, versionObjetivo, anio: input.year, fuelType: identity.fuelType }, soloKeys);
   const reportar = (results: PromiseSettledResult<Awaited<ReturnType<typeof procesar>>>[]) => {
     for (const r of results) {
       if (r.status === 'fulfilled') {
@@ -344,7 +344,8 @@ export async function runIngestPipeline(input: {
   // 3b. Enlaces que puso el equipo: también tier 1 y antes que la web.
   const enlaces: DiscoveredSource[] = (input.enlaces ?? []).slice(0, 6).map(url => ({
     url,
-    tier: 1,
+    // Tier 1 solo si el dominio es del fabricante en Colombia; un blog o un clasificado no lo es.
+    tier: tierPorDominio(url, identity.brand),
     nameEs: `Enlace del equipo: ${new URL(url).hostname.replace(/^www\./, '')}`,
   }));
   const leidosEnlacesP = Promise.allSettled(enlaces.map(source => procesar(source)));

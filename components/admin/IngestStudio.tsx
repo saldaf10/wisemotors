@@ -424,6 +424,8 @@ export function IngestStudio() {
           price: parseFloat(priceValue),
           priceEstimated: draft.price?.estimated ?? true,
           priceReasoningEs: draft.price?.reasoningEs ?? 'Precio ingresado a mano en la revisión.',
+          priceConfidence: draft.price?.confidence,
+          priceSourceUrl: draft.price?.sourceUrl,
           facts,
           sinDato,
           dealerIds: dealerIds.filter(id => concesionarios.some(c => c.id === id)),

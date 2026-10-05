@@ -6,7 +6,7 @@
 // Un valor sin cita se descarta.
 // ============================================================================
 
-import { ATTRIBUTE_REGISTRY } from '@/lib/attributes/registry';
+import { ATTRIBUTE_REGISTRY, attributeAppliesTo } from '@/lib/attributes/registry';
 import { z } from 'zod/v4';
 import { pedirJson } from '@/lib/ai/claude';
 import type { RawFact, SourceTier } from './types';
@@ -44,9 +44,14 @@ const ExtraccionSchema = z.object({
     .describe('Nombres de las OTRAS versiones de este modelo que aparecen en el texto (ej. "LT", "LTZ", "Premier"), sin la versión objetivo. Vacío si no hay.'),
 });
 
-function buildCatalog(soloKeys?: string[]): string {
+/** Atributos que el extractor puede reportar: los del registro que aplican al tren motriz (si se conoce). */
+function extraibles(fuelType?: string) {
+  return fuelType ? EXTRACTABLE.filter(d => attributeAppliesTo(d, fuelType)) : EXTRACTABLE;
+}
+
+function buildCatalog(soloKeys?: string[], fuelType?: string): string {
   // Catálogo compacto: key | etiqueta | unidad esperada | tipo
-  return EXTRACTABLE.filter(d => !soloKeys || soloKeys.includes(d.key))
+  return extraibles(fuelType).filter(d => !soloKeys || soloKeys.includes(d.key))
     .map(d => `${d.key} | ${d.labelEs}${d.unit ? ` (${d.unit})` : ''} | ${d.opciones ? `uno de: ${d.opciones.join(' / ')}` : d.dataType}`)
     .join('\n');
 }
@@ -56,9 +61,10 @@ const SYSTEM_PROMPT = `Eres un extractor de especificaciones de vehículos para 
 REGLAS ABSOLUTAS:
 1. Solo reportas datos que estén EXPLÍCITOS en el texto. Nada de conocimiento propio, nada de estimaciones.
 2. Solo usas keys del catálogo. Si un dato del texto no corresponde a ninguna key, lo ignoras.
-3. Números en la unidad del catálogo: convierte si el texto usa otra (kW→HP: ×1.341; kgf·m→Nm: ×9.807; km/L→L/100km: 100÷valor). La conversión de unidades mal hecha es la fuente #1 de basura en datos automotores — verifica cada una.
+3. Números en la unidad del catálogo: convierte si el texto usa otra (kW→HP: ×1.341; kgf·m→Nm: ×9.807; km/L→km/gal: ×3.785; L/100km→km/gal: 378.5÷valor; m→mm: ×1000; litros de cilindrada→cc: ×1000). La conversión de unidades mal hecha es la fuente #1 de basura en datos automotores — verifica cada una.
 4. Cada valor lleva su cita textual. Sin cita, no reportes el dato.
 5. VERSIONES — la regla más importante: cada versión (LT, LTZ, RS, Premier…) es un carro distinto. Un dato de otra versión JAMÁS se atribuye a la versión objetivo, aunque sea "parecido" o "probablemente igual". Si el texto dice "el Onix LT trae cámara de reversa" y el objetivo es el Onix RS, ese dato NO existe para el RS. Solo vale: lo que el texto atribuye a la versión objetivo, lo que dice que es de serie en TODAS las versiones, o lo que está en una página/ficha dedicada exclusivamente a la versión objetivo. Si no hay versión objetivo, el objetivo es la versión de entrada (base). Marca siempre 'aplicaA' con honestidad.
+5b. TREN MOTRIZ: el vehículo objetivo tiene el tren motriz indicado en el encabezado. Los datos del motor, consumo o batería de OTRO tren motriz (la versión gasolina de un modelo que también es híbrido, la eléctrica, etc.) no se reportan, aunque estén en la misma página.
 6. Precios en COP: repórtalos SOLO en la key 'commercial.priceCop' si el texto trae el precio en Colombia de EXACTAMENTE la versión objetivo (con su caja si el texto distingue). Un "desde $X" de la gama, un precio de otra versión, en USD o de otro país NO se reporta. Anota en 'vigencia' la fecha que dé el texto para ese precio.
 7. Anota en 'anioModeloFuente' el año modelo del que habla la página o el documento (si lo dice, aunque sea en el título o el nombre del archivo). Año modelo: la prensa y los fabricantes suelen hablar del año anterior o siguiente de la MISMA generación (un Onix 2026 y un 2027 son el mismo carro). Eso cuenta como el vehículo objetivo. Solo si es otra generación, otro modelo u otro mercado, no reportes nada.
 8. Que el texto NO mencione algo NO significa que el carro no lo tenga. Si no encuentras un dato, OMITE la key. Jamás reportes false ni 0 para decir "no aparece": eso afirma que el carro carece del equipamiento, que es una mentira distinta a no saberlo.`;
@@ -82,6 +88,32 @@ function citaEnTexto(cita: string, textoPlano: string) {
   const tramo = Math.max(12, Math.floor(c.length * 0.6));
   for (let i = 0; i + tramo <= c.length; i += 4) if (textoPlano.includes(c.slice(i, i + tramo))) return true;
   return false;
+}
+
+// Factores de conversión que el extractor tiene permitido aplicar (ver regla 3 del prompt).
+const FACTORES = [1, 1.341, 1 / 1.341, 0.9863, 1 / 0.9863, 9.807, 1 / 9.807, 3.785, 1 / 3.785, 1000, 0.001, 10, 0.1, 1.609, 1 / 1.609];
+
+/** Números que aparecen en un texto, leídos como se escriben en Colombia y en inglés. */
+function numerosEn(texto: string): number[] {
+  const out: number[] = [];
+  for (const m of texto.match(/\d+(?:[.,]\d+)*/g) ?? []) {
+    const a = parseFloat(m.replace(/\./g, '').replace(',', '.'));
+    const b = parseFloat(m.replace(/,/g, ''));
+    for (const n of [a, b, parseFloat(m.replace(',', '.'))]) if (Number.isFinite(n) && n > 0) out.push(n);
+  }
+  return out;
+}
+
+/**
+ * ¿La cita respalda el número? Debe contener la cifra (o la cifra original antes
+ * de una conversión de unidad permitida). Una cita sin ningún dígito no se
+ * puede contrastar ("cinco airbags") y se acepta.
+ */
+export function citaRespaldaValor(valor: number, cita: string): boolean {
+  const nums = numerosEn(cita);
+  if (nums.length === 0) return true;
+  const cerca = (a: number, b: number) => Math.abs(a - b) <= Math.max(0.011, Math.abs(b) * 0.015);
+  return nums.some(n => FACTORES.some(f => cerca(n * f, valor)) || cerca(378.5 / n, valor));
 }
 
 /** ¿El texto menciona este nombre de versión como palabra suelta? */
@@ -152,7 +184,9 @@ export async function extractFromPage(
   /** Versión pedida ("RS"). Vacía = versión de entrada. */
   version = '',
   /** Solo buscar estas keys (búsqueda dirigida de campos clave que faltan). */
-  soloKeys?: string[]
+  soloKeys?: string[],
+  /** Tren motriz del vehículo: filtra el catálogo y descarta lo que no le aplica. */
+  fuelType?: string
 ): Promise<ResultadoExtraccion> {
   const c: Contenido = typeof contenido === 'string' ? { texto: contenido } : contenido;
   // Documentos (PDF o imagen): no hay texto contra el cual verificar la cita;
@@ -160,10 +194,10 @@ export async function extractFromPage(
   const esPdf = 'pdfBase64' in c;
   const esImagen = 'imagenBase64' in c;
   const esDocumento = esPdf || esImagen;
-  const encabezado = `VEHÍCULO OBJETIVO: ${vehicleLabel}
+  const encabezado = `VEHÍCULO OBJETIVO: ${vehicleLabel}${fuelType ? `\nTREN MOTRIZ DEL OBJETIVO: ${fuelType}` : ''}
 
 CATÁLOGO DE ATRIBUTOS (key | etiqueta | tipo):
-${buildCatalog(soloKeys)}
+${buildCatalog(soloKeys, fuelType)}
 `;
   const cierre = `Extrae las especificaciones del vehículo objetivo presentes en ${esDocumento ? 'el documento' : 'el texto'}. Si habla de otro vehículo, no reportes nada.`;
 
@@ -196,6 +230,8 @@ ${buildCatalog(soloKeys)}
     // El LLM no inventa campos: keys fuera del registro mueren aquí.
     if (!VALID_KEYS.has(f.key)) continue;
     if (soloKeys && !soloKeys.includes(f.key)) continue;
+    // Un dato de otro tren motriz (combustion.* en un híbrido) no es de este carro.
+    if (fuelType && !extraibles(fuelType).some(d => d.key === f.key)) continue;
 
     // Regla de versiones, verificada en código y no solo pedida al modelo:
     //  - lo que el modelo marcó como de otra versión, fuera;
@@ -229,6 +265,8 @@ ${buildCatalog(soloKeys)}
       // cuando la página no traía especificaciones. Un carro con 0 airbags o
       // 0 estrellas NCAP es una afirmación grave, y ninguna ficha real la hace.
       if (n === 0) continue;
+      // La cita tiene que traer la cifra: citar una línea real con otro número no vale.
+      if (!citaRespaldaValor(n, f.quote)) continue;
       value = n;
     } else if (def.dataType === 'boolean') {
       // Mismo criterio: "no lo encontré" NO es "no lo tiene". La ausencia se

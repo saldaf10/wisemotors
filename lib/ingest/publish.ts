@@ -7,7 +7,7 @@
 // ============================================================================
 
 import { prisma } from '@/lib/prisma';
-import { ATTRIBUTE_REGISTRY } from '@/lib/attributes/registry';
+import { ATTRIBUTE_REGISTRY, attributeAppliesTo } from '@/lib/attributes/registry';
 import { computeCoverage } from '@/lib/attributes/coverage';
 
 export interface AcceptedFact {
@@ -28,6 +28,9 @@ export interface PublishInput {
   price: number;
   priceEstimated?: boolean;
   priceReasoningEs?: string;
+  /** Confianza y fuente del precio (para guardarlo como hecho, igual que el resto). */
+  priceConfidence?: number;
+  priceSourceUrl?: string;
   facts: AcceptedFact[];
   /** Fotos aprobadas en la revisión, en orden; la de `portada` es la principal. */
   fotos?: { url: string; angulo: string; portada?: boolean }[];
@@ -91,9 +94,10 @@ export async function publishDraft(input: PublishInput): Promise<PublishResult> 
     return { ok: false, error: 'El precio es obligatorio para publicar', status: 400 };
   }
 
-  const validKeys = new Set(ATTRIBUTE_REGISTRY.map(d => d.key));
+  // Solo keys del registro que aplican a este tren motriz: un híbrido no guarda combustion.*.
+  const validKeys = new Set(ATTRIBUTE_REGISTRY.filter(d => attributeAppliesTo(d, fuelType)).map(d => d.key));
   const clean = (input.facts ?? []).filter(
-    f => validKeys.has(f.key) && f.value !== null && f.value !== undefined
+    f => validKeys.has(f.key) && f.key !== 'commercial.priceCop' && f.value !== null && f.value !== undefined
   );
 
   const existing = await prisma.vehicle.findFirst({
@@ -123,7 +127,7 @@ export async function publishDraft(input: PublishInput): Promise<PublishResult> 
   const sinDato = (input.sinDato ?? []).filter(x => typeof x === 'string').slice(0, 60);
   if (sinDato.length) specs.meta = { ...(specs.meta ?? {}), sinDato };
 
-  const coverage = computeCoverage(fuelType, new Set(clean.map(f => f.key)));
+  const coverage = computeCoverage(fuelType, new Set([...clean.map(f => f.key), 'commercial.priceCop']));
 
   const pedidos = Array.from(new Set((input.dealerIds ?? []).filter(x => typeof x === 'string'))).slice(0, 50);
   const dealers = pedidos.length
@@ -136,6 +140,7 @@ export async function publishDraft(input: PublishInput): Promise<PublishResult> 
       model,
       year: Number(year),
       price,
+      priceEstimated: !!input.priceEstimated,
       type,
       vehicleType,
       fuelType,
@@ -150,7 +155,20 @@ export async function publishDraft(input: PublishInput): Promise<PublishResult> 
         create: dealers.map(d => ({ dealerId: d.id })),
       },
       attributes: {
-        create: clean.map(f => {
+        create: [
+          // El precio también es un hecho: con confianza, fuente y revisor, como los demás.
+          {
+            attributeKey: 'commercial.priceCop',
+            valueNum: price,
+            valueBool: null,
+            valueText: null,
+            confidence: input.priceEstimated ? Math.min(0.6, Number(input.priceConfidence) || 0.4) : Math.max(0, Math.min(1, Number(input.priceConfidence) || 0.85)),
+            sourceTier: input.priceEstimated ? 3 : 2,
+            sourceUrl: input.priceSourceUrl ? String(input.priceSourceUrl).slice(0, 500) : null,
+            verifiedBy: input.verifiedBy,
+            verifiedAt: input.verifiedBy ? new Date() : null,
+          },
+          ...clean.map(f => {
           const def = ATTRIBUTE_REGISTRY.find(d => d.key === f.key)!;
           return {
             attributeKey: f.key,
@@ -164,7 +182,8 @@ export async function publishDraft(input: PublishInput): Promise<PublishResult> 
             verifiedBy: input.verifiedBy,
             verifiedAt: input.verifiedBy ? new Date() : null,
           };
-        }),
+          }),
+        ],
       },
     },
     select: { id: true },

@@ -55,13 +55,13 @@ export async function proponerDesdeTexto(
 ): Promise<{ propuestas: Propuesta[]; descartadosPorVersion: number; truncado: boolean }> {
   const v = await prisma.vehicle.findUnique({
     where: { id: vehicleId },
-    select: { brand: true, model: true, year: true, attributes: { select: { attributeKey: true, valueNum: true, valueBool: true, valueText: true } } },
+    select: { brand: true, model: true, year: true, fuelType: true, attributes: { select: { attributeKey: true, valueNum: true, valueBool: true, valueText: true } } },
   });
   if (!v) throw new Error('Vehículo no encontrado');
 
   const partes = trozos(texto);
   const label = `${v.brand} ${v.model} ${v.year} (mercado Colombia)`;
-  const resultados = await Promise.all(partes.map(t => extractFromPage({ texto: t }, 'texto-pegado', 2, label, '')));
+  const resultados = await Promise.all(partes.map(t => extractFromPage({ texto: t }, 'texto-pegado', 2, label, '', undefined, v.fuelType)));
 
   const actuales = new Map(v.attributes.map(a => [a.attributeKey, a.valueNum ?? a.valueBool ?? a.valueText]));
   const def = new Map(ATTRIBUTE_REGISTRY.map(d => [d.key, d]));

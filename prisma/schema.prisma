@@ -55,6 +55,8 @@ model Vehicle {
   model          String
   year           Int
   price          Float
+  // true = precio estimado por IA, aún sin confirmar por una persona (filtrable en SQL)
+  priceEstimated Boolean         @default(false)
   type           String
   vehicleType    String
   fuelType       String

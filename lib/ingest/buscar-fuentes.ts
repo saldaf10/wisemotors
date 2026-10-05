@@ -36,6 +36,11 @@ const FuentesSchema = z.object({
 
 const normalizar = (u: string) => u.trim().replace(/#.*$/, '').replace(/\/+$/, '').replace(/^http:\/\//, 'https://').toLowerCase();
 
+/** Tier de una URL cuando no hay un tipo declarado: 1 si es del fabricante en Colombia, 2 en cualquier otro caso. */
+export function tierPorDominio(url: string, marca: string): SourceTier {
+  return tierDe('fabricante_colombia', url, marca) === 1 ? 1 : 2;
+}
+
 function tierDe(tipo: (typeof TIPOS)[number], url: string, marca: string): SourceTier {
   const host = (() => {
     try {
