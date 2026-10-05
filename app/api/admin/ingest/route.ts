@@ -82,9 +82,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'No entendí el vehículo. Ejemplo: "Onix RS 2026"' }, { status: 400 });
       }
       ({ brand, model, year } = parsed);
-    } else if (!brand || !model || !year) {
+    } else if (!String(model ?? '').trim() || !year) {
+      // La marca puede faltar ("Blazer EV 2025"): resolveIdentity la deduce del modelo.
       return NextResponse.json(
-        { error: 'Falta el vehículo: manda query ("Onix RS 2026") o brand, model y year' },
+        { error: 'Falta el vehículo: escribe al menos el modelo y el año (ej. "Onix RS 2026")' },
         { status: 400 }
       );
     }
