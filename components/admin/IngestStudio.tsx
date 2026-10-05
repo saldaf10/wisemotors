@@ -226,6 +226,8 @@ export function IngestStudio() {
   }, [draft]);
 
   const acceptedCount = draft ? draft.facts.filter(f => accepted[f.key]).length : 0;
+  // Un borrador vacío ("Ninguna fuente respondió") publicaría un carro sin un solo dato.
+  const sinDatos = acceptedCount + Object.keys(manuales).length === 0;
 
   /** key → valor de lo que se publicaría: lo aceptado (con ediciones) + lo puesto a mano. */
   const valoresPublicables = useMemo(() => {
@@ -904,13 +906,19 @@ export function IngestStudio() {
       {/* Publicar */}
       <div className="sticky bottom-4 bg-white/95 backdrop-blur rounded-2xl shadow-lg border border-linea p-4 flex items-center justify-between gap-4">
         <p className="text-sm text-tinta-2">
+          {sinDatos ? (
+            <span className="text-rose-700 font-medium">Sin datos aceptados no se puede publicar: acepta o completa al menos uno.</span>
+          ) : (
+            <>
           Se publicará con <span className="font-bold">{acceptedCount} datos verificados</span>
           {fotos.some(f => f.usar) && <>, {fotos.filter(f => f.usar).length} fotos</>}
           {draft.price?.estimated && Number(priceValue) > 0 && <span className="text-rose-700"> y precio estimado</span>}.
+            </>
+          )}
         </p>
         <div className="flex gap-2">
           <Button variant="outline" onClick={volverACola}>Volver a la cola</Button>
-          <Button onClick={publish} disabled={phase === 'publishing' || !priceValue || Number(priceValue) <= 0 || fotos.some(f => f.procesando)}
+          <Button onClick={publish} disabled={phase === 'publishing' || sinDatos || !priceValue || Number(priceValue) <= 0 || fotos.some(f => f.procesando)}
             variant="wise">
             {phase === 'publishing'
               ? <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Publicando…</span>

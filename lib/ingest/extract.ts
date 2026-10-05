@@ -39,6 +39,9 @@ const ExtraccionSchema = z.object({
   anioModeloFuente: z
     .number()
     .describe('Año modelo del que habla el texto/documento (ej. 2026). 0 si no se puede saber.'),
+  mismaGeneracion: z
+    .boolean()
+    .describe('true si el texto habla de la MISMA generación del vehículo objetivo (aunque el año modelo sea otro: un Blazer 2019 y uno 2026 de la misma generación cuentan). El año del objetivo suele ser el "modelo vigente" supuesto, no un carro nuevo: si la fuente es del mismo modelo y no sabes de una generación más nueva, es la misma. false solo si es otra generación (sabes que hubo un cambio de generación entre medio), otro modelo u otro mercado.'),
   otrasVersiones: z
     .array(z.string())
     .describe('Nombres de las OTRAS versiones de este modelo que aparecen en el texto (ej. "LT", "LTZ", "Premier"), sin la versión objetivo. Vacío si no hay.'),
@@ -159,6 +162,18 @@ export interface ResultadoExtraccion {
   descartadosPorVersion: number;
   /** Año modelo del que habla la fuente (0 = no se sabe). */
   anioModeloFuente: number;
+  /** La fuente es de la misma generación del objetivo (aunque el año sea otro). */
+  mismaGeneracion: boolean;
+}
+
+/**
+ * ¿La fuente es demasiado vieja? Solo si es de más de un año modelo atrás Y de
+ * otra generación. Un modelo que no se renueva cada año (el Blazer RS se vende
+ * con la misma generación desde 2019) tiene fichas con años viejos que siguen
+ * siendo el carro que se vende hoy.
+ */
+export function fuenteViejaDescartable(r: Pick<ResultadoExtraccion, 'anioModeloFuente' | 'mismaGeneracion'>, anioObjetivo: number) {
+  return r.anioModeloFuente > 1990 && r.anioModeloFuente < anioObjetivo - 1 && !r.mismaGeneracion;
 }
 
 // Palabras que describen carrocería o caja, no la versión: "Premier Sedán" es la versión "Premier".
@@ -186,7 +201,11 @@ export async function extractFromPage(
   /** Solo buscar estas keys (búsqueda dirigida de campos clave que faltan). */
   soloKeys?: string[],
   /** Tren motriz del vehículo: filtra el catálogo y descarta lo que no le aplica. */
-  fuelType?: string
+  fuelType?: string,
+  /** false = la persona no pidió versión y `version` es solo la de entrada que
+   *  supuso la IA (puede ser de otro mercado: "LT" en un Blazer que en Colombia
+   *  solo existe como RS). Entonces es una pista, no una regla. */
+  versionPedida = true
 ): Promise<ResultadoExtraccion> {
   const c: Contenido = typeof contenido === 'string' ? { texto: contenido } : contenido;
   // Documentos (PDF o imagen): no hay texto contra el cual verificar la cita;
@@ -194,7 +213,11 @@ export async function extractFromPage(
   const esPdf = 'pdfBase64' in c;
   const esImagen = 'imagenBase64' in c;
   const esDocumento = esPdf || esImagen;
-  const encabezado = `VEHÍCULO OBJETIVO: ${vehicleLabel}${fuelType ? `\nTREN MOTRIZ DEL OBJETIVO: ${fuelType}` : ''}
+  const notaVersion =
+    version && !versionPedida
+      ? `\nVERSIÓN OBJETIVO: la de ENTRADA (la más barata) que se vende en Colombia. Se SUPONE que se llama "${version}", pero ese nombre puede ser de otro mercado y no existir aquí. Por eso: si ${esDocumento ? 'el documento' : 'el texto'} habla de UNA sola versión (aunque no se llame "${version}"), ESA es la versión objetivo: reporta sus datos con aplicaA = version_objetivo y no la pongas en 'otrasVersiones'. Si habla de varias y ninguna es "${version}", la objetivo es la más barata de ellas.`
+      : '';
+  const encabezado = `VEHÍCULO OBJETIVO: ${vehicleLabel}${fuelType ? `\nTREN MOTRIZ DEL OBJETIVO: ${fuelType}` : ''}${notaVersion}
 
 CATÁLOGO DE ATRIBUTOS (key | etiqueta | tipo):
 ${buildCatalog(soloKeys, fuelType)}
@@ -206,6 +229,9 @@ ${buildCatalog(soloKeys, fuelType)}
     parsed = await pedirJson({
       schema: ExtraccionSchema,
       system: SYSTEM_PROMPT,
+      // Una ficha técnica completa (PDF oficial) trae 100+ datos con su cita:
+      // con 8000 la respuesta se cortaba y se perdía la mejor fuente entera.
+      maxTokens: 24000,
       prompt: esDocumento
         ? [
             'pdfBase64' in c
@@ -219,13 +245,20 @@ ${buildCatalog(soloKeys, fuelType)}
     throw new Error(`Claude falló extrayendo de ${sourceUrl}: ${err instanceof Error ? err.message : err}`);
   }
 
+  const anioModeloFuente = Math.round(parsed.anioModeloFuente || 0);
   const textoPlano = esDocumento ? null : plano((c as { texto: string }).texto);
   const facts: RawFact[] = [];
   let descartadosPorVersion = 0;
   // Palabras que delatan otra versión ("Premier", "LTZ"…), comparadas palabra por palabra:
   // la IA puede decir "Premier Sedán" y la cita solo "el Premier".
   const modelo = vehicleLabel.split(' ').slice(1, 3).join(' ');
-  const otras = marcasDeOtras(parsed.otrasVersiones ?? [], version, modelo);
+  // Versión supuesta (no pedida) que no aparece en el texto y una sola versión
+  // nombrada: la suposición era de otro mercado ("LT" en un Blazer que en
+  // Colombia solo es RS). Esa única versión es la de entrada aquí.
+  const textoCrudo = esDocumento ? '' : (c as { texto: string }).texto;
+  const unicaVersion =
+    !versionPedida && !esDocumento && version && !menciona(textoCrudo, version) && (parsed.otrasVersiones ?? []).length === 1;
+  const otras = unicaVersion ? [] : marcasDeOtras(parsed.otrasVersiones ?? [], version, modelo);
   for (const f of parsed.facts ?? []) {
     // El LLM no inventa campos: keys fuera del registro mueren aquí.
     if (!VALID_KEYS.has(f.key)) continue;
@@ -241,8 +274,8 @@ ${buildCatalog(soloKeys, fuelType)}
     const esPrecio = f.key === 'commercial.priceCop';
     const citaNombraOtra = otras.some(o => menciona(f.quote, o)) && !(version && menciona(f.quote, version));
     if (
-      f.aplicaA === 'otra_version' ||
-      (version && f.aplicaA === 'no_especifica') ||
+      (f.aplicaA === 'otra_version' && !unicaVersion) ||
+      (version && f.aplicaA === 'no_especifica' && !unicaVersion) ||
       (esPrecio && f.aplicaA !== 'version_objetivo') ||
       citaNombraOtra
     ) {
@@ -282,10 +315,10 @@ ${buildCatalog(soloKeys, fuelType)}
       value = String(value).slice(0, 200);
     }
 
-    facts.push({ key: f.key, value, quote: f.quote.slice(0, 160), sourceUrl, tier, vigencia: f.vigencia?.trim() || undefined });
+    facts.push({ key: f.key, value, quote: f.quote.slice(0, 160), sourceUrl, tier, vigencia: f.vigencia?.trim() || undefined, anioFuente: anioModeloFuente });
   }
 
-  return { facts, descartadosPorVersion, anioModeloFuente: Math.round(parsed.anioModeloFuente || 0) };
+  return { facts, descartadosPorVersion, anioModeloFuente, mismaGeneracion: parsed.mismaGeneracion !== false };
 }
 
 /** Resolución de identidad canónica (plan §5.1, paso 1): una sola llamada. */

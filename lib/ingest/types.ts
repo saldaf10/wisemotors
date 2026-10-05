@@ -26,6 +26,8 @@ export interface RawFact {
   tier: SourceTier;
   /** Fecha que la fuente asocia al dato ("octubre de 2025"), sobre todo en precios. */
   vigencia?: string;
+  /** Año modelo del que habla la fuente (0 = no se sabe): a igual tier gana la más reciente. */
+  anioFuente?: number;
 }
 
 /** Un hecho ya reconciliado entre fuentes, listo para revisión humana. */

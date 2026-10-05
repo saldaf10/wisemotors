@@ -17,7 +17,7 @@ import { buscarFotos, type Angulo } from './fotos';
 import { discoverSources } from './sources';
 import { buscarFuentes, buscarFuentesPara, leerConClaude, tierPorDominio, type Contenido } from './buscar-fuentes';
 import { clavesFaltantes } from '@/lib/attributes/clave';
-import { extractFromPage, resolveIdentity } from './extract';
+import { extractFromPage, fuenteViejaDescartable, resolveIdentity } from './extract';
 import { normalizarCop, verificarPrecio } from './price-check';
 import type { DiscoveredSource, DraftFact, PriceDraft, RawFact, VehicleDraft } from './types';
 
@@ -43,8 +43,10 @@ function reconcile(raw: RawFact[]): DraftFact[] {
     const def = ATTRIBUTE_REGISTRY.find(d => d.key === key);
     if (!def) return;
 
-    // Mejor tier primero; a igual tier, el primero encontrado
-    const sorted = [...facts].sort((a, b) => a.tier - b.tier);
+    // Mejor tier primero; a igual tier, la fuente de año modelo más reciente
+    // (una ficha 2019 y una 2024 de la misma generación: manda la 2024); a
+    // igual año, la primera encontrada.
+    const sorted = [...facts].sort((a, b) => a.tier - b.tier || (b.anioFuente ?? 0) - (a.anioFuente ?? 0));
     const winner = sorted[0];
     const others = sorted.slice(1);
 
@@ -192,17 +194,17 @@ export function mesesDesde(vigencia: string | undefined, hoy = new Date()): numb
 // ---------------------------------------------------------------------------
 async function procesarFuente(
   source: DiscoveredSource,
-  ctx: { label: string; versionObjetivo: string; anio: number; fuelType: string },
+  ctx: { label: string; versionObjetivo: string; versionPedida: boolean; anio: number; fuelType: string },
   soloKeys?: string[]
 ): Promise<{ source: DiscoveredSource; facts: RawFact[]; ok: boolean; note: string }> {
   const nota = (n: number, descartados: number, como: string) =>
     `${n} datos extraídos${como}${descartados ? ` · ${descartados} descartados por ser de otra versión` : ''}`;
   const extraer = async (c: string | Contenido) => {
-    const r = await extractFromPage(c, source.url, source.tier, ctx.label, ctx.versionObjetivo, soloKeys, ctx.fuelType);
-    const anioViejo = r.anioModeloFuente > 1990 && r.anioModeloFuente < ctx.anio - 1;
+    const r = await extractFromPage(c, source.url, source.tier, ctx.label, ctx.versionObjetivo, soloKeys, ctx.fuelType, ctx.versionPedida);
+    const anioViejo = fuenteViejaDescartable(r, ctx.anio);
     return { ...r, facts: anioViejo ? [] : r.facts, anioViejo };
   };
-  const viejo = (anio: number) => ({ source, facts: [] as RawFact[], ok: false, note: `Es del modelo ${anio}: demasiado viejo para el ${ctx.anio}, se descartó` });
+  const viejo = (anio: number) => ({ source, facts: [] as RawFact[], ok: false, note: `Es del modelo ${anio} y de otra generación: no sirve para el ${ctx.anio}, se descartó` });
 
   const esPdf = /\.pdf($|\?)/i.test(source.url);
   const directo = esPdf ? null : await fetchPageText(source.url);
@@ -278,11 +280,13 @@ export async function runIngestPipeline(input: {
   if (!identity.trim) {
     warningsEs.push(
       identity.versionEntrada
-        ? `No se pidió versión: se tomaron solo datos de la versión de entrada (${identity.versionEntrada}) o comunes a toda la gama.`
+        ? `No se pidió versión: se tomaron solo datos de la versión de entrada (se supuso "${identity.versionEntrada}"; si en Colombia no existe, la más barata o única que traen las fuentes) o comunes a toda la gama.`
         : 'No se pidió versión y no se identificó la de entrada: revisar con cuidado que los datos no mezclen versiones.'
     );
   }
-  const version = versionObjetivo ? `, versión ${versionObjetivo}${identity.trim ? '' : ' (la de entrada)'}` : '';
+  // Sin versión pedida, la de entrada va como pista aparte (extractFromPage), no
+  // en la etiqueta: el nombre que supone la IA puede ser de otro mercado.
+  const version = identity.trim ? `, versión ${identity.trim}` : '';
   const label = `${identity.brand} ${identity.model} ${input.year}${version} (mercado ${input.country})`;
   // El nombre publicado lleva la versión ("Onix RS"): en Colombia se venden
   // como carros distintos. Las fuentes se buscan por el modelo base, que es
@@ -322,13 +326,13 @@ export async function runIngestPipeline(input: {
   const leidosDocsP = Promise.allSettled(
     docs.map(async d => {
       const url = `concesionario://${d.nombre}`;
-      const r = await extractFromPage(d.contenido, url, 1, label, versionObjetivo, undefined, identity.fuelType);
-      const anioViejo = r.anioModeloFuente > 1990 && r.anioModeloFuente < input.year - 1;
+      const r = await extractFromPage(d.contenido, url, 1, label, versionObjetivo, undefined, identity.fuelType, !!identity.trim);
+      const anioViejo = fuenteViejaDescartable(r, input.year);
       return { d, url, r, anioViejo };
     })
   );
   const procesar = (source: DiscoveredSource, soloKeys?: string[]) =>
-    procesarFuente(source, { label, versionObjetivo, anio: input.year, fuelType: identity.fuelType }, soloKeys);
+    procesarFuente(source, { label, versionObjetivo, versionPedida: !!identity.trim, anio: input.year, fuelType: identity.fuelType }, soloKeys);
   const reportar = (results: PromiseSettledResult<Awaited<ReturnType<typeof procesar>>>[]) => {
     for (const r of results) {
       if (r.status === 'fulfilled') {
@@ -373,7 +377,7 @@ export async function runIngestPipeline(input: {
       tier: 1,
       ok: facts.length > 0,
       note: anioViejo
-        ? `Es del modelo ${r.anioModeloFuente}: demasiado viejo para el ${input.year}, se descartó`
+        ? `Es del modelo ${r.anioModeloFuente} y de otra generación: no sirve para el ${input.year}, se descartó`
         : facts.length > 0
           ? `${facts.length} datos del documento${r.descartadosPorVersion ? ` · ${r.descartadosPorVersion} de otras versiones descartados` : ''}`
           : 'Se leyó, pero no trae datos de esta versión',
@@ -435,6 +439,10 @@ export async function runIngestPipeline(input: {
 
   // 5. Reconciliación + validación
   const allFacts = reconcile(rawFacts);
+  const aniosViejos = Array.from(new Set(rawFacts.map(f => f.anioFuente ?? 0).filter(a => a > 1990 && a < input.year - 1))).sort();
+  if (aniosViejos.length > 0) {
+    warningsEs.push(`Algunas fuentes son del modelo ${aniosViejos.join(', ')} (misma generación): si el carro se renovó, revisa que los datos sigan vigentes.`);
+  }
   const conflicted = allFacts.filter(f => f.conflict).length;
   if (conflicted > 0) warningsEs.push(`${conflicted} campos tienen fuentes en desacuerdo (marcados en la revisión).`);
   const impossible = allFacts.filter(f => f.outOfRange).length;

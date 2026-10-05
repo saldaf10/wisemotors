@@ -100,6 +100,10 @@ export async function publishDraft(input: PublishInput): Promise<PublishResult> 
     f => validKeys.has(f.key) && f.key !== 'commercial.priceCop' && f.value !== null && f.value !== undefined
   );
 
+  if (clean.length === 0) {
+    return { ok: false, error: 'El borrador no tiene ningún dato aceptado: no se publica un carro vacío', status: 400 };
+  }
+
   const existing = await prisma.vehicle.findFirst({
     where: {
       brand: { equals: brand, mode: 'insensitive' },
