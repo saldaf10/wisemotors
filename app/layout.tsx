@@ -28,14 +28,14 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://wisemotors.ai'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://wisemotors.co'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
     title: 'WiseMotors - Encuentra tu vehículo ideal con IA',
     description: 'Búsqueda inteligente de vehículos impulsada por IA. Encuentra lo que realmente necesitas.',
-    url: 'https://wisemotors.ai',
+    url: 'https://wisemotors.co',
     siteName: 'WiseMotors',
     locale: 'es_CO',
     type: 'website',
