@@ -226,6 +226,24 @@ model WhatsAppLead {
   @@map("whatsapp_leads")
 }
 
+// Lista de espera de la campaña de expectativa (app/espera). Un correo, una
+// fila. `codigo` arma su enlace para invitar (wisemotors.co/?ref=codigo) y
+// `referidoPor` guarda el código de quien lo invitó.
+model ListaEspera {
+  id           String   @id @default(cuid())
+  nombre       String
+  email        String   @unique
+  ciudad       String
+  codigo       String   @unique
+  referidoPor  String?
+  origen       String?  // utm_source, o "referido"
+  autorizacion DateTime // cuándo aceptó el tratamiento de datos (Ley 1581)
+  createdAt    DateTime @default(now())
+
+  @@index([referidoPor])
+  @@map("lista_espera")
+}
+
 // Banderas de una sola vez del sistema (ej. 'demo_cargado': los carros de
 // prueba ya se sembraron; si el equipo los borra, no vuelven a aparecer).
 model EstadoSistema {

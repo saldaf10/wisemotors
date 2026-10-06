@@ -241,6 +241,20 @@ cobertura, migración, seeds, motor de cohortes.
    View Transitions catálogo↔ficha; solo animar transform/opacity; dark editorial con
    morado `#881cb7` como luz, no como relleno.
 
+## Expectativa: sitio cerrado con lista de espera (desde 6-oct-2026)
+
+- `middleware.ts` + `lib/acceso.ts`: mientras `SITIO_ABIERTO` no sea `1`, toda página
+  muestra `app/espera` (rewrite, misma URL) y toda API responde 403, salvo
+  `/api/espera*` y `/api/salud`. El equipo entra escribiendo el código en el campo del
+  correo (`CODIGO_ACCESO`, por defecto `admin931`): deja la cookie `wm_acceso` (huella
+  del código + `JWT_SECRET`, 90 días). Para lanzar: `SITIO_ABIERTO=1` en Vercel y redeploy.
+- Las páginas del sitio viven en el grupo `app/(sitio)/` (menú y pie en su layout);
+  `app/espera` queda fuera para mostrarse sola.
+- Tabla `lista_espera` (nombre, correo, ciudad, autorización Ley 1581, código para
+  invitar `?ref=`, `referidoPor`, `origen` = utm_source). Cada invitado adelanta 10
+  puestos (`lib/lista-espera.ts`). CSV en el panel: botón "Lista de espera".
+- Regla de la campaña: la página de espera no muestra ninguna función del producto.
+
 ## Convenciones y trampas del repo
 
 - `AddVehicleForm.tsx` (63KB) y `EditVehicleForm.tsx` (77KB) son los formularios de 200

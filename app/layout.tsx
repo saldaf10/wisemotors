@@ -4,8 +4,6 @@ import '@fontsource/anton'
 import '@fontsource-variable/jetbrains-mono'
 import './globals.css'
 import './legacy.css'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
 import { FavoritesProvider } from '@/contexts/FavoritesContext'
 import { AuthProvider } from '@/contexts/AuthContext'
 
@@ -72,13 +70,7 @@ export default function RootLayout({
       <body className="font-sans">
         <AuthProvider>
           <FavoritesProvider>
-            <div className="min-h-screen flex flex-col">
-              <Navbar />
-              <main className="flex-1">
-                {children}
-              </main>
-              <Footer />
-            </div>
+            {children}
           </FavoritesProvider>
         </AuthProvider>
       </body>
