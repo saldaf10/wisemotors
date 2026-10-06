@@ -12,6 +12,7 @@
 import { useState } from 'react';
 import { CheckCircle2, CircleAlert } from 'lucide-react';
 import { camposClave, clavesFaltantes, keyDeEntrada, type CampoClave } from '@/lib/attributes/clave';
+import { rangoDe, type ClaseVehiculo } from '@/lib/attributes/registry';
 
 export type ValorManual = number | string | boolean;
 
@@ -26,11 +27,13 @@ export function numeroEscrito(t: string): number | null {
 function Entrada({
   campo,
   fuelType,
+  clase,
   onValor,
   onSinDato,
 }: {
   campo: CampoClave;
   fuelType: string;
+  clase: ClaseVehiculo;
   onValor: (key: string, v: ValorManual) => void;
   onSinDato: (id: string) => void;
 }) {
@@ -42,8 +45,10 @@ function Entrada({
     if (def.dataType === 'numeric') {
       const n = numeroEscrito(texto);
       if (n === null || n <= 0) return setError('Escribe un número');
-      if ((def.expectedMin !== undefined && n < def.expectedMin) || (def.expectedMax !== undefined && n > def.expectedMax)) {
-        return setError(`Fuera de rango (${def.expectedMin ?? '…'}–${def.expectedMax ?? '…'} ${def.unit ?? ''})`);
+      // Rango de la clase del vehículo: una van lleva 15.000 L, un carro no.
+      const { min, max } = rangoDe(def, clase);
+      if ((min !== undefined && n < min) || (max !== undefined && n > max)) {
+        return setError(`Fuera de rango (${min?.toLocaleString('es-CO') ?? '…'}–${max?.toLocaleString('es-CO') ?? '…'} ${def.unit ?? ''})`);
       }
       onValor(def.key, n);
     } else if (texto.trim()) {
@@ -115,20 +120,23 @@ function Entrada({
 
 export function DatosClave({
   fuelType,
+  clase = 'auto',
   valores,
   sinDato,
   onValor,
   onSinDato,
 }: {
   fuelType: string;
+  /** Carro, pickup o van/camión: cambia qué datos se piden y sus rangos. */
+  clase?: ClaseVehiculo;
   /** key → valor de lo que ya hay (aceptado o ingresado a mano). */
   valores: Record<string, unknown>;
   sinDato: string[];
   onValor: (key: string, v: ValorManual) => void;
   onSinDato: (id: string, marcar: boolean) => void;
 }) {
-  const todos = camposClave(fuelType);
-  const faltan = clavesFaltantes(fuelType, valores, sinDato);
+  const todos = camposClave(fuelType, clase);
+  const faltan = clavesFaltantes(fuelType, valores, sinDato, clase);
   const completos = todos.length - faltan.length;
   const secciones = Array.from(new Set(faltan.map(f => f.seccion)));
   const marcadosSinDato = todos.filter(c => sinDato.includes(c.id));
@@ -159,7 +167,7 @@ export function DatosClave({
                 {faltan
                   .filter(f => f.seccion === sec)
                   .map(c => (
-                    <Entrada key={c.id} campo={c} fuelType={fuelType} onValor={onValor} onSinDato={id => onSinDato(id, true)} />
+                    <Entrada key={c.id} campo={c} fuelType={fuelType} clase={clase} onValor={onValor} onSinDato={id => onSinDato(id, true)} />
                   ))}
               </ul>
             </div>

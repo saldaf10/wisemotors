@@ -12,13 +12,14 @@ import { adminFetch, mensajeDeErrorDeAuth } from '@/lib/admin-fetch';
 import { Button } from '@/components/ui/button';
 import { RevisionFotos, fotosIniciales, subirFotoVista, VISTAS, type FotoRevision } from '@/components/admin/RevisionFotos';
 import { parseVehicleList, type ParsedVehicleQuery } from '@/lib/ingest/parse-query';
-import { DatosClave, type ValorManual } from '@/components/admin/DatosClave';
+import { DatosClave, numeroEscrito, type ValorManual } from '@/components/admin/DatosClave';
 import { clavesFaltantes } from '@/lib/attributes/clave';
-import { ATTRIBUTE_REGISTRY } from '@/lib/attributes/registry';
+import { ATTRIBUTE_REGISTRY, fueraDeRango } from '@/lib/attributes/registry';
+import { CATEGORIAS, CLASES, claseDeTipo, TIPOS_CARROCERIA, type ClaseVehiculo } from '@/lib/attributes/clase';
 import { Loader2, ExternalLink, AlertTriangle, CheckCircle2, XCircle, Sparkles, Clock, ChevronRight, Paperclip, FileText, Link2 } from 'lucide-react';
 
-const TYPES = ['Sedán', 'SUV', 'Pickup', 'Deportivo', 'Wagon', 'Hatchback', 'Convertible'];
-const VEHICLE_TYPES = ['Automóvil', 'Deportivo', 'Todoterreno', 'Lujo', 'Económico'];
+const TYPES = TIPOS_CARROCERIA;
+const VEHICLE_TYPES = CATEGORIAS;
 const FUEL_TYPES = ['Gasolina', 'Diesel', 'Eléctrico', 'Híbrido', 'Híbrido Enchufable'];
 
 interface DraftFact {
@@ -71,6 +72,8 @@ interface ItemCola {
   fotosPropias?: FotoRevision[];
   /** Qué etapa de la ingesta va corriendo ("Leyendo fuentes 2 de 5…"). */
   avance?: string;
+  /** Carro, pickup o van/camión: lo elige el equipo al subir. */
+  clase?: ClaseVehiculo;
 }
 
 // ── Ingesta por etapas (lib/ingest/pipeline.ts): cada etapa es su propia
@@ -137,6 +140,16 @@ async function prepararArchivo(f: File): Promise<File> {
 
 const CLAVE_COLA = 'wisemotors:cola-ingesta';
 
+const DEF = new Map(ATTRIBUTE_REGISTRY.map(d => [d.key, d]));
+
+/** ¿Este valor numérico se sale del rango físico de la clase? (texto escrito por el revisor incluido) */
+function fueraDeSuRango(key: string, valor: unknown, clase: ClaseVehiculo): boolean {
+  const d = DEF.get(key);
+  if (!d || d.dataType !== 'numeric') return false;
+  const n = typeof valor === 'number' ? valor : numeroEscrito(String(valor ?? ''));
+  return n !== null && fueraDeRango(d, n, clase);
+}
+
 const EJEMPLO = 'Onix RS 2026\nRenault Duster 2026\nBYD Dolphin Mini';
 
 function host(url: string): string {
@@ -165,6 +178,9 @@ export function IngestStudio() {
   // Cola: una línea por vehículo
   const [texto, setTexto] = useState('');
   const [country, setCountry] = useState('CO');
+  // Carro, pickup o van/camión: cambia los rangos válidos (el furgón de una van
+  // pasa de 10.000 L) y los datos que se piden (carga útil, remolque, PBV).
+  const [clase, setClase] = useState<ClaseVehiculo>('auto');
   const [cola, setCola] = useState<ItemCola[]>([]);
   const [abierto, setAbierto] = useState<number | null>(null);
   const siguienteId = useRef(1);
@@ -270,6 +286,9 @@ export function IngestStudio() {
   }, [draft]);
 
   const acceptedCount = draft ? draft.facts.filter(f => accepted[f.key]).length : 0;
+  // La clase sale de la carrocería del borrador: si el revisor la cambia a
+  // Camión, cambian los rangos y los datos clave al instante.
+  const claseDraft = claseDeTipo(draft?.type);
   // Un borrador vacío ("Ninguna fuente respondió") publicaría un carro sin un solo dato.
   const sinDatos = acceptedCount + Object.keys(manuales).length === 0;
 
@@ -287,7 +306,7 @@ export function IngestStudio() {
     setError(null);
     const nuevos: ItemCola[] = vistaPrevia
       .filter((l): l is { raw: string; parsed: ParsedVehicleQuery } => l.parsed !== null)
-      .map(l => ({ id: siguienteId.current++, raw: l.raw, parsed: l.parsed, estado: 'en cola' }));
+      .map(l => ({ id: siguienteId.current++, raw: l.raw, parsed: l.parsed, estado: 'en cola', clase }));
     if (nuevos.length === 0) {
       setError('Escribe al menos un vehículo, por ejemplo "Onix RS 2026".');
       return;
@@ -352,6 +371,7 @@ export function IngestStudio() {
           model: item.parsed.model,
           year: item.parsed.year,
           country,
+          clase: item.clase,
           enlaces: item.enlaces ?? [],
         });
 
@@ -457,7 +477,7 @@ export function IngestStudio() {
 
   async function publish() {
     if (!draft) return;
-    const faltan = clavesFaltantes(draft.fuelType, valoresPublicables, sinDato);
+    const faltan = clavesFaltantes(draft.fuelType, valoresPublicables, sinDato, claseDraft);
     if (
       faltan.length > 0 &&
       !confirm(`Faltan ${faltan.length} datos clave (${faltan.map(c => c.etiqueta).join(', ')}). Sus bloques no saldrán en la ficha. ¿Publicar igual?`)
@@ -472,7 +492,8 @@ export function IngestStudio() {
         .map(f => {
           let value: number | string | boolean = f.value;
           if (edited[f.key] !== undefined && edited[f.key] !== '') {
-            value = typeof f.value === 'number' ? parseFloat(edited[f.key].replace(',', '.')) : edited[f.key];
+            // "1.598" es mil quinientos noventa y ocho (como se escribe en Colombia), no 1,598.
+            value = typeof f.value === 'number' ? (numeroEscrito(edited[f.key]) ?? NaN) : edited[f.key];
           }
           return { key: f.key, value, confidence: f.confidence, sourceTier: f.tier, sourceUrl: f.sourceUrl };
         })
@@ -547,6 +568,32 @@ export function IngestStudio() {
               placeholder={EJEMPLO}
               className="w-full px-4 py-3 border border-linea rounded-xl text-[15px] leading-relaxed focus:ring-2 focus:ring-wise focus:border-wise"
             />
+
+            <fieldset>
+              <legend className="mb-2 text-sm font-medium text-tinta">¿Qué tipo de vehículo es?</legend>
+              <div className="grid gap-2 sm:grid-cols-3" role="radiogroup">
+                {CLASES.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={clase === c.id}
+                    aria-label={`${c.etiqueta}: ${c.ayuda}`}
+                    onClick={() => setClase(c.id)}
+                    className={`rounded-xl border px-3 py-2 text-left transition-colors ${clase === c.id ? 'border-wise bg-wise/10' : 'border-linea hover:border-tinta/40'}`}
+                  >
+                    <span className="block text-sm font-semibold text-tinta">{c.etiqueta}</span>
+                    <span className="block text-xs text-tinta-2">{c.ayuda}</span>
+                  </button>
+                ))}
+              </div>
+              {clase !== 'auto' && (
+                <p className="mt-2 text-xs text-tinta-2">
+                  Se aceptan medidas y pesos de vehículo de trabajo y se piden carga útil, remolque, peso bruto y zona de carga.
+                  {vistaPrevia.length > 1 && ' Aplica a todas las líneas.'}
+                </p>
+              )}
+            </fieldset>
 
             {vistaPrevia.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -698,6 +745,11 @@ export function IngestStudio() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-tinta truncate">
                       {item.draft ? `${item.draft.brand} ${item.draft.model} ${item.draft.year}` : item.raw}
+                      {item.clase && item.clase !== 'auto' && (
+                        <span className="ml-2 rounded-full bg-wise/10 px-2 py-0.5 text-[11px] font-medium text-wise">
+                          {CLASES.find(c => c.id === item.clase)?.etiqueta}
+                        </span>
+                      )}
                       {item.documentos?.length ? (
                         <span className="ml-2 text-xs font-normal text-wise">
                           <Paperclip className="inline h-3 w-3" /> {item.documentos.length} documento{item.documentos.length > 1 ? 's' : ''}
@@ -782,7 +834,14 @@ export function IngestStudio() {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-xs font-medium text-tinta-2 mb-1">Carrocería</label>
-            <select value={draft.type} onChange={e => setDraft({ ...draft, type: e.target.value })}
+            <select value={draft.type} onChange={e => {
+                // Cambiar a Van/Camión (o Pickup) cambia los rangos: lo que estaba
+                // desmarcado SOLO por fuera de rango y ahora cabe, se vuelve a marcar.
+                const nueva = claseDeTipo(e.target.value);
+                const reaceptar = draft.facts.filter(f => f.outOfRange && !fueraDeSuRango(f.key, edited[f.key] ?? f.value, nueva));
+                if (reaceptar.length) setAccepted({ ...accepted, ...Object.fromEntries(reaceptar.map(f => [f.key, true])) });
+                setDraft({ ...draft, type: e.target.value });
+              }}
               className="w-full px-3 py-2 border border-linea rounded-lg text-sm">
               {TYPES.map(t => <option key={t}>{t}</option>)}
             </select>
@@ -818,6 +877,7 @@ export function IngestStudio() {
       {/* Datos clave */}
       <DatosClave
         fuelType={draft.fuelType}
+        clase={claseDraft}
         valores={valoresPublicables}
         sinDato={sinDato}
         onValor={(key, v) => setManuales({ ...manuales, [key]: v })}
@@ -939,7 +999,7 @@ export function IngestStudio() {
                     <TierBadge tier={f.tier} />
                     <span className="text-[10px] text-tinta-2/80">confianza {Math.round(f.confidence * 100)}%</span>
                     {f.conflict && <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-800 text-[10px] font-semibold">fuentes en desacuerdo</span>}
-                    {f.outOfRange && <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-800 text-[10px] font-semibold">fuera de rango físico</span>}
+                    {fueraDeSuRango(f.key, edited[f.key] ?? f.value, claseDraft) && <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-800 text-[10px] font-semibold">fuera de rango físico</span>}
                   </div>
                   <p className="text-xs text-tinta-2/80 italic mt-0.5">"{f.quote}" — {host(f.sourceUrl)}</p>
                   {f.alternatives.length > 0 && (

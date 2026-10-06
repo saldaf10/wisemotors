@@ -12,6 +12,7 @@ import { Check, ChevronDown, ExternalLink, Loader2, Trash2 } from 'lucide-react'
 import { adminFetch, mensajeDeErrorDeAuth } from '@/lib/admin-fetch';
 import type { HechoPendiente, VehiculoPendiente } from '@/lib/auditoria';
 import { DatosClave } from '@/components/admin/DatosClave';
+import { claseDeTipo } from '@/lib/attributes/clase';
 
 const host = (u: string | null) => {
   if (!u) return '';
@@ -124,6 +125,7 @@ export function ColaAuditoria({ onCambio }: { onCambio?: (pendientes: number) =>
                     <div className="mt-4">
                       <DatosClave
                         fuelType={v.fuelType}
+                        clase={claseDeTipo(v.tipo)}
                         valores={v.valores}
                         sinDato={v.sinDato}
                         onValor={(key, valor) => accion(`add-${key}`, { accion: 'agregar', vehicleId: v.id, key, valor })}

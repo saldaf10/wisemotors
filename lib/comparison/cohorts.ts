@@ -34,6 +34,9 @@ const BODY_GROUPS: Record<string, string[]> = {
   'Pickup': ['Pickup', 'SUV'],
   'Deportivo': ['Deportivo', 'Convertible'],
   'Convertible': ['Convertible', 'Deportivo'],
+  // Vehículos de trabajo: nunca se comparan contra carros de pasajeros.
+  'Van': ['Van', 'Camión'],
+  'Camión': ['Camión', 'Van'],
 };
 
 export interface CohortMember {

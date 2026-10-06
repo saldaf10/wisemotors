@@ -5,6 +5,14 @@
 // ============================================================================
 
 export type AttrDataType = 'numeric' | 'boolean' | 'text' | 'enum';
+
+/**
+ * Clase de vehículo: cambia los rangos físicos válidos y los datos clave. Un
+ * baúl de 1200 L es enorme para un carro y diminuto para una van de carga.
+ * Sale de la carrocería (lib/attributes/clase.ts): Pickup → pickup; Van y
+ * Camión → comercial; el resto → auto.
+ */
+export type ClaseVehiculo = 'auto' | 'pickup' | 'comercial';
 export type AttrDirection = 'higher_better' | 'lower_better' | 'neutral';
 
 export interface AttributeDef {
@@ -24,6 +32,8 @@ export interface AttributeDef {
   expectedMax?: number;
   /** Valores válidos de un enum. La ingesta normaliza a uno de estos o descarta el dato. */
   opciones?: string[];
+  /** Rango físico para pickups y vans/camiones cuando no es el de un carro (ver RANGOS_POR_CLASE). */
+  rangos?: Partial<Record<ClaseVehiculo, { min?: number; max?: number }>>;
 }
 
 // FuelTypes canónicos (los del schema Zod / BD)
@@ -121,7 +131,12 @@ const weight: AttributeDef[] = [
   num('weight.grossCombinedWeight', 'Peso bruto combinado', { ...G_CARGA, unit: 'kg', displayPriority: 30, coAvailability: 'rare', expectedMin: 1000, expectedMax: 10000 }),
   num('weight.payload', 'Capacidad de carga', { ...G_CARGA, unit: 'kg', direction: 'higher_better', displayPriority: 65, cardEligible: true, expectedMin: 100, expectedMax: 2500 }),
   num('weight.towingCapacity', 'Capacidad de remolque', { ...G_CARGA, unit: 'kg', direction: 'higher_better', displayPriority: 55, expectedMin: 0, expectedMax: 5000 }),
-  num('weight.cargoBoxVolume', 'Volumen del platón', { ...G_CARGA, unit: 'L', direction: 'higher_better', displayPriority: 40, coAvailability: 'rare', expectedMin: 100, expectedMax: 4000 }),
+  num('weight.cargoBoxVolume', 'Volumen de carga (platón o furgón)', { ...G_CARGA, unit: 'L', direction: 'higher_better', displayPriority: 40, coAvailability: 'rare', expectedMin: 100, expectedMax: 4000 }),
+  // Para pickups, vans y camiones (en un carro casi nunca se publican: 'rare').
+  num('weight.grossVehicleWeight', 'Peso bruto vehicular (PBV)', { ...G_CARGA, unit: 'kg', direction: 'higher_better', displayPriority: 50, coAvailability: 'rare', expectedMin: 900, expectedMax: 4500 }),
+  num('cargoArea.length', 'Largo de la zona de carga (platón o furgón)', { ...G_CARGA, unit: 'mm', direction: 'higher_better', displayPriority: 45, coAvailability: 'rare', expectedMin: 300, expectedMax: 3000 }),
+  num('cargoArea.width', 'Ancho de la zona de carga', { ...G_CARGA, unit: 'mm', direction: 'higher_better', displayPriority: 40, coAvailability: 'rare', expectedMin: 300, expectedMax: 2000 }),
+  num('cargoArea.height', 'Alto de la zona de carga', { ...G_CARGA, unit: 'mm', direction: 'higher_better', displayPriority: 35, coAvailability: 'rare', expectedMin: 200, expectedMax: 1500 }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -493,6 +508,51 @@ const recuperados: AttributeDef[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// RANGOS POR CLASE — los de arriba son de un CARRO. Una pickup o una van/camión
+// pesa, mide y carga mucho más: aquí solo lo que cambia (lo que no está, vale
+// igual que en un carro). Un valor fuera de rango no se borra: se marca y se
+// desmarca por defecto en la revisión, y la entrada a mano lo rechaza.
+// ---------------------------------------------------------------------------
+const RANGOS_POR_CLASE: Record<string, AttributeDef['rangos']> = {
+  'performance.acceleration0to100': { comercial: { min: 3, max: 60 } },
+  'performance.maxSpeed': { comercial: { min: 60, max: 220 } },
+  'performance.powerToWeight': { comercial: { min: 5 } },
+  'chassis.groundClearance': { pickup: { max: 400 }, comercial: { max: 450 } },
+  'weight.grossCombinedWeight': { pickup: { min: 2000, max: 12_000 }, comercial: { min: 2000, max: 80_000 } },
+  'weight.payload': { comercial: { min: 200, max: 40_000 } },
+  'weight.towingCapacity': { comercial: { max: 50_000 } },
+  'weight.cargoBoxVolume': { comercial: { max: 80_000 } },
+  'weight.grossVehicleWeight': { pickup: { min: 1500, max: 6000 }, comercial: { min: 1500, max: 45_000 } },
+  'cargoArea.length': { pickup: { min: 1000 }, comercial: { min: 1000, max: 14_000 } },
+  'cargoArea.width': { comercial: { max: 2600 } },
+  'cargoArea.height': { comercial: { max: 3200 } },
+  'dimensions.length': { comercial: { min: 3500, max: 14_000 } },
+  'dimensions.width': { comercial: { max: 2600 } },
+  'dimensions.height': { pickup: { max: 2300 }, comercial: { max: 4300 } },
+  'dimensions.wheelbase': { comercial: { max: 7500 } },
+  'dimensions.curbWeight': { pickup: { min: 900, max: 4000 }, comercial: { min: 900, max: 20_000 } },
+  // "Baúl" en un carro; en una van o un camión es el volumen de carga (un furgón de 15 m³ = 15.000 L).
+  'dimensions.cargoCapacity': { pickup: { max: 3000 }, comercial: { min: 100, max: 80_000 } },
+  'interior.trunkCapacitySeatsDown': { comercial: { max: 80_000 } },
+  'interior.interiorCargoCapacity': { comercial: { max: 80_000 } },
+  'interior.passengerCapacity': { pickup: { max: 6 }, comercial: { min: 1, max: 25 } },
+  'interior.seatRows': { comercial: { max: 7 } },
+  'interior.doors': { comercial: { max: 6 } },
+  'combustion.displacement': { comercial: { max: 16_000 } },
+  'combustion.maxTorque': { comercial: { max: 3000 } },
+  'combustion.fuelTankCapacity': { pickup: { max: 45 }, comercial: { max: 200 } },
+  'combustion.cityConsumption': { comercial: { min: 3 } },
+  'combustion.highwayConsumption': { comercial: { min: 4 } },
+  'combustion.combinedConsumption': { comercial: { min: 3 } },
+  'hybrid.maxTorque': { comercial: { max: 3000 } },
+  'electric.maxTorque': { comercial: { max: 3000 } },
+  'electric.batteryCapacity': { comercial: { max: 600 } },
+  'electric.cityElectricConsumption': { comercial: { max: 150 } },
+  'electric.highwayElectricConsumption': { comercial: { max: 150 } },
+  'wheels.rimSize': { comercial: { max: 24.5 } },
+};
+
+// ---------------------------------------------------------------------------
 // REGISTRO COMPLETO
 // ---------------------------------------------------------------------------
 export const ATTRIBUTE_REGISTRY: AttributeDef[] = [
@@ -514,7 +574,22 @@ export const ATTRIBUTE_REGISTRY: AttributeDef[] = [
   ...hybrid,
   ...phev,
   ...recuperados,
-];
+].map(d => (RANGOS_POR_CLASE[d.key] ? { ...d, rangos: RANGOS_POR_CLASE[d.key] } : d));
+
+/** Keys de RANGOS_POR_CLASE que no existen en el registro (lo revisa scripts/verify-clase.ts). */
+export const RANGOS_HUERFANOS = Object.keys(RANGOS_POR_CLASE).filter(k => !ATTRIBUTE_REGISTRY.some(d => d.key === k));
+
+/** Rango físico válido de un atributo para una clase de vehículo. */
+export function rangoDe(d: Pick<AttributeDef, 'expectedMin' | 'expectedMax' | 'rangos'>, clase: ClaseVehiculo = 'auto') {
+  const r = d.rangos?.[clase];
+  return { min: r?.min ?? d.expectedMin, max: r?.max ?? d.expectedMax };
+}
+
+/** ¿El número se sale del rango físico de su clase? */
+export function fueraDeRango(d: Pick<AttributeDef, 'expectedMin' | 'expectedMax' | 'rangos'>, n: number, clase: ClaseVehiculo = 'auto') {
+  const { min, max } = rangoDe(d, clase);
+  return (min !== undefined && n < min) || (max !== undefined && n > max);
+}
 
 // Dimensiones usadas para cobertura (editorial se excluye: es curaduría, no dato)
 export const COVERAGE_DIMENSIONS = [

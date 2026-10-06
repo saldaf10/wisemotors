@@ -12,6 +12,7 @@ import { pedirJson } from '@/lib/ai/claude';
 import type { RawFact, SourceTier } from './types';
 import type { Contenido } from './buscar-fuentes';
 import { denserWindow, MAX_TEXT_CHARS } from './fetcher';
+import { CATEGORIAS, claseEnPalabras, TIPOS_CARROCERIA, tiposDeClase, type ClaseVehiculo } from '@/lib/attributes/clase';
 
 // Solo atributos que se publican en Colombia y con keys válidas
 // (los WiseMetrics son criterio editorial de la casa: ninguna página los trae)
@@ -64,7 +65,7 @@ const SYSTEM_PROMPT = `Eres un extractor de especificaciones de vehículos para 
 REGLAS ABSOLUTAS:
 1. Solo reportas datos que estén EXPLÍCITOS en el texto. Nada de conocimiento propio, nada de estimaciones.
 2. Solo usas keys del catálogo. Si un dato del texto no corresponde a ninguna key, lo ignoras.
-3. Números en la unidad del catálogo: convierte si el texto usa otra (kW→HP: ×1.341; kgf·m→Nm: ×9.807; km/L→km/gal: ×3.785; L/100km→km/gal: 378.5÷valor; m→mm: ×1000; litros de cilindrada→cc: ×1000). La conversión de unidades mal hecha es la fuente #1 de basura en datos automotores — verifica cada una.
+3. Números en la unidad del catálogo: convierte si el texto usa otra (kW→HP: ×1.341; kgf·m→Nm: ×9.807; km/L→km/gal: ×3.785; L/100km→km/gal: 378.5÷valor; m→mm: ×1000; litros de cilindrada→cc: ×1000; m³→L: ×1000; toneladas→kg: ×1000). La conversión de unidades mal hecha es la fuente #1 de basura en datos automotores — verifica cada una.
 4. Cada valor lleva su cita textual. Sin cita, no reportes el dato.
 5. VERSIONES — la regla más importante: cada versión (LT, LTZ, RS, Premier…) es un carro distinto. Un dato de otra versión JAMÁS se atribuye a la versión objetivo, aunque sea "parecido" o "probablemente igual". Si el texto dice "el Onix LT trae cámara de reversa" y el objetivo es el Onix RS, ese dato NO existe para el RS. Solo vale: lo que el texto atribuye a la versión objetivo, lo que dice que es de serie en TODAS las versiones, o lo que está en una página/ficha dedicada exclusivamente a la versión objetivo. Si no hay versión objetivo, el objetivo es la versión de entrada (base). Marca siempre 'aplicaA' con honestidad.
 5b. TREN MOTRIZ: el vehículo objetivo tiene el tren motriz indicado en el encabezado. Los datos del motor, consumo o batería de OTRO tren motriz (la versión gasolina de un modelo que también es híbrido, la eléctrica, etc.) no se reportan, aunque estén en la misma página.
@@ -334,8 +335,11 @@ export async function resolveIdentity(
   brand: string,
   model: string,
   year: number,
-  country: string
+  country: string,
+  /** La clase que eligió el equipo al subir: limita las carrocerías posibles. */
+  clase?: ClaseVehiculo
 ): Promise<{ brand: string; model: string; trim: string; versionEntrada: string; type: string; vehicleType: string; fuelType: string }> {
+  const tipos = (clase ? tiposDeClase(clase) : TIPOS_CARROCERIA) as [string, ...string[]];
   const IdentidadSchema = z.object({
     brand: z.string().describe('Marca con capitalización oficial (ej. "Toyota", "BYD")'),
     model: z.string().describe('Modelo canónico SIN marca, año ni versión (ej. "Corolla Cross", "Onix")'),
@@ -345,8 +349,10 @@ export async function resolveIdentity(
     versionEntrada: z
       .string()
       .describe('Nombre comercial de la versión de ENTRADA (la más barata) de este modelo en ese país, ej. "Prime", "LT", "Zen". Cadena vacía si no la conoces con seguridad.'),
-    type: z.enum(['Sedán', 'SUV', 'Pickup', 'Deportivo', 'Wagon', 'Hatchback', 'Convertible']),
-    vehicleType: z.enum(['Automóvil', 'Deportivo', 'Todoterreno', 'Lujo', 'Económico']),
+    type: z.enum(tipos).describe('Carrocería. Van = van de carga o de pasajeros (furgoneta); Camión = camión, chasís cabinado o furgón grande'),
+    vehicleType: z
+      .enum(CATEGORIAS as [string, ...string[]])
+      .describe('Categoría. Comercial = vehículo de trabajo (vans de carga, camiones, pickups de trabajo)'),
     fuelType: z
       .enum(['Gasolina', 'Diesel', 'Eléctrico', 'Híbrido', 'Híbrido Enchufable'])
       .describe('Tren motriz de la versión pedida; si no se pidió versión, el de la MÁS VENDIDA en el país'),
@@ -355,7 +361,7 @@ export async function resolveIdentity(
   const args = await pedirJson({
     schema: IdentidadSchema,
     maxTokens: 4000,
-    prompt: `Vehículo: ${brand ? `${brand} ` : ''}${model} ${year}, mercado ${country}. Normaliza su identidad.${brand ? '' : ' La marca no vino: dedúcela del modelo.'} Si el modelo tiene un nombre comercial distinto en ese mercado, usa el del mercado. Separa la versión del modelo: "Onix RS" es modelo "Onix", versión "RS".`,
+    prompt: `Vehículo: ${brand ? `${brand} ` : ''}${model} ${year}, mercado ${country}${clase ? ` (es un${clase === 'auto' ? '' : 'a'} ${claseEnPalabras(clase)})` : ''}. Normaliza su identidad.${brand ? '' : ' La marca no vino: dedúcela del modelo.'} Si el modelo tiene un nombre comercial distinto en ese mercado, usa el del mercado. Separa la versión del modelo: "Onix RS" es modelo "Onix", versión "RS".`,
   });
 
   return {
@@ -363,7 +369,7 @@ export async function resolveIdentity(
     model: args.model || model,
     trim: args.trim.trim(),
     versionEntrada: args.versionEntrada.trim(),
-    type: args.type || 'Sedán',
+    type: args.type || tipos[0],
     vehicleType: args.vehicleType || 'Automóvil',
     fuelType: args.fuelType || 'Gasolina',
   };

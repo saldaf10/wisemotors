@@ -45,6 +45,7 @@ import { porCercania } from '@/lib/distancia';
 import { BotonCercania, TarjetaConcesionario, tieneUbicacion, type Concesionario } from '@/components/concesionarios/piezas';
 import { ListaContacto, useContactar, type Motivo } from '@/components/concesionarios/Contacto';
 import { leer, precioCompleto, rendimiento, specsDe } from '@/lib/vehiculo-datos';
+import { claseDeTipo } from '@/lib/attributes/clase';
 import { fotoDe, pinturaDe } from '@/components/car/CarRender';
 
 
@@ -75,7 +76,8 @@ interface Categoria {
 
 const fmt = (n: number, dec = 0) => new Intl.NumberFormat('es-CO', { maximumFractionDigits: dec }).format(n);
 
-function categorias(fuelType: string, s: Record<string, any>): Categoria[] {
+function categorias(fuelType: string, s: Record<string, any>, tipo?: string): Categoria[] {
+  const trabajo = claseDeTipo(tipo) !== 'auto';
   const texto = (path: string) => {
     let cur: any = s;
     for (const k of path.split('.')) cur = cur?.[k];
@@ -114,7 +116,9 @@ function categorias(fuelType: string, s: Record<string, any>): Categoria[] {
       explicacion:
         'El baúl se mide en litros: una maleta de cabina ocupa unos 40. La altura al piso decide si pasas un policía acostado o un hueco sin raspar.',
       puntos: [
-        h(P.cola, n(['dimensions.cargoCapacity'], x => `Baúl de ${fmt(x)} L`)),
+        trabajo
+          ? h(P.cola, n(['weight.payload'], x => `Carga ${fmt(x)} kg`))
+          : h(P.cola, n(['dimensions.cargoCapacity'], x => `Baúl de ${fmt(x)} L`)),
         h(P.cabina, n(['interior.passengerCapacity'], x => `${fmt(x)} pasajeros`)),
         h(P.ruedaF, n(['chassis.groundClearance'], x => `${fmt(x / 10, 1)} cm del piso`)),
         h(P.techoR, n(['dimensions.length'], x => `${fmt(x / 1000, 2)} m de largo`)),
@@ -197,7 +201,7 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
   const { user } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
   const s = useMemo(() => specsDe(vehicle.specifications), [vehicle.specifications]);
-  const cats = useMemo(() => categorias(vehicle.fuelType, s), [vehicle.fuelType, s]);
+  const cats = useMemo(() => categorias(vehicle.fuelType, s, vehicle.type), [vehicle.fuelType, s, vehicle.type]);
   const [cat, setCat] = useState(0);
   // Un solo concesionario (o ninguno): el nombre junto al botón que se tocó y
   // directo a WhatsApp. Varios: la lista para elegir, ordenada por distancia.

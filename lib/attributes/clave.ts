@@ -14,9 +14,9 @@
 // prueba de choque), el revisor lo marca como "no existe" y deja de pedirse.
 // ============================================================================
 
-import { ATTRIBUTE_REGISTRY, attributeAppliesTo, type AttributeDef } from './registry';
+import { ATTRIBUTE_REGISTRY, attributeAppliesTo, type AttributeDef, type ClaseVehiculo } from './registry';
 
-export type SeccionClave = 'Desempeño' | 'Consumo' | 'Batería' | 'Espacio' | 'Seguridad' | 'Tecnología' | 'Garantía';
+export type SeccionClave = 'Desempeño' | 'Consumo' | 'Batería' | 'Espacio' | 'Carga' | 'Seguridad' | 'Tecnología' | 'Garantía';
 
 export interface CampoClave {
   id: string;
@@ -26,7 +26,14 @@ export interface CampoClave {
   keys: string[];
   /** Para qué se usa, en una frase (se muestra al revisor). */
   porque: string;
+  /** Solo se pide a estas clases (sin esto: a todas). */
+  soloClases?: ClaseVehiculo[];
+  /** No se pide a estas clases (a un camión no se le pide el 0 a 100). */
+  noAplicaA?: ClaseVehiculo[];
 }
+
+/** Lo que casi nunca se publica de una van o un camión de trabajo. */
+const NO_COMERCIAL: ClaseVehiculo[] = ['comercial'];
 
 const TRENES = (campo: string) => [`combustion.${campo}`, `hybrid.${campo}`, `phev.${campo}`];
 
@@ -34,7 +41,7 @@ export const CAMPOS_CLAVE: CampoClave[] = [
   // Desempeño
   { id: 'potencia', etiqueta: 'Potencia', seccion: 'Desempeño', keys: [...TRENES('maxPower'), 'electric.maxPower'], porque: 'Tarjeta, ficha, Índice Altura y Palmas' },
   { id: 'torque', etiqueta: 'Torque', seccion: 'Desempeño', keys: [...TRENES('maxTorque'), 'electric.maxTorque'], porque: 'Bloque de desempeño y búsqueda "para subir"' },
-  { id: 'aceleracion', etiqueta: '0 a 100 km/h', seccion: 'Desempeño', keys: ['performance.acceleration0to100'], porque: 'Tarjeta del catálogo y carrera en la ficha' },
+  { id: 'aceleracion', etiqueta: '0 a 100 km/h', seccion: 'Desempeño', keys: ['performance.acceleration0to100'], porque: 'Tarjeta del catálogo y carrera en la ficha', noAplicaA: NO_COMERCIAL },
   { id: 'velocidad', etiqueta: 'Velocidad máxima', seccion: 'Desempeño', keys: ['performance.maxSpeed'], porque: 'Velocímetro de la ficha' },
   { id: 'caja', etiqueta: 'Transmisión', seccion: 'Desempeño', keys: TRENES('transmissionType'), porque: 'Filtro automática/manual del buscador' },
   { id: 'traccion', etiqueta: 'Tracción', seccion: 'Desempeño', keys: ['drivetrain.traction'], porque: 'Filtro 4x4 y búsqueda "para finca"' },
@@ -58,7 +65,7 @@ export const CAMPOS_CLAVE: CampoClave[] = [
 
   // Espacio
   { id: 'pasajeros', etiqueta: 'Pasajeros', seccion: 'Espacio', keys: ['interior.passengerCapacity'], porque: 'Filtro "7 puestos" y bloque de espacio' },
-  { id: 'baul', etiqueta: 'Baúl', seccion: 'Espacio', keys: ['dimensions.cargoCapacity'], porque: 'Maletas en la ficha, búsqueda "para la familia"' },
+  { id: 'baul', etiqueta: 'Baúl', seccion: 'Espacio', keys: ['dimensions.cargoCapacity'], porque: 'Maletas en la ficha, búsqueda "para la familia"', soloClases: ['auto'] },
   { id: 'largo', etiqueta: 'Largo', seccion: 'Espacio', keys: ['dimensions.length'], porque: 'Medidas y "¿cabe en mi parqueadero?"' },
   { id: 'ancho', etiqueta: 'Ancho', seccion: 'Espacio', keys: ['dimensions.width'], porque: 'Medidas de la ficha' },
   { id: 'alto', etiqueta: 'Alto', seccion: 'Espacio', keys: ['dimensions.height'], porque: 'Medidas y silueta del carro' },
@@ -66,25 +73,32 @@ export const CAMPOS_CLAVE: CampoClave[] = [
   { id: 'despeje', etiqueta: 'Altura al piso', seccion: 'Espacio', keys: ['chassis.groundClearance'], porque: 'Índice Hueco y búsqueda "para trocha"' },
   { id: 'llanta', etiqueta: 'Medida de llanta', seccion: 'Espacio', keys: ['wheels.tireSize'], porque: 'Índice Hueco' },
 
+  // Carga (pickups, vans y camiones: lo primero que pregunta quien compra para trabajar)
+  { id: 'cargaUtil', etiqueta: 'Capacidad de carga (payload)', seccion: 'Carga', keys: ['weight.payload'], porque: 'Cuánto peso lleva: lo primero que se compara en un vehículo de trabajo', soloClases: ['pickup', 'comercial'] },
+  { id: 'remolque', etiqueta: 'Capacidad de remolque', seccion: 'Carga', keys: ['weight.towingCapacity'], porque: 'Tráiler, lancha, remolque de carga', soloClases: ['pickup', 'comercial'] },
+  { id: 'pbv', etiqueta: 'Peso bruto vehicular (PBV)', seccion: 'Carga', keys: ['weight.grossVehicleWeight'], porque: 'Peso máximo cargado: define licencia y por dónde puede circular', soloClases: ['pickup', 'comercial'] },
+  { id: 'zonaCarga', etiqueta: 'Largo del platón o del furgón', seccion: 'Carga', keys: ['cargoArea.length'], porque: 'Qué cabe atrás (estibas, motos, material)', soloClases: ['pickup', 'comercial'] },
+  { id: 'volumenCarga', etiqueta: 'Volumen de carga', seccion: 'Carga', keys: ['dimensions.cargoCapacity', 'interior.interiorCargoCapacity', 'weight.cargoBoxVolume'], porque: 'Cuánto cabe en el furgón o la caja', soloClases: ['comercial'] },
+
   // Seguridad
   { id: 'airbags', etiqueta: 'Airbags', seccion: 'Seguridad', keys: ['safety.airbags'], porque: 'Tarjeta y bloque de seguridad' },
-  { id: 'ncap', etiqueta: 'Estrellas en prueba de choque', seccion: 'Seguridad', keys: ['safety.ncapRating'], porque: 'Bloque de seguridad (si no tiene prueba, márcalo "no existe")' },
+  { id: 'ncap', etiqueta: 'Estrellas en prueba de choque', seccion: 'Seguridad', keys: ['safety.ncapRating'], porque: 'Bloque de seguridad (si no tiene prueba, márcalo "no existe")', noAplicaA: NO_COMERCIAL },
   { id: 'estabilidad', etiqueta: 'Control de estabilidad', seccion: 'Seguridad', keys: ['safety.stabilityControl'], porque: 'Ayudas de seguridad' },
   { id: 'aeb', etiqueta: 'Frenado autónomo de emergencia', seccion: 'Seguridad', keys: ['safety.autonomousEmergencyBraking'], porque: 'Ayudas de seguridad y búsqueda' },
   { id: 'camara', etiqueta: 'Cámara de reversa', seccion: 'Seguridad', keys: ['assistance.reverseCamera', 'assistance.cameras360'], porque: 'Ayudas de seguridad y búsqueda' },
   { id: 'sensores', etiqueta: 'Sensores de parqueo', seccion: 'Seguridad', keys: ['assistance.parkingSensors'], porque: 'Ayudas de seguridad y búsqueda' },
-  { id: 'isofix', etiqueta: 'ISOFIX', seccion: 'Seguridad', keys: ['safety.isofix'], porque: 'Búsqueda "silla del bebé"' },
-  { id: 'carril', etiqueta: 'Asistente de carril', seccion: 'Seguridad', keys: ['safety.laneAssist'], porque: 'Ayudas de seguridad' },
-  { id: 'puntoCiego', etiqueta: 'Alerta de punto ciego', seccion: 'Seguridad', keys: ['safety.blindSpotDetection'], porque: 'Ayudas de seguridad' },
-  { id: 'crucero', etiqueta: 'Crucero adaptativo', seccion: 'Seguridad', keys: ['safety.adaptiveCruiseControl'], porque: 'Ayudas de seguridad' },
+  { id: 'isofix', etiqueta: 'ISOFIX', seccion: 'Seguridad', keys: ['safety.isofix'], porque: 'Búsqueda "silla del bebé"', noAplicaA: NO_COMERCIAL },
+  { id: 'carril', etiqueta: 'Asistente de carril', seccion: 'Seguridad', keys: ['safety.laneAssist'], porque: 'Ayudas de seguridad', noAplicaA: NO_COMERCIAL },
+  { id: 'puntoCiego', etiqueta: 'Alerta de punto ciego', seccion: 'Seguridad', keys: ['safety.blindSpotDetection'], porque: 'Ayudas de seguridad', noAplicaA: NO_COMERCIAL },
+  { id: 'crucero', etiqueta: 'Crucero adaptativo', seccion: 'Seguridad', keys: ['safety.adaptiveCruiseControl'], porque: 'Ayudas de seguridad', noAplicaA: NO_COMERCIAL },
 
   // Tecnología
   { id: 'pantalla', etiqueta: 'Pantalla central (pulgadas)', seccion: 'Tecnología', keys: ['technology.centralScreenIn'], porque: 'Bloque de tecnología' },
   { id: 'celular', etiqueta: 'CarPlay / Android Auto', seccion: 'Tecnología', keys: ['technology.smartphoneIntegration'], porque: 'Tarjeta, tecnología y búsqueda' },
   { id: 'clima', etiqueta: 'Aire acondicionado automático', seccion: 'Tecnología', keys: ['comfort.automaticClimateControl'], porque: 'Confort y búsqueda' },
   { id: 'faros', etiqueta: 'Tipo de faros', seccion: 'Tecnología', keys: ['lighting.headlightType'], porque: 'Tecnología y búsqueda "luces LED"' },
-  { id: 'cargadorInalambrico', etiqueta: 'Cargador inalámbrico', seccion: 'Tecnología', keys: ['technology.wirelessCharger'], porque: 'Tecnología y búsqueda' },
-  { id: 'sinLlave', etiqueta: 'Encendido sin llave', seccion: 'Tecnología', keys: ['comfort.keyless'], porque: 'Confort' },
+  { id: 'cargadorInalambrico', etiqueta: 'Cargador inalámbrico', seccion: 'Tecnología', keys: ['technology.wirelessCharger'], porque: 'Tecnología y búsqueda', noAplicaA: NO_COMERCIAL },
+  { id: 'sinLlave', etiqueta: 'Encendido sin llave', seccion: 'Tecnología', keys: ['comfort.keyless'], porque: 'Confort', noAplicaA: NO_COMERCIAL },
 
   // Garantía
   { id: 'garantia', etiqueta: 'Garantía (años)', seccion: 'Garantía', keys: ['commercial.warrantyYears'], porque: 'Ficha y comparador' },
@@ -101,9 +115,13 @@ function keysQueAplican(c: CampoClave, fuelType: string) {
   });
 }
 
-/** Campos clave que aplican a este tren motriz. */
-export function camposClave(fuelType: string): CampoClave[] {
-  return CAMPOS_CLAVE.filter(c => keysQueAplican(c, fuelType).length > 0);
+/** ¿El campo se le pide a esta clase de vehículo? */
+const aplicaAClase = (c: CampoClave, clase: ClaseVehiculo) =>
+  (!c.soloClases || c.soloClases.includes(clase)) && !(c.noAplicaA ?? []).includes(clase);
+
+/** Campos clave que aplican a este tren motriz y esta clase (carro, pickup, van/camión). */
+export function camposClave(fuelType: string, clase: ClaseVehiculo = 'auto'): CampoClave[] {
+  return CAMPOS_CLAVE.filter(c => aplicaAClase(c, clase) && keysQueAplican(c, fuelType).length > 0);
 }
 
 /** Dónde se escribe el dato si se ingresa a mano (la primera key que aplica). */
@@ -120,8 +138,13 @@ export const tieneValor = (v: unknown) => v !== null && v !== undefined && v !==
  * @param valores key → valor (lo que ya tiene el carro o el borrador)
  * @param sinDato ids que el revisor marcó como "el dato no existe"
  */
-export function clavesFaltantes(fuelType: string, valores: Record<string, unknown>, sinDato: string[] = []): CampoClave[] {
-  return camposClave(fuelType).filter(c => !sinDato.includes(c.id) && !keysQueAplican(c, fuelType).some(k => tieneValor(valores[k])));
+export function clavesFaltantes(
+  fuelType: string,
+  valores: Record<string, unknown>,
+  sinDato: string[] = [],
+  clase: ClaseVehiculo = 'auto'
+): CampoClave[] {
+  return camposClave(fuelType, clase).filter(c => !sinDato.includes(c.id) && !keysQueAplican(c, fuelType).some(k => tieneValor(valores[k])));
 }
 
 /** Aplana specifications ({a:{b:1}}) a { 'a.b': 1 } para preguntar por keys. */

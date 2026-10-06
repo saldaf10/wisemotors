@@ -13,7 +13,8 @@
 // ============================================================================
 
 import { z } from 'zod/v4';
-import { ATTRIBUTE_REGISTRY } from '@/lib/attributes/registry';
+import { ATTRIBUTE_REGISTRY, fueraDeRango } from '@/lib/attributes/registry';
+import { claseDeTipo, claseEnPalabras, type ClaseVehiculo } from '@/lib/attributes/clase';
 import { esErrorDeCuenta, explicarErrorClaude, pedirJson } from '@/lib/ai/claude';
 import { fetchPageText } from './fetcher';
 import { buscarFotos, type Angulo } from './fotos';
@@ -33,7 +34,7 @@ const CONFLICT_THRESHOLD = 0.10;
 // Reconciliación multi-fuente: gana el mejor tier; el resto queda como
 // alternativa visible. Numéricos con >10% de diferencia → bandera de conflicto.
 // ---------------------------------------------------------------------------
-function reconcile(raw: RawFact[]): DraftFact[] {
+function reconcile(raw: RawFact[], clase: ClaseVehiculo): DraftFact[] {
   const byKey = new Map<string, RawFact[]>();
   for (const f of raw) {
     const list = byKey.get(f.key) ?? [];
@@ -65,13 +66,9 @@ function reconcile(raw: RawFact[]): DraftFact[] {
       conflict = others.some(o => o.value !== winner.value);
     }
 
-    // Validación física (plan §5.1 paso 5): fuera de rango se marca, no se esconde
-    let outOfRange = false;
-    if (def.dataType === 'numeric') {
-      const v = winner.value as number;
-      if (def.expectedMin !== undefined && v < def.expectedMin) outOfRange = true;
-      if (def.expectedMax !== undefined && v > def.expectedMax) outOfRange = true;
-    }
+    // Validación física (plan §5.1 paso 5) con el rango de SU clase (un furgón
+    // de 15.000 L no es un error en una van): fuera de rango se marca, no se esconde
+    const outOfRange = def.dataType === 'numeric' && fueraDeRango(def, winner.value as number, clase);
 
     // Confianza: base por tier, castigada por conflicto o rango imposible
     const tierBase = winner.tier === 1 ? 0.95 : winner.tier === 2 ? 0.8 : 0.5;
@@ -297,6 +294,8 @@ export interface ContextoIngesta {
   fuelType: string;
   versionObjetivo: string;
   versionPedida: boolean;
+  /** Carro, pickup o van/camión: define rangos válidos y datos clave. */
+  clase: ClaseVehiculo;
   label: string;
   warningsEs: string[];
 }
@@ -319,10 +318,13 @@ export async function prepararIngesta(input: {
   year: number;
   country: string;
   enlaces?: string[];
+  /** La que eligió el equipo al subir; sin ella se deduce de la carrocería. */
+  clase?: ClaseVehiculo;
 }): Promise<{ ctx: ContextoIngesta; fuentes: DiscoveredSource[] }> {
   reiniciarTiempos();
   const warningsEs: string[] = [];
-  const identity = await medir('identidad', resolveIdentity(input.brand, input.model, input.year, input.country));
+  const identity = await medir('identidad', resolveIdentity(input.brand, input.model, input.year, input.country, input.clase));
+  const clase = input.clase ?? claseDeTipo(identity.type);
   // Sin versión pedida, el objetivo es la versión de ENTRADA, con nombre propio:
   // si no, una página dedicada a una versión alta (CX-30 Touring) pasaría por "la objetivo".
   const versionObjetivo = identity.trim || identity.versionEntrada;
@@ -348,7 +350,9 @@ export async function prepararIngesta(input: {
     fuelType: identity.fuelType,
     versionObjetivo,
     versionPedida: !!identity.trim,
-    label: `${identity.brand} ${identity.model} ${input.year}${version} (mercado ${input.country})`,
+    clase,
+    // La clase va en la etiqueta: la IA debe saber que "la caja" es el furgón de un camión.
+    label: `${identity.brand} ${identity.model} ${input.year}${version} (${clase === 'auto' ? '' : `${claseEnPalabras(clase)}, `}mercado ${input.country})`,
     warningsEs,
   };
 
@@ -456,7 +460,7 @@ export async function buscarFaltantes(
   facts: Pick<RawFact, 'key' | 'value'>[],
   yaLeidas: string[]
 ): Promise<{ fuentes: DiscoveredSource[]; soloKeys: string[] }> {
-  const faltan = clavesFaltantes(ctx.fuelType, valoresDe(facts));
+  const faltan = clavesFaltantes(ctx.fuelType, valoresDe(facts), [], ctx.clase);
   if (faltan.length === 0) return { fuentes: [], soloKeys: [] };
   const fuentes = await medir('2.ª búsqueda (datos que faltan)', () =>
     buscarFuentesPara(ctx.brand, ctx.model, ctx.versionObjetivo, ctx.year, faltan.map(c => c.etiqueta), yaLeidas)
@@ -488,7 +492,7 @@ export async function cerrarIngesta(
   } else if (okSources === 1) {
     warningsEs.push('Solo una fuente respondió: sin reconciliación multi-fuente, revisar con más cuidado.');
   }
-  const faltan = clavesFaltantes(ctx.fuelType, valoresDe(rawFacts));
+  const faltan = clavesFaltantes(ctx.fuelType, valoresDe(rawFacts), [], ctx.clase);
   if (faltan.length > 0) {
     warningsEs.push(
       `Faltan ${faltan.length} datos clave (${faltan.map(c => c.etiqueta).join(', ')}): complétalos en la revisión o márcalos como "no existe".`
@@ -496,7 +500,7 @@ export async function cerrarIngesta(
   }
 
   // Reconciliación + validación
-  const allFacts = reconcile(rawFacts);
+  const allFacts = reconcile(rawFacts, ctx.clase);
   const aniosViejos = Array.from(new Set(rawFacts.map(f => f.anioFuente ?? 0).filter(a => a > 1990 && a < ctx.year - 1))).sort();
   if (aniosViejos.length > 0) {
     warningsEs.push(`Algunas fuentes son del modelo ${aniosViejos.join(', ')} (misma generación): si el carro se renovó, revisa que los datos sigan vigentes.`);
@@ -562,6 +566,8 @@ export async function runIngestPipeline(input: {
   enlaces?: string[];
   /** Vistas que ya tienen foto del concesionario: la IA solo busca las demás. */
   angulosCubiertos?: Angulo[];
+  /** Carro, pickup o van/camión (sin ella se deduce de la carrocería). */
+  clase?: ClaseVehiculo;
 }): Promise<VehicleDraft> {
   const { ctx, fuentes } = await prepararIngesta(input);
   const fotosP = fotosDeIngesta(ctx, fuentes, input.angulosCubiertos);

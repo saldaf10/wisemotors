@@ -14,7 +14,8 @@
 
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { ATTRIBUTE_REGISTRY, attributeAppliesTo } from '@/lib/attributes/registry';
+import { ATTRIBUTE_REGISTRY, attributeAppliesTo, fueraDeRango } from '@/lib/attributes/registry';
+import { claseDeTipo, type ClaseVehiculo } from '@/lib/attributes/clase';
 import { computeCoverage } from '@/lib/attributes/coverage';
 import { specsDe } from '@/lib/vehiculo-datos';
 import { clavesFaltantes, sinDatoDeSpecs, valoresDeSpecs } from '@/lib/attributes/clave';
@@ -52,6 +53,8 @@ export interface VehiculoPendiente {
   razonPrecio: string | null;
   hechos: HechoPendiente[];
   fuelType: string;
+  /** Carrocería: de ella sale la clase (rangos y datos clave de pickups y camiones). */
+  tipo: string;
   /** key → valor de todo lo que tiene (para calcular los datos clave en pantalla). */
   valores: Record<string, unknown>;
   sinDato: string[];
@@ -62,7 +65,7 @@ export async function colaDeAuditoria(): Promise<{ vehiculos: VehiculoPendiente[
   const [hechos, vehiculos] = await Promise.all([
     prisma.vehicleAttribute.findMany({ where: PENDIENTE, orderBy: { vehicleId: 'asc' } }),
     prisma.vehicle.findMany({
-      select: { id: true, brand: true, model: true, year: true, price: true, fuelType: true, history: true, specifications: true },
+      select: { id: true, brand: true, model: true, year: true, price: true, fuelType: true, type: true, history: true, specifications: true },
     }),
   ]);
 
@@ -98,7 +101,7 @@ export async function colaDeAuditoria(): Promise<{ vehiculos: VehiculoPendiente[
     const lista = porVehiculo.get(v.id) ?? [];
     const valores = valoresDeSpecs(s);
     const sinDato = sinDatoDeSpecs(s);
-    const faltanClave = clavesFaltantes(v.fuelType, valores, sinDato).length;
+    const faltanClave = clavesFaltantes(v.fuelType, valores, sinDato, claseDeTipo(v.type)).length;
     if (!precioEstimado && lista.length === 0 && faltanClave === 0) continue;
     lista.sort((a, b) => (DEF.get(b.key)?.displayPriority ?? 0) - (DEF.get(a.key)?.displayPriority ?? 0));
     out.push({
@@ -110,6 +113,7 @@ export async function colaDeAuditoria(): Promise<{ vehiculos: VehiculoPendiente[
       razonPrecio: s.commercial?.priceReasoningEs ?? null,
       hechos: lista,
       fuelType: v.fuelType,
+      tipo: v.type,
       valores,
       sinDato,
       faltanClave,
@@ -151,14 +155,14 @@ function numeroEscrito(t: string): number {
 }
 
 /** Convierte lo que escribió el auditor al tipo del atributo; null si no sirve. */
-export function valorAuditado(key: string, crudo: unknown): number | string | boolean | null {
+export function valorAuditado(key: string, crudo: unknown, clase: ClaseVehiculo = 'auto'): number | string | boolean | null {
   const d = DEF.get(key);
   if (!d) return null;
   if (d.dataType === 'numeric') {
     const n = typeof crudo === 'number' ? crudo : numeroEscrito(String(crudo));
     if (!Number.isFinite(n) || n <= 0) return null;
-    if (d.expectedMin !== undefined && n < d.expectedMin) return null;
-    if (d.expectedMax !== undefined && n > d.expectedMax) return null;
+    // Rango de SU clase: 15.000 L de carga es normal en una van.
+    if (fueraDeRango(d, n, clase)) return null;
     return n;
   }
   if (d.dataType === 'boolean') return crudo === true || crudo === 'true';
@@ -178,7 +182,7 @@ export async function escribirHechos(
   hechos: { key: string; valor: unknown; confianza: number; tier: number; fuente?: string | null }[],
   userId: string
 ): Promise<{ ok: true; escritos: number } | { ok: false; error: string }> {
-  const v = await prisma.vehicle.findUnique({ where: { id: vehicleId }, select: { specifications: true, fuelType: true } });
+  const v = await prisma.vehicle.findUnique({ where: { id: vehicleId }, select: { specifications: true, fuelType: true, type: true } });
   if (!v) return { ok: false, error: 'Vehículo no encontrado' };
   const s = specsDe(v.specifications);
   const ahora = new Date();
@@ -187,7 +191,7 @@ export async function escribirHechos(
       const d = DEF.get(h.key);
       return !!d && attributeAppliesTo(d, v.fuelType);
     })
-    .map(h => ({ ...h, valor: valorAuditado(h.key, h.valor) }))
+    .map(h => ({ ...h, valor: valorAuditado(h.key, h.valor, claseDeTipo(v.type)) }))
     .filter((h): h is typeof h & { valor: number | string | boolean } => h.valor !== null);
   if (limpios.length === 0) return { ok: false, error: 'Ningún valor válido (revisa unidades y rangos)' };
 
@@ -227,7 +231,7 @@ export async function escribirHechos(
 /** Borra datos de un carro publicado: hecho + specifications + cobertura. */
 export async function quitarHechos(vehicleId: string, keys: string[]): Promise<{ ok: true } | { ok: false; error: string }> {
   if (keys.length === 0) return { ok: true };
-  const v = await prisma.vehicle.findUnique({ where: { id: vehicleId }, select: { specifications: true, fuelType: true } });
+  const v = await prisma.vehicle.findUnique({ where: { id: vehicleId }, select: { specifications: true, fuelType: true, type: true } });
   if (!v) return { ok: false, error: 'Vehículo no encontrado' };
   const s = specsDe(v.specifications);
   for (const k of keys) fijarEnSpecs(s, k, undefined);
@@ -312,12 +316,12 @@ export async function aplicarAuditoria(a: AccionAuditoria, userId: string): Prom
     return { ok: true };
   }
 
-  const v = await prisma.vehicle.findUnique({ where: { id: hecho.vehicleId }, select: { specifications: true, fuelType: true } });
+  const v = await prisma.vehicle.findUnique({ where: { id: hecho.vehicleId }, select: { specifications: true, fuelType: true, type: true } });
   if (!v) return { ok: false, error: 'Vehículo no encontrado' };
   const s = specsDe(v.specifications);
 
   if (a.accion === 'corregir') {
-    const valor = valorAuditado(hecho.attributeKey, a.valor);
+    const valor = valorAuditado(hecho.attributeKey, a.valor, claseDeTipo(v.type));
     if (valor === null) return { ok: false, error: 'Valor inválido para este dato (revisa la unidad y el rango)' };
     const d = DEF.get(hecho.attributeKey)!;
     fijarEnSpecs(s, hecho.attributeKey, valor);

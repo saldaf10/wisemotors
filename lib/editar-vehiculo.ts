@@ -11,6 +11,7 @@
 // ============================================================================
 
 import { prisma } from '@/lib/prisma';
+import { CATEGORIAS, TIPOS_CARROCERIA } from '@/lib/attributes/clase';
 import { escribirHechos, quitarHechos, upsertPrecioHecho } from '@/lib/auditoria';
 import { specsDe } from '@/lib/vehiculo-datos';
 
@@ -25,8 +26,7 @@ export interface CambiosVehiculo {
   sinDato?: string[];
 }
 
-const TIPOS = ['Sedán', 'SUV', 'Pickup', 'Deportivo', 'Wagon', 'Hatchback', 'Convertible'];
-const CATEGORIAS = ['Automóvil', 'Deportivo', 'Todoterreno', 'Lujo', 'Económico'];
+const TIPOS = TIPOS_CARROCERIA;
 const TRENES = ['Gasolina', 'Diesel', 'Eléctrico', 'Híbrido', 'Híbrido Enchufable'];
 const ESTADOS = ['Disponible', 'Agotado', 'Próximamente'];
 const ALT: Record<string, string> = {

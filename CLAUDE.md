@@ -201,6 +201,20 @@ cobertura, migración, seeds, motor de cohortes.
   `sincronizarCarros`). OJO: `Dealer.vehicles` ("DealerVehicles") es una relación VIEJA sin
   uso; conteos y borrado ya usan `vehicleDealers`.
 
+**6-oct-2026 — Clases de vehículo (carro / pickup / van-camión):**
+- Al subir se elige la clase (`IngestStudio`): limita las carrocerías que puede escoger la IA
+  (`Van` y `Camión` son carrocerías nuevas; categoría nueva `Comercial`). La clase NO es una
+  columna: sale de `Vehicle.type` con `claseDeTipo` (`lib/attributes/clase.ts`).
+- Rangos físicos por clase: `RANGOS_POR_CLASE` en `registry.ts` (solo lo que cambia frente a
+  un carro) + `rangoDe` / `fueraDeRango`. Los usan la reconciliación, la entrada a mano
+  (`DatosClave`), la auditoría (`valorAuditado`) y Complementar. Nunca comparar contra
+  `expectedMin/Max` directo.
+- Campos nuevos: `weight.grossVehicleWeight` (PBV) y `cargoArea.length/width/height`.
+- Datos clave por clase (`soloClases` / `noAplicaA` en `clave.ts`): pickup y van/camión piden
+  carga útil, remolque, PBV y zona de carga; a van/camión no se le pide 0-100, NCAP, ISOFIX…
+- Ficha: bloque "Para trabajar" en "Espacio y carga" para pickups y vans/camiones.
+  Test: `scripts/verify-clase.ts`.
+
 ## Backlog en orden (del plan, secciones 8-9)
 
 1. **Fase 0 — SEGURIDAD (pospuesta por decisión del usuario, pero es LEGALMENTE urgente):**
@@ -236,7 +250,7 @@ cobertura, migración, seeds, motor de cohortes.
   BD** — el registro nuevo (`FT` en `lib/attributes/registry.ts`) ya la usa. Unificar hacia ella.
 - `getMarketStats()` en `lib/ai/features.ts` trae TODO el catálogo por búsqueda, sin
   caché — cuello de botella conocido.
-- Tests (npx tsx, sin BD ni API): `scripts/verify-scoring.ts`, `verify-indices.ts`, `verify-clave.ts`, `verify-demanda.ts`, `verify-mapas.ts`.
+- Tests (npx tsx, sin BD ni API): `scripts/verify-scoring.ts`, `verify-indices.ts`, `verify-clave.ts`, `verify-clase.ts`, `verify-demanda.ts`, `verify-mapas.ts`.
 - Git: push directo a `main` (sin ramas ni PRs), decisión del usuario.
 - Prueba local sin tocar producción: Postgres en Docker (`wise-pg`, puerto 55432) + la
   configuración `wisemotors-local-db` de `.claude/launch.json` (puerto 3007).

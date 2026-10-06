@@ -10,7 +10,8 @@
 // ============================================================================
 
 import { prisma } from '@/lib/prisma';
-import { ATTRIBUTE_REGISTRY } from '@/lib/attributes/registry';
+import { ATTRIBUTE_REGISTRY, fueraDeRango } from '@/lib/attributes/registry';
+import { claseDeTipo, claseEnPalabras } from '@/lib/attributes/clase';
 import { extractFromPage } from './extract';
 import { MAX_TEXT_CHARS } from './fetcher';
 
@@ -55,12 +56,13 @@ export async function proponerDesdeTexto(
 ): Promise<{ propuestas: Propuesta[]; descartadosPorVersion: number; truncado: boolean }> {
   const v = await prisma.vehicle.findUnique({
     where: { id: vehicleId },
-    select: { brand: true, model: true, year: true, fuelType: true, attributes: { select: { attributeKey: true, valueNum: true, valueBool: true, valueText: true } } },
+    select: { brand: true, model: true, year: true, fuelType: true, type: true, attributes: { select: { attributeKey: true, valueNum: true, valueBool: true, valueText: true } } },
   });
   if (!v) throw new Error('Vehículo no encontrado');
 
   const partes = trozos(texto);
-  const label = `${v.brand} ${v.model} ${v.year} (mercado Colombia)`;
+  const clase = claseDeTipo(v.type);
+  const label = `${v.brand} ${v.model} ${v.year} (${clase === 'auto' ? '' : `${claseEnPalabras(clase)}, `}mercado Colombia)`;
   const resultados = await Promise.all(partes.map(t => extractFromPage({ texto: t }, 'texto-pegado', 2, label, '', undefined, v.fuelType)));
 
   const actuales = new Map(v.attributes.map(a => [a.attributeKey, a.valueNum ?? a.valueBool ?? a.valueText]));
@@ -71,7 +73,7 @@ export async function proponerDesdeTexto(
       if (EXCLUIDAS.has(f.key) || porKey.has(f.key)) continue;
       const d = def.get(f.key)!;
       // Validación física: un valor imposible no se propone.
-      if (typeof f.value === 'number' && ((d.expectedMin !== undefined && f.value < d.expectedMin) || (d.expectedMax !== undefined && f.value > d.expectedMax))) continue;
+      if (typeof f.value === 'number' && fueraDeRango(d, f.value, clase)) continue;
       const actual = actuales.get(f.key) ?? null;
       porKey.set(f.key, {
         key: f.key,

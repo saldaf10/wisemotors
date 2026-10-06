@@ -27,6 +27,7 @@ import {
   MonitorSmartphone,
   ParkingSquare,
   Radar,
+  Package,
   Ruler,
   ScanLine,
   Shield,
@@ -42,6 +43,7 @@ import {
 import { CarRender } from '@/components/car/CarRender';
 import { useEnVista } from '@/components/ui/useEnVista';
 import { leer, millones, rendimiento, specsDe, tanque } from '@/lib/vehiculo-datos';
+import { claseDeTipo } from '@/lib/attributes/clase';
 import { masParecidos } from '@/lib/similares';
 import { hayIndices, SeccionIndices } from './IndicesWise';
 import type { IndicesVehiculo } from '@/lib/indices/calculo';
@@ -193,6 +195,25 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
   const pasajeros = leer(s, 'interior.passengerCapacity');
   const peso = leer(s, 'dimensions.curbWeight');
   const remolque = leer(s, 'weight.towingCapacity');
+  // Pickups, vans y camiones: lo que importa para trabajar.
+  const clase = claseDeTipo(vehicle.type);
+  const cargaUtil = leer(s, 'weight.payload');
+  const pesoBruto = leer(s, 'weight.grossVehicleWeight');
+  const zona = { largo: leer(s, 'cargoArea.length'), ancho: leer(s, 'cargoArea.width'), alto: leer(s, 'cargoArea.height') };
+  // En una van o un camión "el baúl" es el furgón: se cuenta en m³, no en maletas.
+  const volumenCarga = clase === 'comercial' ? leer(s, 'dimensions.cargoCapacity', 'interior.interiorCargoCapacity', 'weight.cargoBoxVolume') : null;
+  // Solo a vehículos de trabajo: una SUV con remolque lo sigue mostrando junto a la altura al piso.
+  const datosTrabajo = (clase === 'auto' ? [] : [
+    cargaUtil !== null && { etiqueta: 'Carga útil', valor: `${fmt(cargaUtil)} kg`, ayuda: 'Lo que puede llevar encima' },
+    remolque !== null && { etiqueta: 'Remolque', valor: `${fmt(remolque)} kg`, ayuda: 'Lo que puede halar' },
+    pesoBruto !== null && { etiqueta: 'Peso bruto', valor: `${fmt(pesoBruto)} kg`, ayuda: 'Peso máximo ya cargado' },
+    volumenCarga !== null && { etiqueta: 'Volumen de carga', valor: `${fmt(volumenCarga / 1000, 1)} m³`, ayuda: 'Lo que cabe en el furgón o la caja' },
+    zona.largo !== null && {
+      etiqueta: clase === 'pickup' ? 'Platón' : 'Zona de carga',
+      valor: [zona.largo, zona.ancho, zona.alto].filter((x): x is number => x !== null).map(x => fmt(x / 1000, 2)).join(' × ') + ' m',
+      ayuda: zona.ancho !== null ? (zona.alto !== null ? 'Largo × ancho × alto' : 'Largo × ancho') : 'Largo',
+    },
+  ]).filter((x): x is { etiqueta: string; valor: string; ayuda: string } => !!x);
   const airbags = leer(s, 'safety.airbags');
   const ncap = leer(s, 'safety.ncapRating');
   const adultos = leer(s, 'safety.adultSafetyScore');
@@ -243,7 +264,8 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
     cero100 !== null && { etiqueta: '0 a 100', unidad: 's', menorEsMejor: true, propio: cero100, otros: paresAcel, formato: (n: number) => fmt(n, 1) },
     !electrico && rinde !== null && { etiqueta: 'Consumo', unidad: 'km/gal', propio: rinde, otros: dePares((x, v) => (v.fuelType === 'Eléctrico' ? null : rendimiento(x))) },
     electrico && autonomia !== null && { etiqueta: 'Autonomía', unidad: 'km', propio: autonomia, otros: dePares(x => leer(x, 'electric.realRangeMixed', 'electric.electricRange')) },
-    baul !== null && { etiqueta: 'Baúl', unidad: 'L', propio: baul, otros: dePares(x => leer(x, 'dimensions.cargoCapacity')) },
+    clase === 'auto' && baul !== null && { etiqueta: 'Baúl', unidad: 'L', propio: baul, otros: dePares(x => leer(x, 'dimensions.cargoCapacity')) },
+    clase !== 'auto' && cargaUtil !== null && { etiqueta: 'Carga útil', unidad: 'kg', propio: cargaUtil, otros: dePares(x => leer(x, 'weight.payload')) },
     altura !== null && { etiqueta: 'Altura al piso', unidad: 'mm', propio: altura, otros: dePares(x => leer(x, 'chassis.groundClearance')) },
   ] as (Tira | false)[]).filter((t): t is Tira => !!t && t.otros.length >= 2);
 
@@ -251,7 +273,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
     { id: 'desempeno', texto: 'Desempeño', hay: potencia !== null || cero100 !== null },
     { id: 'colombia', texto: 'Para Colombia', hay: hayIndices(indices) },
     { id: 'consumo', texto: electrico ? 'Batería' : 'Consumo', hay: alcance !== null || rinde !== null || bateria !== null },
-    { id: 'espacio', texto: 'Espacio', hay: baul !== null || largo !== null || pasajeros !== null },
+    { id: 'espacio', texto: clase === 'auto' ? 'Espacio' : 'Espacio y carga', hay: baul !== null || largo !== null || pasajeros !== null || datosTrabajo.length > 0 },
     { id: 'seguridad', texto: 'Seguridad', hay: airbags !== null || ncap !== null || ayudas.length > 0 },
     { id: 'tecnologia', texto: 'Tecnología', hay: equipo.length > 0 },
     { id: 'categoria', texto: 'Su categoría', hay: tiras.length > 0 },
@@ -506,15 +528,41 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
       {/* ── ESPACIO ───────────────────────────────────────────────────── */}
       {secciones.some(x => x.id === 'espacio') && (
         <section>
-          <Cabecera id="espacio" icono={Ruler} titulo="Espacio" bajada="Lo que le cabe por dentro, cuánto ocupa por fuera y si pasa los reductores sin raspar." />
+          <Cabecera
+            id="espacio"
+            icono={Ruler}
+            titulo={clase === 'auto' ? 'Espacio' : 'Espacio y carga'}
+            bajada={
+              clase === 'auto'
+                ? 'Lo que le cabe por dentro, cuánto ocupa por fuera y si pasa los reductores sin raspar.'
+                : 'Cuánto carga, cuánto hala, cuánto ocupa por fuera y si pasa los reductores sin raspar.'
+            }
+          />
           <div className="grid gap-4 md:grid-cols-12">
+            {/* Vehículos de trabajo: lo primero que se mira, arriba. */}
+            {datosTrabajo.length > 0 && (
+              <Bloque tono="tinta" className="md:col-span-12">
+                <Titulito icono={Package} claro>
+                  Para trabajar
+                </Titulito>
+                <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-6 md:grid-cols-5">
+                  {datosTrabajo.map(d => (
+                    <div key={d.etiqueta}>
+                      <dt className="text-[13px] text-white/60">{d.etiqueta}</dt>
+                      <dd className="cifra mt-1 text-[28px] font-light leading-none tracking-[-0.04em] md:text-[34px]">{d.valor}</dd>
+                      <dd className="mt-2 text-[12px] leading-snug text-white/50">{d.ayuda}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Bloque>
+            )}
             {(largo !== null || alto !== null) && (
               <Bloque tono="estudio" className="md:col-span-7 md:row-span-2">
                 <Titulito icono={Ruler}>Sus medidas</Titulito>
                 <Medidas vehicle={vehicle} largo={largo} alto={alto} entreEjes={entreEjes} altura={altura} ancho={ancho} />
               </Bloque>
             )}
-            {baul !== null && (
+            {baul !== null && clase !== 'comercial' && (
               <Bloque className="md:col-span-5">
                 <Titulito icono={Car}>El baúl</Titulito>
                 <div className="mt-5">
@@ -538,7 +586,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                 </div>
               </Bloque>
             )}
-            {(altura !== null || remolque !== null) && (
+            {(altura !== null || (remolque !== null && datosTrabajo.length === 0)) && (
               <Bloque tono="lila" className="md:col-span-2">
                 {altura !== null && (
                   <>
@@ -550,7 +598,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                     <p className="mt-2 text-[12px] leading-snug text-tinta-2">{altura >= 190 ? 'Pasa huecos y reductores tranquilo' : altura >= 160 ? 'Bien para la ciudad' : 'Ojo con los reductores altos'}</p>
                   </>
                 )}
-                {remolque !== null && (
+                {remolque !== null && datosTrabajo.length === 0 && (
                   <p className="mt-4 text-[12px] text-tinta-2">
                     Remolca <span className="cifra font-semibold text-tinta">{fmt(remolque)} kg</span>
                   </p>

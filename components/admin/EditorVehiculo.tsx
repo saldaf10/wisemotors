@@ -20,9 +20,9 @@ import { sinDatoDeSpecs, valoresDeSpecs } from '@/lib/attributes/clave';
 import { DatosClave, numeroEscrito } from './DatosClave';
 import { ComplementarIA } from './ComplementarIA';
 import { RevisionFotos, VISTAS, type FotoRevision } from './RevisionFotos';
+import { CATEGORIAS, claseDeTipo, TIPOS_CARROCERIA } from '@/lib/attributes/clase';
 
-const TIPOS = ['Sedán', 'SUV', 'Pickup', 'Deportivo', 'Wagon', 'Hatchback', 'Convertible'];
-const CATEGORIAS = ['Automóvil', 'Deportivo', 'Todoterreno', 'Lujo', 'Económico'];
+const TIPOS = TIPOS_CARROCERIA;
 const TRENES = ['Gasolina', 'Diesel', 'Eléctrico', 'Híbrido', 'Híbrido Enchufable'];
 const ESTADOS = ['Disponible', 'Agotado', 'Próximamente'];
 
@@ -369,6 +369,7 @@ export function EditorVehiculo({ vehicleId }: { vehicleId: string }) {
       <div className="grid gap-4 lg:grid-cols-2">
         <DatosClave
           fuelType={fuelType}
+          clase={claseDeTipo(identidad?.type)}
           valores={valores}
           sinDato={sinDato}
           onValor={(key, valor) => poner(key, valor)}

@@ -15,6 +15,7 @@ import {
 import { parseVehicleQuery } from '@/lib/ingest/parse-query';
 import { ANGULOS, type Angulo } from '@/lib/ingest/fotos';
 import { esErrorDeCuenta } from '@/lib/ai/claude';
+import { esClase } from '@/lib/attributes/clase';
 import type { DiscoveredSource, SourceTier } from '@/lib/ingest/types';
 
 // Cada etapa tiene su propia petición de hasta 300 s (vercel.json).
@@ -95,7 +96,7 @@ function ctxDe(x: unknown): ContextoIngesta {
   if (!c || typeof c !== 'object' || textos.some(k => typeof c[k] !== 'string') || !Number.isInteger(c.year)) {
     throw new ErrorEntrada('Contexto de ingesta inválido: vuelve a empezar este vehículo.');
   }
-  return { ...c, versionPedida: !!c.versionPedida, warningsEs: Array.isArray(c.warningsEs) ? c.warningsEs.map(String).slice(0, 30) : [] };
+  return { ...c, versionPedida: !!c.versionPedida, clase: esClase(c.clase) ? c.clase : 'auto', warningsEs: Array.isArray(c.warningsEs) ? c.warningsEs.map(String).slice(0, 30) : [] };
 }
 
 /** Identidad pedida: una línea ("Onix RS 2026") o marca/modelo/año sueltos. */
@@ -116,6 +117,8 @@ function pedido(body: any) {
     model: String(model).trim(),
     year: yearNum,
     country: String(body?.country ?? 'CO').trim().toUpperCase(),
+    // Carro, pickup o van/camión: la elige el equipo al subir (sin ella, la deduce la IA).
+    clase: esClase(body?.clase) ? body.clase : undefined,
   };
 }
 
