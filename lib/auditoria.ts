@@ -17,7 +17,7 @@ import { prisma } from '@/lib/prisma';
 import { ATTRIBUTE_REGISTRY, attributeAppliesTo, fueraDeRango } from '@/lib/attributes/registry';
 import { claseDeTipo, type ClaseVehiculo } from '@/lib/attributes/clase';
 import { computeCoverage } from '@/lib/attributes/coverage';
-import { specsDe } from '@/lib/vehiculo-datos';
+import { fijarEnSpecs, specsDe } from '@/lib/vehiculo-datos';
 import { clavesFaltantes, sinDatoDeSpecs, valoresDeSpecs } from '@/lib/attributes/clave';
 
 export const CONFIANZA_MINIMA = 0.7;
@@ -135,17 +135,6 @@ export function upsertPrecioHecho(vehicleId: string, precio: number, userId: str
 }
 
 /** Pone o quita un valor en el JSON por su path ('combustion.maxPower'). */
-export function fijarEnSpecs(specs: Record<string, any>, key: string, valor: unknown | undefined) {
-  const partes = key.split('.');
-  let nodo = specs;
-  for (let i = 0; i < partes.length - 1; i++) {
-    if (valor === undefined && !nodo[partes[i]]) return;
-    nodo[partes[i]] = nodo[partes[i]] ?? {};
-    nodo = nodo[partes[i]];
-  }
-  if (valor === undefined) delete nodo[partes[partes.length - 1]];
-  else nodo[partes[partes.length - 1]] = valor;
-}
 
 /** "4,5" → 4.5 · "4.5" → 4.5 · "1.250.000" → 1250000 (así se escriben en Colombia). */
 function numeroEscrito(t: string): number {

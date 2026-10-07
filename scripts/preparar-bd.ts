@@ -10,6 +10,8 @@
 //   3. Los 10 vehículos de prueba (data/semillas/vehiculos-demo.json), UNA sola
 //      vez y marcados DEMO. Si el equipo los borra no vuelven. CARGAR_DEMO=no
 //      en Vercel los apaga.
+//   5. Pasa la "Suspensión" vieja a delantera/trasera (lib/db/partir-suspension.ts):
+//      idempotente, solo llena vacíos; si falla, no tumba el deploy.
 //   4. Cuenta admin inicial: si están ADMIN_EMAIL y ADMIN_PASSWORD y ese
 //      correo NO existe, la crea con rol admin. Nunca asciende a un usuario
 //      que ya exista (el registro no verifica correos: cualquiera pudo haber
@@ -27,6 +29,7 @@ import { sembrarBandas, sembrarDefiniciones, sembrarPercepcion } from '../lib/db
 import { crearAdminInicial } from '../lib/db/admin-inicial';
 import { cargarVehiculosDemo } from '../lib/db/vehiculos-demo';
 import { sembrarParametros } from '../lib/indices/parametros';
+import { partirSuspensiones } from '../lib/db/partir-suspension';
 
 async function main() {
   const produccion = process.env.VERCEL_ENV === 'production';
@@ -85,6 +88,13 @@ async function main() {
         `[preparar-bd] ✓ vehículos de prueba: ${demo.creados.length} creados, ${demo.yaExistian.length} ya existían` +
           (demo.errores.length ? ` · ⚠ ${demo.errores.length} con error (se reintenta en el próximo deploy): ${demo.errores.join('; ')}` : '')
       );
+    }
+
+    try {
+      const susp = await partirSuspensiones(prisma, true);
+      console.log(`[preparar-bd] ✓ suspensión vieja → delantera/trasera: ${susp.escritos} datos nuevos en ${susp.carros} carros` + (susp.revisar.length ? ` · revisar a mano: ${susp.revisar.join('; ')}` : ''));
+    } catch (e) {
+      console.log(`[preparar-bd] ⚠ partir suspensión falló (${e instanceof Error ? e.message : e}); se reintenta en el próximo deploy`);
     }
 
     const admin = await crearAdminInicial(prisma);

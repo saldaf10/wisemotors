@@ -113,3 +113,16 @@ export function palabraGigante(modelo: string, marca = ''): string {
   // "3" o "Y" solos no dicen nada: se acompañan de la marca.
   return palabra.length < 3 && marca ? `${marca} ${palabra}`.toUpperCase() : palabra;
 }
+
+/** Pone (o quita, con `undefined`) un valor en el JSON de specifications por su key del registro. */
+export function fijarEnSpecs(specs: Record<string, any>, key: string, valor: unknown | undefined) {
+  const partes = key.split('.');
+  let nodo = specs;
+  for (let i = 0; i < partes.length - 1; i++) {
+    if (valor === undefined && !nodo[partes[i]]) return;
+    nodo[partes[i]] = nodo[partes[i]] ?? {};
+    nodo = nodo[partes[i]];
+  }
+  if (valor === undefined) delete nodo[partes[partes.length - 1]];
+  else nodo[partes[partes.length - 1]] = valor;
+}
