@@ -108,7 +108,7 @@ const chassis: AttributeDef[] = [
   num('chassis.brakingDistance100to0', 'Frenado 100–0', { ...G_CHAS, unit: 'm', direction: 'lower_better', displayPriority: 70, coAvailability: 'rare', expectedMin: 28, expectedMax: 60 }),
   num('chassis.maxLateralAcceleration', 'Aceleración lateral máx.', { ...G_CHAS, unit: 'g', direction: 'higher_better', displayPriority: 30, coAvailability: 'rare', expectedMin: 0.5, expectedMax: 1.6 }),
   num('chassis.maxLongitudinalAcceleration', 'Aceleración longitudinal máx.', { ...G_CHAS, unit: 'g', direction: 'higher_better', displayPriority: 20, coAvailability: 'rare', expectedMin: 0.3, expectedMax: 1.8 }),
-  txt('chassis.suspensionSetup', 'Suspensión', { ...G_CHAS, displayPriority: 45 }),
+  // 'Suspensión' general retirada: la cubren Suspensión delantera y trasera (más abajo).
 ];
 
 // ---------------------------------------------------------------------------
@@ -440,6 +440,7 @@ const recuperados: AttributeDef[] = [
   txt('chassis.frontSuspension', 'Suspensión delantera', { ...G_FRENOS, displayPriority: 40 }),
   txt('chassis.rearSuspension', 'Suspensión trasera', { ...G_FRENOS, displayPriority: 40 }),
   bool('chassis.adaptiveDampers', 'Amortiguación adaptativa', { ...G_FRENOS, displayPriority: 25, coAvailability: 'rare' }),
+  enm('chassis.frontBrakes', 'Frenos delanteros', { ...G_FRENOS, displayPriority: 46, opciones: ['Disco', 'Tambor'] }),
   enm('chassis.rearBrakes', 'Frenos traseros', { ...G_FRENOS, displayPriority: 45, opciones: ['Disco', 'Tambor'] }),
   txt('chassis.brakeDiscMaterial', 'Material de los discos', { ...G_FRENOS, displayPriority: 15, coAvailability: 'rare' }),
   txt('chassis.brakeCalipers', 'Pinzas de freno', { ...G_FRENOS, displayPriority: 15, coAvailability: 'rare' }),
