@@ -135,7 +135,7 @@ export function upsertPrecioHecho(vehicleId: string, precio: number, userId: str
 }
 
 /** Pone o quita un valor en el JSON por su path ('combustion.maxPower'). */
-function fijarEnSpecs(specs: Record<string, any>, key: string, valor: unknown | undefined) {
+export function fijarEnSpecs(specs: Record<string, any>, key: string, valor: unknown | undefined) {
   const partes = key.split('.');
   let nodo = specs;
   for (let i = 0; i < partes.length - 1; i++) {

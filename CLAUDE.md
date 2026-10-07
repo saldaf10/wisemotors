@@ -264,7 +264,8 @@ cobertura, migración, seeds, motor de cohortes.
   BD** — el registro nuevo (`FT` en `lib/attributes/registry.ts`) ya la usa. Unificar hacia ella.
 - `getMarketStats()` en `lib/ai/features.ts` trae TODO el catálogo por búsqueda, sin
   caché — cuello de botella conocido.
-- Tests (npx tsx, sin BD ni API): `scripts/verify-scoring.ts`, `verify-indices.ts`, `verify-clave.ts`, `verify-clase.ts`, `verify-demanda.ts`, `verify-mapas.ts`.
+- Tests (npx tsx, sin BD ni API): `scripts/verify-scoring.ts`, `verify-indices.ts`, `verify-clave.ts`, `verify-clase.ts`, `verify-demanda.ts`, `verify-mapas.ts`, `verify-suspension.ts`.
+- Ficha (7-oct-2026): hay `chassis.frontBrakes` (Frenos delanteros) y se retiró `chassis.suspensionSetup` (Suspensión general) del registro. `scripts/partir-suspension.ts` pasa ese texto viejo a Suspensión delantera/trasera (simulación por defecto, `--write` aplica, solo llena vacíos y hereda fuente/confianza); se corre con las variables de la base de producción.
 - Git: push directo a `main` (sin ramas ni PRs), decisión del usuario.
 - Prueba local sin tocar producción: Postgres en Docker (`wise-pg`, puerto 55432) + la
   configuración `wisemotors-local-db` de `.claude/launch.json` (puerto 3007).
