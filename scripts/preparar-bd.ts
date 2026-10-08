@@ -12,8 +12,9 @@
 //      en Vercel los apaga.
 //   5. Pasa la "Suspensión" vieja a delantera/trasera (lib/db/partir-suspension.ts)
 //      y los demás campos retirados por redundantes a los que se quedan
-//      (lib/db/fusionar-campos.ts): idempotente, solo llena vacíos; si falla, no
-//      tumba el deploy.
+//      (lib/db/fusionar-campos.ts), y DESPUÉS borra de la base todo campo que ya
+//      no esté en el registro, con respaldo en estado_sistema
+//      (lib/db/limpiar-campos.ts). Idempotente; si falla, no tumba el deploy.
 //   4. Cuenta admin inicial: si están ADMIN_EMAIL y ADMIN_PASSWORD y ese
 //      correo NO existe, la crea con rol admin. Nunca asciende a un usuario
 //      que ya exista (el registro no verifica correos: cualquiera pudo haber
@@ -33,6 +34,7 @@ import { cargarVehiculosDemo } from '../lib/db/vehiculos-demo';
 import { sembrarParametros } from '../lib/indices/parametros';
 import { partirSuspensiones } from '../lib/db/partir-suspension';
 import { fusionarCampos } from '../lib/db/fusionar-campos';
+import { limpiarCamposRetirados } from '../lib/db/limpiar-campos';
 
 async function main() {
   const produccion = process.env.VERCEL_ENV === 'production';
@@ -104,6 +106,16 @@ async function main() {
       console.log(`[preparar-bd] ✓ campos retirados → los que se quedan: ${fus.escritos} datos nuevos en ${fus.carros} carros`);
     } catch (e) {
       console.log(`[preparar-bd] ⚠ fusionar campos falló (${e instanceof Error ? e.message : e}); se reintenta en el próximo deploy`);
+    }
+    try {
+      const lim = await limpiarCamposRetirados(prisma, true);
+      console.log(
+        lim.campos.length
+          ? `[preparar-bd] ✓ campos retirados borrados de la base: ${lim.campos.length} campos, ${lim.datos} datos, ${lim.carros} carros · respaldo en estado_sistema: ${lim.respaldo}`
+          : '[preparar-bd] ✓ la base solo tiene los campos del registro'
+      );
+    } catch (e) {
+      console.log(`[preparar-bd] ⚠ limpiar campos falló (${e instanceof Error ? e.message : e}); se reintenta en el próximo deploy`);
     }
 
     const admin = await crearAdminInicial(prisma);
