@@ -46,7 +46,7 @@ export const CAMPOS_CLAVE: CampoClave[] = [
   { id: 'caja', etiqueta: 'Transmisión', seccion: 'Desempeño', keys: TRENES('transmissionType'), porque: 'Filtro automática/manual del buscador' },
   { id: 'traccion', etiqueta: 'Tracción', seccion: 'Desempeño', keys: ['drivetrain.traction'], porque: 'Filtro 4x4 y búsqueda "para finca"' },
   { id: 'cilindraje', etiqueta: 'Cilindraje', seccion: 'Desempeño', keys: TRENES('displacement'), porque: 'Ficha y SOAT del Costo Real de Tenencia' },
-  { id: 'induccion', etiqueta: 'Turbo o atmosférico', seccion: 'Desempeño', keys: ['combustion.inductionType', 'combustion.turbo'], porque: 'Índice Altura (cuánto pierde en Bogotá)' },
+  { id: 'induccion', etiqueta: 'Turbo o atmosférico', seccion: 'Desempeño', keys: ['combustion.inductionType'], porque: 'Índice Altura (cuánto pierde en Bogotá)' },
   { id: 'peso', etiqueta: 'Peso', seccion: 'Desempeño', keys: ['dimensions.curbWeight'], porque: 'Índice Palmas' },
 
   // Consumo / batería
@@ -60,7 +60,7 @@ export const CAMPOS_CLAVE: CampoClave[] = [
   { id: 'tanque', etiqueta: 'Tanque', seccion: 'Consumo', keys: TRENES('fuelTankCapacity'), porque: 'Kilómetros con el tanque lleno' },
   { id: 'autonomia', etiqueta: 'Autonomía eléctrica', seccion: 'Batería', keys: ['electric.electricRange', 'electric.realRangeMixed', 'phev.electricRange'], porque: 'Tarjeta, ficha y ruta desde Medellín' },
   { id: 'bateria', etiqueta: 'Batería', seccion: 'Batería', keys: ['electric.batteryCapacity', 'phev.batteryCapacity'], porque: 'Ficha y costo de energía' },
-  { id: 'cargaRapida', etiqueta: 'Carga rápida', seccion: 'Batería', keys: ['electric.chargingTime1080', 'electric.dcChargingTime', 'phev.dcChargingTime'], porque: 'Bloque de batería' },
+  { id: 'cargaRapida', etiqueta: 'Carga rápida', seccion: 'Batería', keys: ['electric.dcChargingTime', 'phev.dcChargingTime'], porque: 'Bloque de batería' },
   { id: 'cargaCasa', etiqueta: 'Carga en casa', seccion: 'Batería', keys: ['electric.acChargingTime', 'phev.acChargingTime'], porque: 'Bloque de batería' },
 
   // Espacio
@@ -78,7 +78,7 @@ export const CAMPOS_CLAVE: CampoClave[] = [
   { id: 'remolque', etiqueta: 'Capacidad de remolque', seccion: 'Carga', keys: ['weight.towingCapacity'], porque: 'Tráiler, lancha, remolque de carga', soloClases: ['pickup', 'comercial'] },
   { id: 'pbv', etiqueta: 'Peso bruto vehicular (PBV)', seccion: 'Carga', keys: ['weight.grossVehicleWeight'], porque: 'Peso máximo cargado: define licencia y por dónde puede circular', soloClases: ['pickup', 'comercial'] },
   { id: 'zonaCarga', etiqueta: 'Largo del platón o del furgón', seccion: 'Carga', keys: ['cargoArea.length'], porque: 'Qué cabe atrás (estibas, motos, material)', soloClases: ['pickup', 'comercial'] },
-  { id: 'volumenCarga', etiqueta: 'Volumen de carga', seccion: 'Carga', keys: ['dimensions.cargoCapacity', 'interior.interiorCargoCapacity', 'weight.cargoBoxVolume'], porque: 'Cuánto cabe en el furgón o la caja', soloClases: ['comercial'] },
+  { id: 'volumenCarga', etiqueta: 'Volumen de carga', seccion: 'Carga', keys: ['dimensions.cargoCapacity', 'weight.cargoBoxVolume'], porque: 'Cuánto cabe en el furgón o la caja', soloClases: ['comercial'] },
 
   // Seguridad
   { id: 'airbags', etiqueta: 'Airbags', seccion: 'Seguridad', keys: ['safety.airbags'], porque: 'Tarjeta y bloque de seguridad' },

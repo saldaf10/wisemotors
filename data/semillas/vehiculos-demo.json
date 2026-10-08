@@ -37,20 +37,8 @@
     "sourceTier": 3
    },
    {
-    "key": "performance.powerToWeight",
-    "value": 102,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "chassis.groundClearance",
     "value": 175,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "chassis.suspensionSetup",
-    "value": "Independiente McPherson adelante / eje torsional atrás",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -117,12 +105,6 @@
    {
     "key": "safety.ncapRating",
     "value": 4,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "safety.brakingSystem",
-    "value": "Discos ventilados adelante / discos sólidos atrás con ABS y EBD",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -223,12 +205,6 @@
     "sourceTier": 3
    },
    {
-    "key": "combustion.turbo",
-    "value": true,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "combustion.engineConfiguration",
     "value": "3 cilindros en línea",
     "confidence": 0.4,
@@ -307,12 +283,6 @@
     "sourceTier": 3
    },
    {
-    "key": "combustion.startStop",
-    "value": true,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "wisemetrics.drivingFun",
     "value": 6.5,
     "confidence": 0.4,
@@ -387,6 +357,18 @@
    {
     "key": "wisemetrics.familyFriendly",
     "value": 7.5,
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "chassis.frontSuspension",
+    "value": "Independiente McPherson",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "chassis.rearSuspension",
+    "value": "Eje torsional",
     "confidence": 0.4,
     "sourceTier": 3
    }
@@ -574,12 +556,6 @@
     "sourceTier": 3
    },
    {
-    "key": "chassis.suspensionSetup",
-    "value": "McPherson adelante / eje torsional atrás",
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "offRoad.approachAngle",
     "value": 31,
     "confidence": 0.4,
@@ -612,12 +588,6 @@
    {
     "key": "safety.ncapRating",
     "value": 3,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "safety.brakingSystem",
-    "value": "Discos ventilados adelante / tambores atrás con ABS",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -712,12 +682,6 @@
     "sourceTier": 3
    },
    {
-    "key": "combustion.ecoMode",
-    "value": true,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "wisemetrics.qualityPriceRatio",
     "value": 8.5,
     "confidence": 0.4,
@@ -764,6 +728,24 @@
     "value": 4.2,
     "confidence": 0.4,
     "sourceTier": 3
+   },
+   {
+    "key": "drivetrain.driveModes",
+    "value": "Eco",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "chassis.frontSuspension",
+    "value": "McPherson",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "chassis.rearSuspension",
+    "value": "Eje torsional",
+    "confidence": 0.4,
+    "sourceTier": 3
    }
   ]
  },
@@ -806,12 +788,6 @@
    {
     "key": "performance.maxSpeed",
     "value": 150,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "performance.powerToWeight",
-    "value": 68,
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -876,12 +852,6 @@
     "sourceTier": 3
    },
    {
-    "key": "chassis.suspensionSetup",
-    "value": "McPherson adelante / eje de torsión atrás",
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "safety.airbags",
     "value": 6,
     "confidence": 0.4,
@@ -902,12 +872,6 @@
    {
     "key": "safety.childSafetyScore",
     "value": 86,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "safety.brakingSystem",
-    "value": "Discos ventilados adelante y discos atrás con ABS+EBD",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -1092,18 +1056,6 @@
     "sourceTier": 3
    },
    {
-    "key": "electric.chargingTime1080",
-    "value": 37,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "electric.regenerativeBraking",
-    "value": true,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "electric.homeChargerCost",
     "value": 4500000,
     "confidence": 0.4,
@@ -1186,6 +1138,18 @@
     "value": 7.5,
     "confidence": 0.4,
     "sourceTier": 3
+   },
+   {
+    "key": "chassis.frontSuspension",
+    "value": "McPherson",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "chassis.rearSuspension",
+    "value": "Eje de torsión",
+    "confidence": 0.4,
+    "sourceTier": 3
    }
   ]
  },
@@ -1208,12 +1172,6 @@
   ],
   "facts": [
    {
-    "key": "hybrid.startStop",
-    "value": true,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "commercial.warrantyYears",
     "value": 5,
     "confidence": 0.4,
@@ -1234,12 +1192,6 @@
    {
     "key": "performance.maxSpeed",
     "value": 180,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "performance.powerToWeight",
-    "value": 128,
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -1304,12 +1256,6 @@
     "sourceTier": 3
    },
    {
-    "key": "chassis.suspensionSetup",
-    "value": "Independiente McPherson adelante / multibrazo atrás",
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "weight.towingCapacity",
     "value": 800,
     "confidence": 0.4,
@@ -1370,18 +1316,6 @@
     "sourceTier": 3
    },
    {
-    "key": "hybrid.regenerativeBraking",
-    "value": true,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "hybrid.ecoMode",
-    "value": true,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "safety.airbags",
     "value": 7,
     "confidence": 0.4,
@@ -1390,12 +1324,6 @@
    {
     "key": "safety.ncapRating",
     "value": 5,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "safety.brakingSystem",
-    "value": "Discos ventilados adelante y discos atrás con ABS, EBD y BA",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -1542,6 +1470,30 @@
     "value": 4.6,
     "confidence": 0.4,
     "sourceTier": 3
+   },
+   {
+    "key": "technology.startStop",
+    "value": true,
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "drivetrain.driveModes",
+    "value": "Eco",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "chassis.frontSuspension",
+    "value": "Independiente McPherson",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "chassis.rearSuspension",
+    "value": "Multibrazo",
+    "confidence": 0.4,
+    "sourceTier": 3
    }
   ]
  },
@@ -1631,12 +1583,6 @@
     "sourceTier": 3
    },
    {
-    "key": "chassis.suspensionSetup",
-    "value": "Independiente McPherson adelante / eje de torsión atrás",
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "performance.acceleration0to100",
     "value": 10.3,
     "confidence": 0.4,
@@ -1645,12 +1591,6 @@
    {
     "key": "performance.maxSpeed",
     "value": 186,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "performance.powerToWeight",
-    "value": 108,
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -1745,12 +1685,6 @@
     "sourceTier": 3
    },
    {
-    "key": "combustion.startStop",
-    "value": true,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "safety.airbags",
     "value": 6,
     "confidence": 0.4,
@@ -1771,12 +1705,6 @@
    {
     "key": "safety.tractionControl",
     "value": true,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "safety.brakingSystem",
-    "value": "Discos ventilados adelante / discos atrás con ABS, EBD",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -1923,6 +1851,18 @@
     "value": 4.5,
     "confidence": 0.4,
     "sourceTier": 3
+   },
+   {
+    "key": "chassis.frontSuspension",
+    "value": "Independiente McPherson",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "chassis.rearSuspension",
+    "value": "Eje de torsión",
+    "confidence": 0.4,
+    "sourceTier": 3
    }
   ]
  },
@@ -2012,12 +1952,6 @@
     "sourceTier": 3
    },
    {
-    "key": "chassis.suspensionSetup",
-    "value": "Independiente McPherson adelante / eje torsional atrás",
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "performance.acceleration0to100",
     "value": 14.6,
     "confidence": 0.4,
@@ -2026,12 +1960,6 @@
    {
     "key": "performance.maxSpeed",
     "value": 161,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "performance.powerToWeight",
-    "value": 70,
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -2128,12 +2056,6 @@
    {
     "key": "safety.airbags",
     "value": 6,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "safety.brakingSystem",
-    "value": "Discos ventilados adelante / tambores atrás con ABS y EBD",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -2304,6 +2226,18 @@
     "value": 5.5,
     "confidence": 0.4,
     "sourceTier": 3
+   },
+   {
+    "key": "chassis.frontSuspension",
+    "value": "Independiente McPherson",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "chassis.rearSuspension",
+    "value": "Eje torsional",
+    "confidence": 0.4,
+    "sourceTier": 3
    }
   ]
  },
@@ -2341,12 +2275,6 @@
    {
     "key": "performance.maxSpeed",
     "value": 195,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "performance.powerToWeight",
-    "value": 114,
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -2389,12 +2317,6 @@
    {
     "key": "chassis.groundClearance",
     "value": 140,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "chassis.suspensionSetup",
-    "value": "Independiente McPherson adelante / eje de torsión atrás",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -2501,12 +2423,6 @@
     "sourceTier": 3
    },
    {
-    "key": "combustion.startStop",
-    "value": true,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "safety.airbags",
     "value": 6,
     "confidence": 0.4,
@@ -2527,12 +2443,6 @@
    {
     "key": "safety.childSafetyScore",
     "value": 89,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "safety.brakingSystem",
-    "value": "Discos ventilados adelante y discos sólidos atrás con ABS, EBD",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -2691,6 +2601,18 @@
     "value": 4.4,
     "confidence": 0.4,
     "sourceTier": 3
+   },
+   {
+    "key": "chassis.frontSuspension",
+    "value": "Independiente McPherson",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "chassis.rearSuspension",
+    "value": "Eje de torsión",
+    "confidence": 0.4,
+    "sourceTier": 3
    }
   ]
  },
@@ -2722,12 +2644,6 @@
    {
     "key": "combustion.displacement",
     "value": 2393,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "combustion.turbo",
-    "value": true,
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -2828,12 +2744,6 @@
     "sourceTier": 3
    },
    {
-    "key": "performance.powerToWeight",
-    "value": 73,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "dimensions.length",
     "value": 5325,
     "confidence": 0.4,
@@ -2866,12 +2776,6 @@
    {
     "key": "chassis.groundClearance",
     "value": 216,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "chassis.suspensionSetup",
-    "value": "Independiente doble horquilla adelante / eje rígido con ballestas atrás",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -2950,12 +2854,6 @@
    {
     "key": "safety.childSafetyScore",
     "value": 82,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "safety.brakingSystem",
-    "value": "Discos ventilados adelante / tambor atrás con ABS y EBD",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -3138,6 +3036,18 @@
     "value": 7,
     "confidence": 0.4,
     "sourceTier": 3
+   },
+   {
+    "key": "chassis.frontSuspension",
+    "value": "Independiente doble horquilla",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "chassis.rearSuspension",
+    "value": "Eje rígido con ballestas",
+    "confidence": 0.4,
+    "sourceTier": 3
    }
   ]
  },
@@ -3175,12 +3085,6 @@
    {
     "key": "performance.maxSpeed",
     "value": 201,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "performance.powerToWeight",
-    "value": 155,
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -3241,12 +3145,6 @@
    {
     "key": "chassis.groundClearance",
     "value": 167,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "chassis.suspensionSetup",
-    "value": "Independiente: McPherson adelante / multibrazo atrás con resortes helicoidales",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -3317,20 +3215,8 @@
     "sourceTier": 3
    },
    {
-    "key": "electric.chargingTime1080",
-    "value": 27,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "electric.dcChargingTime",
     "value": 30,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "electric.regenerativeBraking",
-    "value": true,
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -3367,12 +3253,6 @@
    {
     "key": "safety.assistanceScore",
     "value": 88,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "safety.brakingSystem",
-    "value": "Discos ventilados en las 4 ruedas con ABS, EBD y regeneración",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -3633,6 +3513,18 @@
     "value": 8,
     "confidence": 0.4,
     "sourceTier": 3
+   },
+   {
+    "key": "chassis.frontSuspension",
+    "value": "Independiente McPherson",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "chassis.rearSuspension",
+    "value": "Multibrazo con resortes helicoidales",
+    "confidence": 0.4,
+    "sourceTier": 3
    }
   ]
  },
@@ -3674,20 +3566,8 @@
     "sourceTier": 3
    },
    {
-    "key": "performance.powerToWeight",
-    "value": 101,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
     "key": "chassis.groundClearance",
     "value": 160,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "chassis.suspensionSetup",
-    "value": "McPherson adelante / eje torsional atrás",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -3748,12 +3628,6 @@
    {
     "key": "safety.airbags",
     "value": 4,
-    "confidence": 0.4,
-    "sourceTier": 3
-   },
-   {
-    "key": "safety.brakingSystem",
-    "value": "Discos ventilados adelante, tambores atrás con ABS",
     "confidence": 0.4,
     "sourceTier": 3
    },
@@ -3976,6 +3850,18 @@
    {
     "key": "wisemetrics.userRating",
     "value": 4.2,
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "chassis.frontSuspension",
+    "value": "McPherson",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "chassis.rearSuspension",
+    "value": "Eje torsional",
     "confidence": 0.4,
     "sourceTier": 3
    }

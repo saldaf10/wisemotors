@@ -25,7 +25,7 @@ check('rendimiento se cumple con solo ciudad', !f({ 'combustion.cityConsumption'
 check('"No lo tiene" (false) cuenta como dato', !f({ 'safety.isofix': false }).includes('isofix'));
 check('vacío no cuenta', f({ 'wheels.tireSize': '' }).includes('llanta'));
 check('"no existe" deja de pedirse', !f({}, 'Gasolina', ['ncap']).includes('ncap'));
-check('turbo=true cumple "turbo o atmosférico"', !f({ 'combustion.turbo': true }).includes('induccion'));
+check('inducción «Turbo» cumple "turbo o atmosférico"', !f({ 'combustion.inductionType': 'Turbo' }).includes('induccion'));
 check('la potencia de un híbrido se escribe en hybrid.maxPower', keyDeEntrada(camposClave('Híbrido').find(c => c.id === 'potencia')!, 'Híbrido')?.key === 'hybrid.maxPower');
 check('valoresDeSpecs aplana', valoresDeSpecs({ safety: { airbags: 6 }, meta: { sinDato: [] } })['safety.airbags'] === 6);
 

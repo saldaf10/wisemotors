@@ -44,8 +44,8 @@ check('a una pickup no se le pide baúl', !pickup.includes('baul'));
 check('a una van o camión se le pide volumen de carga', comercial.includes('volumenCarga') && comercial.includes('cargaUtil') && comercial.includes('pbv'));
 check('a una van o camión no se le pide 0 a 100, prueba de choque ni cargador inalámbrico', !['aceleracion', 'ncap', 'cargadorInalambrico', 'baul'].some(i => comercial.includes(i)));
 check(
-  'el volumen de carga se cumple con la capacidad interior',
-  !clavesFaltantes('Diesel', { 'interior.interiorCargoCapacity': 12_000 }, [], 'comercial').some(c => c.id === 'volumenCarga')
+  'el volumen de carga se cumple con el volumen del furgón',
+  !clavesFaltantes('Diesel', { 'weight.cargoBoxVolume': 12_000 }, [], 'comercial').some(c => c.id === 'volumenCarga')
 );
 check('sin clase, todo sigue como un carro', camposClave('Gasolina').map(c => c.id).join() === auto.join());
 

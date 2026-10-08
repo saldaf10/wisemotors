@@ -95,7 +95,6 @@ const performance: AttributeDef[] = [
   num('performance.quarterMile', 'Cuarto de milla', { ...G_PERF, unit: 's', direction: 'lower_better', displayPriority: 30, coAvailability: 'rare', expectedMin: 7, expectedMax: 25 }),
   num('performance.overtaking80to120', 'Adelantamiento 80–120', { ...G_PERF, unit: 's', direction: 'lower_better', displayPriority: 55, coAvailability: 'rare', expectedMin: 2, expectedMax: 20 }),
   num('performance.maxSpeed', 'Velocidad máxima', { ...G_PERF, unit: 'km/h', direction: 'higher_better', displayPriority: 60, expectedMin: 90, expectedMax: 420 }),
-  num('performance.powerToWeight', 'Relación potencia/peso', { ...G_PERF, unit: 'HP/t', direction: 'higher_better', displayPriority: 70, cardEligible: true, expectedMin: 20, expectedMax: 700 }),
   bool('performance.launchControl', 'Launch control', { ...G_PERF, displayPriority: 20, coAvailability: 'rare' }),
 ];
 
@@ -120,7 +119,6 @@ const offRoad: AttributeDef[] = [
   num('offRoad.departureAngle', 'Ángulo de salida', { ...G_OFF, unit: '°', direction: 'higher_better', displayPriority: 55, expectedMin: 5, expectedMax: 55 }),
   num('offRoad.breakoverAngle', 'Ángulo ventral', { ...G_OFF, unit: '°', direction: 'higher_better', displayPriority: 50, expectedMin: 5, expectedMax: 45 }),
   num('offRoad.wadingDepth', 'Vadeo (profundidad)', { ...G_OFF, unit: 'mm', direction: 'higher_better', displayPriority: 45, coAvailability: 'rare', expectedMin: 100, expectedMax: 1000 }),
-  num('offRoad.wadingHeight', 'Vadeo (altura)', { ...G_OFF, unit: 'mm', direction: 'higher_better', displayPriority: 20, coAvailability: 'rare', expectedMin: 100, expectedMax: 1000 }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -131,7 +129,7 @@ const weight: AttributeDef[] = [
   num('weight.grossCombinedWeight', 'Peso bruto combinado', { ...G_CARGA, unit: 'kg', displayPriority: 30, coAvailability: 'rare', expectedMin: 1000, expectedMax: 10000 }),
   num('weight.payload', 'Capacidad de carga', { ...G_CARGA, unit: 'kg', direction: 'higher_better', displayPriority: 65, cardEligible: true, expectedMin: 100, expectedMax: 2500 }),
   num('weight.towingCapacity', 'Capacidad de remolque', { ...G_CARGA, unit: 'kg', direction: 'higher_better', displayPriority: 55, expectedMin: 0, expectedMax: 5000 }),
-  num('weight.cargoBoxVolume', 'Volumen de carga (platón o furgón)', { ...G_CARGA, unit: 'L', direction: 'higher_better', displayPriority: 40, coAvailability: 'rare', expectedMin: 100, expectedMax: 4000 }),
+  num('weight.cargoBoxVolume', 'Volumen de carga (platón o furgón)', { ...G_CARGA, unit: 'L', direction: 'higher_better', displayPriority: 40, coAvailability: 'rare', expectedMin: 100, expectedMax: 5000 }),
   // Para pickups, vans y camiones (en un carro casi nunca se publican: 'rare').
   num('weight.grossVehicleWeight', 'Peso bruto vehicular (PBV)', { ...G_CARGA, unit: 'kg', direction: 'higher_better', displayPriority: 50, coAvailability: 'rare', expectedMin: 900, expectedMax: 4500 }),
   num('cargoArea.length', 'Largo de la zona de carga (platón o furgón)', { ...G_CARGA, unit: 'mm', direction: 'higher_better', displayPriority: 45, coAvailability: 'rare', expectedMin: 300, expectedMax: 3000 }),
@@ -159,7 +157,6 @@ const G_INT = { displayGroup: 'Interior y espacio', dimension: 'espacio' };
 const interior: AttributeDef[] = [
   num('interior.trunkCapacitySeatsDown', 'Baúl con sillas abatidas', { ...G_INT, unit: 'L', direction: 'higher_better', displayPriority: 55, expectedMin: 100, expectedMax: 3500 }),
   num('interior.seatRows', 'Filas de asientos', { ...G_INT, direction: 'higher_better', displayPriority: 60, expectedMin: 1, expectedMax: 4 }),
-  num('interior.interiorCargoCapacity', 'Capacidad interior', { ...G_INT, unit: 'L', direction: 'higher_better', displayPriority: 30, coAvailability: 'rare', expectedMin: 50, expectedMax: 5000 }),
   num('interior.passengerCapacity', 'Pasajeros', { ...G_INT, direction: 'higher_better', displayPriority: 85, cardEligible: true, expectedMin: 2, expectedMax: 9 }),
 ];
 
@@ -173,7 +170,6 @@ const safety: AttributeDef[] = [
   num('safety.adultSafetyScore', 'Protección adultos NCAP', { ...G_SAF, unit: '%', direction: 'higher_better', displayPriority: 60, coAvailability: 'rare', expectedMin: 0, expectedMax: 100 }),
   num('safety.childSafetyScore', 'Protección niños NCAP', { ...G_SAF, unit: '%', direction: 'higher_better', displayPriority: 60, coAvailability: 'rare', expectedMin: 0, expectedMax: 100 }),
   num('safety.assistanceScore', 'Asistencias NCAP', { ...G_SAF, unit: '%', direction: 'higher_better', displayPriority: 40, coAvailability: 'rare', expectedMin: 0, expectedMax: 100 }),
-  txt('safety.brakingSystem', 'Sistema de frenos', { ...G_SAF, displayPriority: 50 }),
   bool('safety.stabilityControl', 'Control de estabilidad', { ...G_SAF, displayPriority: 85 }),
   bool('safety.tractionControl', 'Control de tracción', { ...G_SAF, displayPriority: 80 }),
   bool('safety.autonomousEmergencyBraking', 'Frenado autónomo de emergencia', { ...G_SAF, displayPriority: 88 }),
@@ -198,7 +194,7 @@ const assistance: AttributeDef[] = [
   bool('assistance.brakeAssist', 'Asistente de frenado', { ...G_ASSIST, displayPriority: 60 }),
   bool('assistance.hillStartAssist', 'Asistente de arranque en pendiente', { ...G_ASSIST, displayPriority: 72, cardEligible: true }),
   bool('assistance.reverseCamera', 'Cámara de reversa', { ...G_ASSIST, displayPriority: 80 }),
-  bool('assistance.parkingSensors', 'Sensores de parqueo', { ...G_ASSIST, displayPriority: 75 }),
+  bool('assistance.parkingSensors', 'Sensores de parqueo traseros', { ...G_ASSIST, displayPriority: 75 }),
   bool('assistance.cameras360', 'Cámaras 360°', { ...G_ASSIST, displayPriority: 55 }),
 ];
 
@@ -225,7 +221,7 @@ const technology: AttributeDef[] = [
   bool('technology.navigation', 'Navegación', { ...G_TECH, displayPriority: 50 }),
   txt('technology.smartphoneIntegration', 'CarPlay / Android Auto', { ...G_TECH, displayPriority: 85, cardEligible: true, comparable: true }),
   bool('technology.wirelessCharger', 'Cargador inalámbrico', { ...G_TECH, displayPriority: 45 }),
-  bool('technology.startStop', 'Start-Stop', { ...G_TECH, displayPriority: 40 }),
+  bool('technology.startStop', 'Start-Stop (se apaga en los semáforos)', { ...G_TECH, displayPriority: 40, appliesTo: `${ICE},${FT.HEV},${FT.PHEV}` }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -267,8 +263,6 @@ const INDUCCION = ['Atmosférico', 'Turbo', 'Supercargado', 'Turbo y supercargad
 const G_MOTOR_ICE = { displayGroup: 'Motor a combustión', dimension: 'motor', appliesTo: ICE };
 const combustion: AttributeDef[] = [
   num('combustion.displacement', 'Cilindraje', { ...G_MOTOR_ICE, unit: 'cc', displayPriority: 80, cardEligible: true, expectedMin: 600, expectedMax: 8500 }),
-  bool('combustion.turbo', 'Turbo', { ...G_MOTOR_ICE, displayPriority: 75, cardEligible: true }),
-  bool('combustion.supercharger', 'Supercargador', { ...G_MOTOR_ICE, displayPriority: 30, coAvailability: 'rare' }),
   enm('combustion.engineConfiguration', 'Configuración del motor', { ...G_MOTOR_ICE, displayPriority: 45 }),
   enm('combustion.inductionType', 'Tipo de inducción', { ...G_MOTOR_ICE, displayPriority: 50, opciones: INDUCCION }),
   num('combustion.compressionRatio', 'Relación de compresión', { ...G_MOTOR_ICE, displayPriority: 25, coAvailability: 'rare', expectedMin: 7, expectedMax: 16 }),
@@ -284,9 +278,6 @@ const combustion: AttributeDef[] = [
   num('combustion.highwayConsumption', 'Consumo carretera', { ...G_MOTOR_ICE, unit: 'km/gal', direction: 'higher_better', displayPriority: 80, dimension: 'eficiencia', expectedMin: 15, expectedMax: 110 }),
   num('combustion.combinedConsumption', 'Consumo mixto', { ...G_MOTOR_ICE, unit: 'km/gal', direction: 'higher_better', displayPriority: 88, cardEligible: true, dimension: 'eficiencia', expectedMin: 12, expectedMax: 100 }),
   txt('combustion.emissionStandard', 'Norma de emisiones', { ...G_MOTOR_ICE, displayPriority: 30, dimension: 'eficiencia' }),
-  bool('combustion.startStop', 'Start-Stop (motor)', { ...G_MOTOR_ICE, displayPriority: 35, dimension: 'eficiencia' }),
-  bool('combustion.ecoMode', 'Modo eco', { ...G_MOTOR_ICE, displayPriority: 30, dimension: 'eficiencia' }),
-  txt('combustion.ahorro5Anos', 'Ahorro estimado 5 años', { ...G_MOTOR_ICE, displayPriority: 40, dimension: 'costo' }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -297,21 +288,15 @@ const G_EV_EF = { ...G_EV, dimension: 'eficiencia' };
 const electric: AttributeDef[] = [
   num('electric.cityElectricConsumption', 'Consumo eléctrico ciudad', { ...G_EV_EF, unit: 'kWh/100km', direction: 'lower_better', displayPriority: 70, expectedMin: 8, expectedMax: 35 }),
   num('electric.highwayElectricConsumption', 'Consumo eléctrico carretera', { ...G_EV_EF, unit: 'kWh/100km', direction: 'lower_better', displayPriority: 65, expectedMin: 10, expectedMax: 40 }),
-  num('electric.electricRange', 'Autonomía', { ...G_EV, unit: 'km', direction: 'higher_better', displayPriority: 95, cardEligible: true, expectedMin: 80, expectedMax: 900 }),
-  num('electric.theoreticalRangeHighway', 'Autonomía teórica carretera', { ...G_EV, unit: 'km', direction: 'higher_better', displayPriority: 40, coAvailability: 'rare', expectedMin: 50, expectedMax: 900 }),
-  num('electric.theoreticalRangeCity', 'Autonomía teórica ciudad', { ...G_EV, unit: 'km', direction: 'higher_better', displayPriority: 40, coAvailability: 'rare', expectedMin: 50, expectedMax: 1000 }),
-  num('electric.theoreticalRangeMixed', 'Autonomía teórica mixta', { ...G_EV, unit: 'km', direction: 'higher_better', displayPriority: 45, coAvailability: 'rare', expectedMin: 50, expectedMax: 950 }),
+  num('electric.electricRange', 'Autonomía oficial', { ...G_EV, unit: 'km', direction: 'higher_better', displayPriority: 95, cardEligible: true, expectedMin: 80, expectedMax: 900 }),
   num('electric.realRangeHighway', 'Autonomía real carretera', { ...G_EV, unit: 'km', direction: 'higher_better', displayPriority: 75, coAvailability: 'rare', expectedMin: 50, expectedMax: 850 }),
   num('electric.realRangeCity', 'Autonomía real ciudad', { ...G_EV, unit: 'km', direction: 'higher_better', displayPriority: 78, coAvailability: 'rare', expectedMin: 50, expectedMax: 950 }),
   num('electric.realRangeMixed', 'Autonomía real mixta', { ...G_EV, unit: 'km', direction: 'higher_better', displayPriority: 80, cardEligible: true, coAvailability: 'rare', expectedMin: 50, expectedMax: 900 }),
   num('electric.acChargingTime', 'Carga AC', { ...G_EV, unit: 'h', direction: 'lower_better', displayPriority: 60, expectedMin: 1, expectedMax: 40 }),
-  num('electric.dcChargingTime', 'Carga DC rápida', { ...G_EV, unit: 'min', direction: 'lower_better', displayPriority: 85, cardEligible: true, expectedMin: 10, expectedMax: 240 }),
-  num('electric.chargingTime1080', 'Carga 10–80%', { ...G_EV, unit: 'min', direction: 'lower_better', displayPriority: 82, expectedMin: 10, expectedMax: 180 }),
-  bool('electric.regenerativeBraking', 'Frenado regenerativo', { ...G_EV, displayPriority: 50 }),
+  num('electric.dcChargingTime', 'Carga rápida DC (10–80 %)', { ...G_EV, unit: 'min', direction: 'lower_better', displayPriority: 85, cardEligible: true, expectedMin: 10, expectedMax: 240 }),
   num('electric.batteryCapacity', 'Capacidad de batería', { ...G_EV, unit: 'kWh', direction: 'higher_better', displayPriority: 88, cardEligible: true, expectedMin: 10, expectedMax: 200 }),
   num('electric.batteryPrice', 'Precio de la batería', { ...G_EV, unit: 'COP', direction: 'lower_better', displayPriority: 35, dimension: 'costo', coAvailability: 'rare', expectedMin: 5_000_000, expectedMax: 300_000_000 }),
   num('electric.homeChargerCost', 'Costo cargador en casa', { ...G_EV, unit: 'COP', direction: 'lower_better', displayPriority: 40, dimension: 'costo', coAvailability: 'rare', expectedMin: 500_000, expectedMax: 20_000_000 }),
-  num('electric.chargingConvenienceIndex', 'Índice conveniencia de carga', { ...G_EV, direction: 'higher_better', displayPriority: 45, coAvailability: 'rare', expectedMin: 0, expectedMax: 100 }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -329,9 +314,6 @@ const hybrid: AttributeDef[] = [
   num('hybrid.cityConsumption', 'Consumo ciudad (HEV)', { ...G_HEV, unit: 'km/gal', direction: 'higher_better', displayPriority: 90, cardEligible: true, dimension: 'eficiencia', expectedMin: 20, expectedMax: 130 }),
   num('hybrid.highwayConsumption', 'Consumo carretera (HEV)', { ...G_HEV, unit: 'km/gal', direction: 'higher_better', displayPriority: 82, dimension: 'eficiencia', expectedMin: 20, expectedMax: 120 }),
   num('hybrid.batteryCapacity', 'Batería (HEV)', { ...G_HEV, unit: 'kWh', direction: 'higher_better', displayPriority: 55, expectedMin: 0.5, expectedMax: 5 }),
-  bool('hybrid.regenerativeBraking', 'Frenado regenerativo (HEV)', { ...G_HEV, displayPriority: 50 }),
-  bool('hybrid.startStop', 'Start-Stop (HEV)', { ...G_HEV, displayPriority: 30, dimension: 'eficiencia' }),
-  bool('hybrid.ecoMode', 'Modo eco (HEV)', { ...G_HEV, displayPriority: 30, dimension: 'eficiencia' }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -352,10 +334,8 @@ const phev: AttributeDef[] = [
   num('phev.electricRange', 'Autonomía eléctrica (PHEV)', { ...G_PHEV, unit: 'km', direction: 'higher_better', displayPriority: 92, cardEligible: true, expectedMin: 10, expectedMax: 200 }),
   num('phev.acChargingTime', 'Carga AC (PHEV)', { ...G_PHEV, unit: 'h', direction: 'lower_better', displayPriority: 55, expectedMin: 1, expectedMax: 15 }),
   num('phev.dcChargingTime', 'Carga DC (PHEV)', { ...G_PHEV, unit: 'min', direction: 'lower_better', displayPriority: 50, coAvailability: 'rare', expectedMin: 10, expectedMax: 240 }),
-  bool('phev.regenerativeBraking', 'Frenado regenerativo (PHEV)', { ...G_PHEV, displayPriority: 45 }),
   num('phev.batteryWeight', 'Peso de la batería (PHEV)', { ...G_PHEV, unit: 'kg', displayPriority: 20, coAvailability: 'rare', expectedMin: 50, expectedMax: 500 }),
   num('phev.homeChargerCost', 'Costo cargador en casa (PHEV)', { ...G_PHEV, unit: 'COP', direction: 'lower_better', displayPriority: 35, dimension: 'costo', coAvailability: 'rare', expectedMin: 500_000, expectedMax: 20_000_000 }),
-  num('phev.chargingConvenienceIndex', 'Índice conveniencia de carga (PHEV)', { ...G_PHEV, direction: 'higher_better', displayPriority: 40, coAvailability: 'rare', expectedMin: 0, expectedMax: 100 }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -416,7 +396,6 @@ const recuperados: AttributeDef[] = [
   num('electric.maxPower', 'Potencia máxima', { ...G_EV, unit: 'HP', direction: 'higher_better', displayPriority: 94, cardEligible: true, expectedMin: 40, expectedMax: 1600 }),
   num('electric.maxTorque', 'Torque máximo', { ...G_EV, unit: 'Nm', direction: 'higher_better', displayPriority: 89, cardEligible: true, expectedMin: 60, expectedMax: 1500 }),
   num('electric.motors', 'Motores eléctricos', { ...G_EV, displayPriority: 55, expectedMin: 1, expectedMax: 4 }),
-  num('electric.grossBatteryCapacity', 'Capacidad bruta de batería', { ...G_EV, unit: 'kWh', displayPriority: 30, coAvailability: 'rare', expectedMin: 10, expectedMax: 220 }),
   num('electric.onboardChargerKw', 'Potencia de carga en casa (AC)', { ...G_EV, appliesTo: ENCHUFABLE, unit: 'kW', direction: 'higher_better', displayPriority: 62, expectedMin: 2, expectedMax: 22 }),
   num('electric.dcMaxPowerKw', 'Potencia máxima de carga rápida (DC)', { ...G_EV, appliesTo: ENCHUFABLE, unit: 'kW', direction: 'higher_better', displayPriority: 70, expectedMin: 10, expectedMax: 400 }),
   txt('electric.chargePort', 'Conector de carga', { ...G_EV, appliesTo: ENCHUFABLE, displayPriority: 68 }),
@@ -509,6 +488,21 @@ const recuperados: AttributeDef[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// CAMPOS RETIRADOS (8-oct-2026) por redundantes: la IA ya no los pide ni el
+// editor los muestra. Sus datos se pasaron al campo que se queda en cada deploy
+// (lib/db/fusionar-campos.ts) y los viejos siguen en la base sin mostrarse.
+//   Start-Stop y Modo eco por tren motriz → technology.startStop / drivetrain.driveModes
+//   Turbo y Supercargador (sí/no)         → combustion.inductionType
+//   Autonomía teórica ciudad/carretera/mixta → electric.electricRange (oficial)
+//   Carga 10–80 %                         → electric.dcChargingTime
+//   Capacidad interior                    → weight.cargoBoxVolume
+//   Vadeo (altura)                        → offRoad.wadingDepth
+//   Sistema de frenos (ABS/EBD/BA)        → assistance.brakeAssist (el ABS es obligatorio)
+//   Suspensión general                    → chassis.front/rearSuspension
+//   Frenado regenerativo (todos los EV/HEV/PHEV lo tienen), relación potencia/peso
+//   (se calcula), capacidad bruta de batería (confunde con la útil), índice de
+//   conveniencia de carga y ahorro a 5 años (los reemplazan los Índices WiseMotors).
+// ---------------------------------------------------------------------------
 // RANGOS POR CLASE — los de arriba son de un CARRO. Una pickup o una van/camión
 // pesa, mide y carga mucho más: aquí solo lo que cambia (lo que no está, vale
 // igual que en un carro). Un valor fuera de rango no se borra: se marca y se
@@ -517,7 +511,6 @@ const recuperados: AttributeDef[] = [
 const RANGOS_POR_CLASE: Record<string, AttributeDef['rangos']> = {
   'performance.acceleration0to100': { comercial: { min: 3, max: 60 } },
   'performance.maxSpeed': { comercial: { min: 60, max: 220 } },
-  'performance.powerToWeight': { comercial: { min: 5 } },
   'chassis.groundClearance': { pickup: { max: 400 }, comercial: { max: 450 } },
   'weight.grossCombinedWeight': { pickup: { min: 2000, max: 12_000 }, comercial: { min: 2000, max: 80_000 } },
   'weight.payload': { comercial: { min: 200, max: 40_000 } },
@@ -535,7 +528,6 @@ const RANGOS_POR_CLASE: Record<string, AttributeDef['rangos']> = {
   // "Baúl" en un carro; en una van o un camión es el volumen de carga (un furgón de 15 m³ = 15.000 L).
   'dimensions.cargoCapacity': { pickup: { max: 3000 }, comercial: { min: 100, max: 80_000 } },
   'interior.trunkCapacitySeatsDown': { comercial: { max: 80_000 } },
-  'interior.interiorCargoCapacity': { comercial: { max: 80_000 } },
   'interior.passengerCapacity': { pickup: { max: 6 }, comercial: { min: 1, max: 25 } },
   'interior.seatRows': { comercial: { max: 7 } },
   'interior.doors': { comercial: { max: 6 } },

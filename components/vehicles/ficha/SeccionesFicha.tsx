@@ -227,8 +227,10 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
       t: 'Se apaga solo en los semáforos',
       d: 'Start-stop: no gasta mientras esperas.',
     },
-    (valorEn(s, 'combustion.ecoMode') === true || valorEn(s, 'hybrid.ecoMode') === true) && { t: 'Modo ECO', d: 'Suaviza el acelerador para gastar menos.' },
-    (valorEn(s, 'hybrid.regenerativeBraking') === true || valorEn(s, 'phev.regenerativeBraking') === true) && {
+    // Modo eco: hoy vive en «Modos de manejo»; los carros viejos lo traen como sí/no.
+    (/\beco\b/i.test(String(valorEn(s, 'drivetrain.driveModes') ?? '')) || valorEn(s, 'combustion.ecoMode') === true || valorEn(s, 'hybrid.ecoMode') === true) && { t: 'Modo ECO', d: 'Suaviza el acelerador para gastar menos.' },
+    // Todo híbrido recupera energía al frenar: ya no es un dato que se pida.
+    vehicle.fuelType === 'Híbrido' && {
       t: 'Recupera energía al frenar',
       d: 'La batería se carga sola: este híbrido no se enchufa.',
     },
