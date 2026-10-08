@@ -168,8 +168,6 @@ const G_SAF = { displayGroup: 'Seguridad', dimension: 'seguridad' };
 const safety: AttributeDef[] = [
   num('safety.airbags', 'Airbags', { ...G_SAF, direction: 'higher_better', displayPriority: 90, cardEligible: true, expectedMin: 0, expectedMax: 12 }),
   num('safety.ncapRating', 'Calificación NCAP', { ...G_SAF, unit: '★', direction: 'higher_better', displayPriority: 95, cardEligible: true, expectedMin: 0, expectedMax: 5 }),
-  num('safety.adultSafetyScore', 'Protección adultos NCAP', { ...G_SAF, unit: '%', direction: 'higher_better', displayPriority: 60, coAvailability: 'rare', expectedMin: 0, expectedMax: 100 }),
-  num('safety.childSafetyScore', 'Protección niños NCAP', { ...G_SAF, unit: '%', direction: 'higher_better', displayPriority: 60, coAvailability: 'rare', expectedMin: 0, expectedMax: 100 }),
   num('safety.assistanceScore', 'Asistencias NCAP', { ...G_SAF, unit: '%', direction: 'higher_better', displayPriority: 40, coAvailability: 'rare', expectedMin: 0, expectedMax: 100 }),
   bool('safety.stabilityControl', 'Control de estabilidad', { ...G_SAF, displayPriority: 85 }),
   bool('safety.tractionControl', 'Control de tracción', { ...G_SAF, displayPriority: 80 }),
@@ -178,7 +176,6 @@ const safety: AttributeDef[] = [
   bool('safety.laneAssist', 'Asistente de carril', { ...G_SAF, displayPriority: 75 }),
   bool('safety.adaptiveCruiseControl', 'Crucero adaptativo', { ...G_SAF, displayPriority: 72 }),
   bool('safety.blindSpotDetection', 'Punto ciego', { ...G_SAF, displayPriority: 74 }),
-  bool('safety.crossTrafficAlert', 'Alerta de tráfico cruzado', { ...G_SAF, displayPriority: 55 }),
   bool('safety.fatigueMonitor', 'Monitor de fatiga', { ...G_SAF, displayPriority: 45 }),
   bool('safety.tirePressureMonitoring', 'Monitoreo presión llantas', { ...G_SAF, displayPriority: 50 }),
 ];
@@ -219,7 +216,6 @@ const G_TECH = { displayGroup: 'Tecnología', dimension: 'tecnología' };
 const technology: AttributeDef[] = [
   bool('technology.bluetooth', 'Bluetooth', { ...G_TECH, displayPriority: 60 }),
   bool('technology.touchscreen', 'Pantalla táctil', { ...G_TECH, displayPriority: 70 }),
-  bool('technology.navigation', 'Navegación', { ...G_TECH, displayPriority: 50 }),
   txt('technology.smartphoneIntegration', 'CarPlay / Android Auto', { ...G_TECH, displayPriority: 85, cardEligible: true, comparable: true }),
   bool('technology.wirelessCharger', 'Cargador inalámbrico', { ...G_TECH, displayPriority: 45 }),
   bool('technology.startStop', 'Start-Stop (se apaga en los semáforos)', { ...G_TECH, displayPriority: 40, appliesTo: `${ICE},${FT.HEV},${FT.PHEV}` }),
@@ -290,15 +286,10 @@ const electric: AttributeDef[] = [
   num('electric.cityElectricConsumption', 'Consumo eléctrico ciudad', { ...G_EV_EF, unit: 'kWh/100km', direction: 'lower_better', displayPriority: 70, expectedMin: 8, expectedMax: 35 }),
   num('electric.highwayElectricConsumption', 'Consumo eléctrico carretera', { ...G_EV_EF, unit: 'kWh/100km', direction: 'lower_better', displayPriority: 65, expectedMin: 10, expectedMax: 40 }),
   num('electric.electricRange', 'Autonomía oficial', { ...G_EV, unit: 'km', direction: 'higher_better', displayPriority: 95, cardEligible: true, expectedMin: 80, expectedMax: 900 }),
-  num('electric.realRangeHighway', 'Autonomía real carretera', { ...G_EV, unit: 'km', direction: 'higher_better', displayPriority: 75, coAvailability: 'rare', expectedMin: 50, expectedMax: 850 }),
-  num('electric.realRangeCity', 'Autonomía real ciudad', { ...G_EV, unit: 'km', direction: 'higher_better', displayPriority: 78, coAvailability: 'rare', expectedMin: 50, expectedMax: 950 }),
-  num('electric.realRangeMixed', 'Autonomía real mixta', { ...G_EV, unit: 'km', direction: 'higher_better', displayPriority: 80, cardEligible: true, coAvailability: 'rare', expectedMin: 50, expectedMax: 900 }),
   num('electric.acChargingTime', 'Carga AC', { ...G_EV, unit: 'h', direction: 'lower_better', displayPriority: 60, expectedMin: 1, expectedMax: 40 }),
   num('electric.dcChargingTime', 'Carga rápida DC (10–80 %)', { ...G_EV, unit: 'min', direction: 'lower_better', displayPriority: 85, cardEligible: true, expectedMin: 10, expectedMax: 240 }),
   bool('electric.regenerativeBraking', 'Frenado regenerativo', { ...G_EV, displayPriority: 50 }),
   num('electric.batteryCapacity', 'Capacidad de batería', { ...G_EV, unit: 'kWh', direction: 'higher_better', displayPriority: 88, cardEligible: true, expectedMin: 10, expectedMax: 200 }),
-  num('electric.batteryPrice', 'Precio de la batería', { ...G_EV, unit: 'COP', direction: 'lower_better', displayPriority: 35, dimension: 'costo', coAvailability: 'rare', expectedMin: 5_000_000, expectedMax: 300_000_000 }),
-  num('electric.homeChargerCost', 'Costo cargador en casa', { ...G_EV, unit: 'COP', direction: 'lower_better', displayPriority: 40, dimension: 'costo', coAvailability: 'rare', expectedMin: 500_000, expectedMax: 20_000_000 }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -339,7 +330,6 @@ const phev: AttributeDef[] = [
   num('phev.dcChargingTime', 'Carga DC (PHEV)', { ...G_PHEV, unit: 'min', direction: 'lower_better', displayPriority: 50, coAvailability: 'rare', expectedMin: 10, expectedMax: 240 }),
   bool('phev.regenerativeBraking', 'Frenado regenerativo (PHEV)', { ...G_PHEV, displayPriority: 45 }),
   num('phev.batteryWeight', 'Peso de la batería (PHEV)', { ...G_PHEV, unit: 'kg', displayPriority: 20, coAvailability: 'rare', expectedMin: 50, expectedMax: 500 }),
-  num('phev.homeChargerCost', 'Costo cargador en casa (PHEV)', { ...G_PHEV, unit: 'COP', direction: 'lower_better', displayPriority: 35, dimension: 'costo', coAvailability: 'rare', expectedMin: 500_000, expectedMax: 20_000_000 }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -405,14 +395,11 @@ const recuperados: AttributeDef[] = [
   txt('electric.chargePort', 'Conector de carga', { ...G_EV, appliesTo: ENCHUFABLE, displayPriority: 68 }),
   bool('electric.onePedal', 'Manejo con un solo pedal', { ...G_EV, displayPriority: 35, coAvailability: 'rare' }),
   num('electric.regenLevels', 'Niveles de regeneración', { ...G_EV, appliesTo: ENCHUFABLE, displayPriority: 25, coAvailability: 'rare', expectedMin: 1, expectedMax: 6 }),
-  bool('electric.bidirectional', 'Da energía a aparatos o a la casa (V2L/V2H)', { ...G_EV, appliesTo: ENCHUFABLE, displayPriority: 45 }),
-  num('electric.bidirectionalKw', 'Potencia bidireccional', { ...G_EV, appliesTo: ENCHUFABLE, unit: 'kW', direction: 'higher_better', displayPriority: 25, coAvailability: 'rare', expectedMin: 1, expectedMax: 20 }),
 
   // Dimensiones e interior
   num('dimensions.turningRadius', 'Radio de giro', { ...G_DIM, unit: 'm', direction: 'lower_better', displayPriority: 50, coAvailability: 'rare', expectedMin: 4, expectedMax: 8 }),
   num('dimensions.roofLoad', 'Carga en el techo', { ...G_DIM, unit: 'kg', direction: 'higher_better', displayPriority: 20, coAvailability: 'rare', expectedMin: 20, expectedMax: 200 }),
   num('interior.doors', 'Puertas', { ...G_INT, displayPriority: 50, expectedMin: 2, expectedMax: 5 }),
-  num('interior.trunkThirdRowUp', 'Baúl con la tercera fila en uso', { ...G_INT, unit: 'L', direction: 'higher_better', displayPriority: 35, coAvailability: 'rare', expectedMin: 50, expectedMax: 800 }),
 
   // Llantas (base del Índice Hueco)
   txt('wheels.tireSize', 'Medida de llanta', { ...G_LLANTAS, displayPriority: 60 }),
@@ -433,7 +420,6 @@ const recuperados: AttributeDef[] = [
   bool('safety.isofix', 'Anclajes ISOFIX para sillas de niños', { ...G_SAF, displayPriority: 78 }),
   enm('safety.ncapAgency', 'Quién hizo la prueba de choque', { ...G_SAF, displayPriority: 70, opciones: ['Latin NCAP', 'Euro NCAP', 'ANCAP', 'ASEAN NCAP', 'C-NCAP', 'IIHS', 'NHTSA', 'Global NCAP'] }),
   num('safety.ncapYear', 'Año de la prueba de choque', { ...G_SAF, displayPriority: 45, expectedMin: 2010, expectedMax: 2030 }),
-  num('safety.pedestrianScore', 'Protección a peatones NCAP', { ...G_SAF, unit: '%', direction: 'higher_better', displayPriority: 35, coAvailability: 'rare', expectedMin: 0, expectedMax: 100 }),
   bool('assistance.frontParkingSensors', 'Sensores de parqueo delanteros', { ...G_ASSIST, displayPriority: 55 }),
   bool('assistance.parkAssist', 'Se parquea solo', { ...G_ASSIST, displayPriority: 35, coAvailability: 'rare' }),
   bool('offRoad.hillDescentControl', 'Control de descenso', { ...G_OFF, displayPriority: 50 }),
@@ -442,7 +428,6 @@ const recuperados: AttributeDef[] = [
   num('offRoad.maxGradient', 'Pendiente máxima', { ...G_OFF, unit: '%', direction: 'higher_better', displayPriority: 25, coAvailability: 'rare', expectedMin: 20, expectedMax: 100 }),
 
   // Luces
-  bool('lighting.adaptiveHeadlights', 'Luces que se adaptan (no encandilan)', { ...G_LUCES, displayPriority: 40, coAvailability: 'rare' }),
   bool('lighting.frontFogLights', 'Exploradoras delanteras', { ...G_LUCES, displayPriority: 45 }),
   bool('lighting.dynamicIndicators', 'Direccionales secuenciales', { ...G_LUCES, displayPriority: 10, coAvailability: 'rare' }),
   bool('lighting.headlightWashers', 'Lavafaros', { ...G_LUCES, displayPriority: 10, coAvailability: 'rare' }),
@@ -454,11 +439,8 @@ const recuperados: AttributeDef[] = [
   bool('technology.wirelessSmartphone', 'CarPlay / Android Auto sin cable', { ...G_INFO, displayPriority: 55 }),
   txt('technology.audioBrand', 'Marca del sonido', { ...G_INFO, displayPriority: 35 }),
   num('technology.speakers', 'Parlantes', { ...G_INFO, direction: 'higher_better', displayPriority: 35, expectedMin: 2, expectedMax: 30 }),
-  num('technology.amplifierW', 'Potencia del amplificador', { ...G_INFO, unit: 'W', direction: 'higher_better', displayPriority: 10, coAvailability: 'rare', expectedMin: 50, expectedMax: 3000 }),
   num('technology.usbA', 'Puertos USB-A', { ...G_INFO, displayPriority: 20, expectedMin: 1, expectedMax: 10 }),
   num('technology.usbC', 'Puertos USB-C', { ...G_INFO, displayPriority: 30, expectedMin: 1, expectedMax: 10 }),
-  bool('technology.wifi', 'Wi-Fi a bordo', { ...G_INFO, displayPriority: 20, coAvailability: 'rare' }),
-  bool('technology.connectedApp', 'App en el celular / actualizaciones remotas', { ...G_INFO, displayPriority: 40 }),
 
   // Confort
   bool('comfort.keyless', 'Encendido sin llave', { ...G_COMF, displayPriority: 55 }),
@@ -472,14 +454,10 @@ const recuperados: AttributeDef[] = [
   enm('comfort.powerWindows', 'Vidrios eléctricos', { ...G_COMF, displayPriority: 40, opciones: ['Solo adelante', 'Adelante y atrás'] }),
   bool('comfort.ambientLighting', 'Luz ambiental', { ...G_COMF, displayPriority: 25 }),
   bool('comfort.acousticGlass', 'Vidrios acústicos', { ...G_COMF, displayPriority: 15, coAvailability: 'rare' }),
-  bool('comfort.heatedWindshield', 'Parabrisas térmico', { ...G_COMF, displayPriority: 10, coAvailability: 'rare' }),
   bool('comfort.slidingSecondRow', 'Segunda fila corrediza', { ...G_COMF, displayPriority: 25, coAvailability: 'rare' }),
   txt('comfort.steeringWheel', 'Volante', { ...G_COMF, displayPriority: 30 }),
   bool('comfort.heatedSteeringWheel', 'Volante con calefacción', { ...G_COMF, displayPriority: 10, coAvailability: 'rare' }),
   bool('comfort.autoDimmingMirror', 'Retrovisor que se oscurece solo', { ...G_COMF, displayPriority: 25 }),
-  bool('comfort.outlet12v', 'Toma de 12 V', { ...G_COMF, displayPriority: 15 }),
-  bool('comfort.outlet120v', 'Toma de 110/120 V', { ...G_COMF, displayPriority: 25, coAvailability: 'rare' }),
-  bool('comfort.bedOutlet', 'Toma de corriente en el platón', { ...G_COMF, displayPriority: 10, coAvailability: 'rare' }),
 
   // Garantía, mantenimiento y origen
   num('commercial.batteryWarrantyYears', 'Garantía de la batería', { ...G_POST, appliesTo: `${ENCHUFABLE},${FT.HEV}`, unit: 'años', direction: 'higher_better', displayPriority: 65, expectedMin: 1, expectedMax: 12 }),
@@ -503,7 +481,12 @@ const recuperados: AttributeDef[] = [
 //   Vadeo (altura)                        → offRoad.wadingDepth
 //   Sistema de frenos (ABS/EBD/BA)        → assistance.brakeAssist (el ABS es obligatorio)
 //   Suspensión general                    → chassis.front/rearSuspension
-//   Capacidad bruta de batería (confunde con la útil), índice de conveniencia de
+//   Decisión del equipo (8-oct-2026), no se van a llenar: autonomía real (mixta,
+//   ciudad, carretera), V2L/V2H y su potencia, precio de la batería, costo del
+//   cargador en casa, baúl con tercera fila, protección adultos/niños/peatones
+//   NCAP, tráfico cruzado, luces adaptativas, parabrisas térmico, tomas de 12 V,
+//   110 V y en el platón, amplificador, Wi-Fi, app conectada y navegación.
+////   Capacidad bruta de batería (confunde con la útil), índice de conveniencia de
 //   carga y ahorro a 5 años (los reemplazan los Índices WiseMotors).
 //   Se quedan (decisión del equipo): frenado regenerativo (no todos lo tienen) y
 //   relación potencia/peso (se muestra en la ficha; si falta se calcula).

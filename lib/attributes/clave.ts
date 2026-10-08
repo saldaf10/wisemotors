@@ -58,7 +58,7 @@ export const CAMPOS_CLAVE: CampoClave[] = [
     porque: 'Tarjeta, ficha, búsqueda "que gaste poco" y Costo Real de Tenencia',
   },
   { id: 'tanque', etiqueta: 'Tanque', seccion: 'Consumo', keys: TRENES('fuelTankCapacity'), porque: 'Kilómetros con el tanque lleno' },
-  { id: 'autonomia', etiqueta: 'Autonomía eléctrica', seccion: 'Batería', keys: ['electric.electricRange', 'electric.realRangeMixed', 'phev.electricRange'], porque: 'Tarjeta, ficha y ruta desde Medellín' },
+  { id: 'autonomia', etiqueta: 'Autonomía eléctrica', seccion: 'Batería', keys: ['electric.electricRange', 'phev.electricRange'], porque: 'Tarjeta, ficha y ruta desde Medellín' },
   { id: 'bateria', etiqueta: 'Batería', seccion: 'Batería', keys: ['electric.batteryCapacity', 'phev.batteryCapacity'], porque: 'Ficha y costo de energía' },
   { id: 'cargaRapida', etiqueta: 'Carga rápida', seccion: 'Batería', keys: ['electric.dcChargingTime', 'phev.dcChargingTime'], porque: 'Bloque de batería' },
   { id: 'cargaCasa', etiqueta: 'Carga en casa', seccion: 'Batería', keys: ['electric.acChargingTime', 'phev.acChargingTime'], porque: 'Bloque de batería' },

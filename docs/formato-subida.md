@@ -6,6 +6,7 @@ este formato, siempre en el mismo orden, y WiseMotors lo lee sin IA.
 ## Reglas
 
 - Una línea por campo: `Campo: valor`. Siempre el mismo orden.
+- El estado (Disponible) se pone solo al subir y se cambia en el editor.
 - Si no se sabe o no aplica, se deja vacío después de los dos puntos (`Turbo:`).
 - La unidad ya está en el nombre del campo: se escribe solo el número (`Largo (mm): 4270`).
 - Decimales con coma o punto (`10,9` o `10.9`). Miles sin separador o con punto (`113000000` o `113.000.000`).
@@ -26,7 +27,6 @@ Tren motriz (Gasolina / Diesel / Eléctrico / Híbrido / Híbrido Enchufable):
 Carrocería (Sedán / Hatchback / SUV / Wagon / Deportivo / Convertible / Pickup / Van / Camión):
 Categoría (Automóvil / Deportivo / Todoterreno / Lujo / Económico / Comercial):
 Precio de lista (COP):
-Estado (Disponible / Agotado / Próximamente):
 
 # Motor
 Potencia máxima (hp):
@@ -55,9 +55,6 @@ Tanque de combustible (gal):
 Consumo eléctrico ciudad (kWh/100 km): [solo eléctrico]
 Consumo eléctrico carretera (kWh/100 km): [solo eléctrico]
 Autonomía oficial (km): [solo eléctrico y enchufable]
-Autonomía real mixta (km): [solo eléctrico]
-Autonomía real ciudad (km): [solo eléctrico]
-Autonomía real carretera (km): [solo eléctrico]
 
 # Batería y carga
 Capacidad de batería (kWh): [eléctrico, híbrido y enchufable]
@@ -70,10 +67,6 @@ Conector de carga: [eléctrico y enchufable]
 Frenado regenerativo (Sí/No): [eléctrico, híbrido y enchufable]
 Niveles de regeneración: [eléctrico y enchufable]
 Manejo con un solo pedal (Sí/No): [solo eléctrico]
-Da energía a aparatos o a la casa V2L/V2H (Sí/No): [eléctrico y enchufable]
-Potencia bidireccional (kW): [eléctrico y enchufable]
-Costo del cargador en casa (COP): [eléctrico y enchufable]
-Precio de la batería (COP): [solo eléctrico]
 Garantía de la batería (años): [eléctrico, híbrido y enchufable]
 Garantía de la batería (km): [eléctrico, híbrido y enchufable]
 
@@ -111,7 +104,6 @@ Filas de asientos:
 Puertas:
 Baúl (L):
 Baúl con sillas abatidas (L):
-Baúl con la tercera fila en uso (L):
 
 # Carga y trabajo (pickups, vans y camiones)
 Capacidad de carga (kg):
@@ -159,9 +151,6 @@ Monitoreo de presión de llantas (Sí/No):
 Calificación NCAP (estrellas):
 Quién hizo la prueba de choque (Latin NCAP / Euro NCAP / ANCAP / ASEAN NCAP / C-NCAP / IIHS / NHTSA / Global NCAP):
 Año de la prueba de choque:
-Protección adultos NCAP (%):
-Protección niños NCAP (%):
-Protección a peatones NCAP (%):
 Asistencias NCAP (%):
 
 # Asistencias de manejo
@@ -169,7 +158,6 @@ Frenado autónomo de emergencia (Sí/No):
 Alerta de colisión frontal (Sí/No):
 Asistente de carril (Sí/No):
 Punto ciego (Sí/No):
-Alerta de tráfico cruzado (Sí/No):
 Crucero adaptativo (Sí/No):
 Monitor de fatiga (Sí/No):
 Asistente de frenado (Sí/No):
@@ -183,7 +171,6 @@ Se parquea solo (Sí/No):
 # Luces
 Tipo de faros:
 Luces altas automáticas (Sí/No):
-Luces que se adaptan, no encandilan (Sí/No):
 Exploradoras delanteras (Sí/No):
 Direccionales secuenciales (Sí/No):
 Lavafaros (Sí/No):
@@ -210,10 +197,6 @@ Volante con calefacción (Sí/No):
 Retrovisor que se oscurece solo (Sí/No):
 Luz ambiental (Sí/No):
 Vidrios acústicos (Sí/No):
-Parabrisas térmico (Sí/No):
-Toma de 12 V (Sí/No):
-Toma de 110/120 V (Sí/No):
-Toma de corriente en el platón (Sí/No):
 
 # Tecnología
 Pantalla central (pulgadas):
@@ -222,15 +205,11 @@ Tablero digital (pulgadas):
 CarPlay / Android Auto:
 CarPlay / Android Auto sin cable (Sí/No):
 Bluetooth (Sí/No):
-Navegación (Sí/No):
 Cargador inalámbrico (Sí/No):
 Puertos USB-A:
 Puertos USB-C:
 Marca del sonido:
 Parlantes:
-Potencia del amplificador (W):
-Wi-Fi a bordo (Sí/No):
-App en el celular / actualizaciones remotas (Sí/No):
 Start-Stop (Sí/No): [no eléctrico]
 
 # Garantía y mantenimiento
