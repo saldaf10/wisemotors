@@ -554,6 +554,9 @@ const RANGOS_POR_CLASE: Record<string, AttributeDef['rangos']> = {
 // ---------------------------------------------------------------------------
 // REGISTRO COMPLETO
 // ---------------------------------------------------------------------------
+/** Se calculan con otros datos: nunca se buscan ni se piden (potencia/peso = potencia ÷ peso en toneladas). */
+export const CALCULADOS = new Set(['performance.powerToWeight']);
+
 export const ATTRIBUTE_REGISTRY: AttributeDef[] = [
   ...commercial,
   ...performance,

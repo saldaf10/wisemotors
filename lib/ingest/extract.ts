@@ -6,7 +6,7 @@
 // Un valor sin cita se descarta.
 // ============================================================================
 
-import { ATTRIBUTE_REGISTRY, attributeAppliesTo } from '@/lib/attributes/registry';
+import { ATTRIBUTE_REGISTRY, CALCULADOS, attributeAppliesTo } from '@/lib/attributes/registry';
 import { z } from 'zod/v4';
 import { pedirJson } from '@/lib/ai/claude';
 import type { RawFact, SourceTier } from './types';
@@ -16,7 +16,7 @@ import { CATEGORIAS, claseEnPalabras, TIPOS_CARROCERIA, tiposDeClase, type Clase
 
 // Solo atributos que se publican en Colombia y con keys válidas
 // (los WiseMetrics son criterio editorial de la casa: ninguna página los trae)
-const EXTRACTABLE = ATTRIBUTE_REGISTRY.filter(d => d.coAvailability !== 'never_published' && d.dimension !== 'editorial');
+const EXTRACTABLE = ATTRIBUTE_REGISTRY.filter(d => d.coAvailability !== 'never_published' && d.dimension !== 'editorial' && !CALCULADOS.has(d.key));
 const VALID_KEYS = new Set(EXTRACTABLE.map(d => d.key));
 
 const ExtraccionSchema = z.object({
