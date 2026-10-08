@@ -3,9 +3,9 @@
 // ============================================================================
 // Revisión de fotos en la ingesta: SEIS vistas fijas (lateral, frontal,
 // trasera, 3/4 delantera, 3/4 trasera, interior). Cada vista muestra la foto
-// elegida —del concesionario o la que encontró la IA, ya procesada: sin fondo,
+// elegida —la que subió el equipo, ya procesada: sin fondo,
 // recortada— o queda vacía para subirla. Debajo, las demás candidatas: se
-// pueden usar para cualquier vista (la IA a veces confunde el ángulo).
+// pueden usar para cualquier vista.
 // La lateral es la portada por defecto.
 // ============================================================================
 
@@ -198,7 +198,7 @@ export function RevisionFotos({
     <div className="bg-blanco rounded-[28px] border border-linea p-6">
       <h3 className="font-bold text-tinta">Fotos: {llenas} de 6 vistas</h3>
       <p className="mt-1 text-sm text-tinta-2">
-        Las del concesionario van primero; la IA llenó las que encontró. Sube la que falte o cámbiala. La marcada con ★ es la
+        Sube una foto por vista o cámbiala. La marcada con ★ es la
         portada; las de lado deben mirar a la derecha (si no, voltéala).
       </p>
 
@@ -232,7 +232,7 @@ export function RevisionFotos({
               <div className="flex flex-wrap items-center gap-1.5 p-3">
                 <span className="mr-auto text-[13px] font-semibold">{v.etiqueta}</span>
                 {f && f.pagina === 'concesionario' && <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[11px] text-purple-800">Concesionario</span>}
-                {f && f.pagina !== 'concesionario' && <span className="rounded-full bg-[#efe4f7] px-2 py-0.5 text-[11px] text-wise">IA</span>}
+                
                 {f && !ocupado && (
                   <>
                     {f.angulo !== 'interior' && (
@@ -266,7 +266,7 @@ export function RevisionFotos({
 
       {candidatas.length > 0 && (
         <details className="mt-6">
-          <summary className="cursor-pointer text-sm text-wise hover:underline">Otras {candidatas.length} fotos que encontró la IA</summary>
+          <summary className="cursor-pointer text-sm text-wise hover:underline">Otras {candidatas.length} fotos</summary>
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
             {candidatas.map(f => (
               <div key={f.original} className="overflow-hidden rounded-[20px] border border-linea">
@@ -276,7 +276,7 @@ export function RevisionFotos({
                 </div>
                 <div className="space-y-2 p-3">
                   <div className="flex items-center gap-2 text-[11px]">
-                    <span className="rounded-full bg-tarjeta px-2 py-0.5">La IA dice: {ETIQUETA[f.angulo] ?? f.angulo}</span>
+                    <span className="rounded-full bg-tarjeta px-2 py-0.5">{ETIQUETA[f.angulo] ?? f.angulo}</span>
                     <a href={f.pagina} target="_blank" rel="noopener noreferrer" className="ml-auto text-tinta-2 hover:text-tinta" title="Página de origen">
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>

@@ -11,7 +11,7 @@
 import { readFileSync } from 'node:fs';
 import { VALORES_POR_DEFECTO as P } from '../lib/indices/parametros';
 import { calcularIndices, costoRealTenencia, indiceAltura, indiceHueco, indicePalmas, leerLlanta } from '../lib/indices/calculo';
-import { normalizarOpcion } from '../lib/ingest/extract';
+import { opcionMasCercana } from '../lib/subida/opciones';
 
 let fallas = 0;
 function check(nombre: string, ok: boolean, detalle = '') {
@@ -96,12 +96,12 @@ for (const [entra, sale] of [
   ['4WD', '4x4'], ['Tracción total', 'Integral (AWD)'], ['AWD', 'Integral (AWD)'], ['4x2', 'Delantera'],
   ['Tracción delantera', 'Delantera'], ['RWD', 'Trasera'], ['xDrive', 'Integral (AWD)'], ['E-Four', 'Integral (AWD)'],
 ] as const) {
-  check(`"${entra}" → ${sale}`, normalizarOpcion('drivetrain.traction', entra, ['Delantera', 'Trasera', 'Integral (AWD)', '4x4']) === sale);
+  check(`"${entra}" → ${sale}`, opcionMasCercana(entra, ['Delantera', 'Trasera', 'Integral (AWD)', '4x4']) === sale);
 }
 const IND = ['Atmosférico', 'Turbo', 'Supercargado', 'Turbo y supercargado'];
-check('"1.0 TSI" → Turbo', normalizarOpcion('combustion.inductionType', '1.0 TSI', IND) === 'Turbo');
-check('"aspiración natural" → Atmosférico', normalizarOpcion('combustion.inductionType', 'aspiración natural', IND) === 'Atmosférico');
-check('"Frenos de tambor" → Tambor', normalizarOpcion('chassis.rearBrakes', 'Frenos de tambor', ['Disco', 'Tambor']) === 'Tambor');
+check('"1.0 TSI" → Turbo', opcionMasCercana('1.0 TSI', IND, 'combustion.inductionType') === 'Turbo');
+check('"aspiración natural" → Atmosférico', opcionMasCercana('aspiración natural', IND, 'combustion.inductionType') === 'Atmosférico');
+check('"Frenos de tambor" → Tambor', opcionMasCercana('Frenos de tambor', ['Disco', 'Tambor']) === 'Tambor');
 
 console.log('\nLos 10 DEMO (para mirar con criterio):');
 const demo = JSON.parse(readFileSync('data/semillas/vehiculos-demo.json', 'utf8'));

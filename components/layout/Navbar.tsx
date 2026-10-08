@@ -192,7 +192,7 @@ export function Navbar() {
                       { href: '/favorites', texto: 'Favoritos', icono: Heart },
                       ...(isFullyAuthorized
                         ? [
-                            { href: '/admin/ingest', texto: 'Subir con IA', icono: Sparkles },
+                            { href: '/admin/ingest', texto: 'Subir carro', icono: Sparkles },
                             { href: '/admin', texto: 'Panel', icono: User },
                           ]
                         : []),
@@ -244,7 +244,7 @@ export function Navbar() {
             {[
               ...enlaces,
               ...(isAuthenticated ? [{ href: '/favorites', texto: 'Favoritos' }] : []),
-              ...(isFullyAuthorized ? [{ href: '/admin/ingest', texto: 'Subir con IA' }, { href: '/admin', texto: 'Panel' }] : []),
+              ...(isFullyAuthorized ? [{ href: '/admin/ingest', texto: 'Subir carro' }, { href: '/admin', texto: 'Panel' }] : []),
             ].map(
               (e, i) => (
                 <Link

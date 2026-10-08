@@ -11,9 +11,6 @@
     "app/api/**/*.ts": {
       "maxDuration": 30
     },
-    "app/api/admin/ingest/route.ts": {
-      "maxDuration": 300
-    },
     "app/api/compare/ia/route.ts": {
       "maxDuration": 120
     },
@@ -22,9 +19,6 @@
     },
     "app/api/admin/ingest/publish/route.ts": {
       "maxDuration": 60
-    },
-    "app/api/admin/vehicles/*/complementar/route.ts": {
-      "maxDuration": 120
     }
   },
   "env": {

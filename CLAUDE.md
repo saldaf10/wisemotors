@@ -215,6 +215,21 @@ cobertura, migración, seeds, motor de cohortes.
 - Ficha: bloque "Para trabajar" en "Espacio y carga" para pickups y vans/camiones.
   Test: `scripts/verify-clase.ts`.
 
+**8-oct-2026 — SUBIDA SIN IA (la IA gastaba demasiado por carro):**
+- Se eliminó toda la subida con IA: búsqueda de fuentes, lectura de páginas/PDF, extracción,
+  búsqueda y clasificación de fotos, verificación de precios, "Complementar con IA", IngestStudio
+  y los scripts de carga masiva (están en el historial de git si algún día se necesitan).
+- La subida ahora es la GUÍA (`/admin/ingest`, `components/admin/SubidaGuia.tsx`):
+  `lib/subida/formato.ts` = la lista de campos en orden FIJO (no reordenar; un campo "por motor"
+  se guarda en combustion/hybrid/phev/electric según el tren) y qué va para cada tren motriz +
+  carrocería (`aplica`, `generarPlantilla`). `lib/subida/leer.ts` lee "Campo: valor" por NOMBRE
+  (nunca por posición: un vacío no corre datos), tolera mayúsculas/tildes/tipeos
+  (`lib/subida/texto.ts`, `opciones.ts` con sinónimos del oficio), convierte números en formato
+  colombiano y valida rangos por clase. Lo que no entiende no se guarda: sale como error.
+  Publica por el mismo `/api/admin/ingest/publish` (confianza 1, tier 1). Fotos: solo las que
+  sube el equipo, procesadas en Cloudinary (`lib/ingest/fotos.ts`, sin IA).
+  Guía para el equipo: `docs/formato-subida.md` y `docs/como-llenar-la-guia.md`. Test: `verify-subida.ts`.
+
 ## Backlog en orden (del plan, secciones 8-9)
 
 1. **Fase 0 — SEGURIDAD (pospuesta por decisión del usuario, pero es LEGALMENTE urgente):**
@@ -264,7 +279,7 @@ cobertura, migración, seeds, motor de cohortes.
   BD** — el registro nuevo (`FT` en `lib/attributes/registry.ts`) ya la usa. Unificar hacia ella.
 - `getMarketStats()` en `lib/ai/features.ts` trae TODO el catálogo por búsqueda, sin
   caché — cuello de botella conocido.
-- Tests (npx tsx, sin BD ni API): `scripts/verify-scoring.ts`, `verify-indices.ts`, `verify-clave.ts`, `verify-clase.ts`, `verify-demanda.ts`, `verify-mapas.ts`, `verify-suspension.ts`.
+- Tests (npx tsx, sin BD ni API): `scripts/verify-scoring.ts`, `verify-indices.ts`, `verify-clave.ts`, `verify-clase.ts`, `verify-demanda.ts`, `verify-mapas.ts`, `verify-suspension.ts`, `verify-subida.ts`.
 - Registro sin redundancia (8-oct-2026): 253 → 214 campos (se quedaron potencia/peso, que solo se calcula, y frenado regenerativo; el equipo retiró 22 que no se van a llenar). Formato de subida sin IA en `docs/formato-subida.md` (166 líneas). Los retirados y a dónde pasó su dato están en el comentario "CAMPOS RETIRADOS" de `registry.ts`; `lib/db/fusionar-campos.ts` mueve los datos en cada deploy (idempotente, solo llena vacíos) y `scripts/fusionar-campos.ts` lo muestra a mano. La ficha/buscador/índices siguen leyendo los campos viejos como respaldo. Antes de agregar un campo: revisar que no exista ya otro con el mismo dato. En la base SOLO quedan los campos del registro: `lib/db/limpiar-campos.ts` (en cada deploy, después de partir-suspension y fusionar-campos) borra datos, definiciones y valores del JSON de cualquier campo retirado, con respaldo en `estado_sistema` (`respaldo_campos_retirados_<fecha>`). Retirar un campo del registro = se borra de la base en el siguiente deploy.
 - Ficha (7-oct-2026): hay `chassis.frontBrakes` (Frenos delanteros) y se retiró `chassis.suspensionSetup` (Suspensión general) del registro. `lib/db/partir-suspension.ts` pasa ese texto viejo a Suspensión delantera/trasera (solo llena vacíos, hereda fuente/confianza) y corre solo en cada deploy de producción desde `preparar-bd.ts`; `scripts/partir-suspension.ts` lo muestra a mano (simulación por defecto, `--write` aplica).
 - Git: push directo a `main` (sin ramas ni PRs), decisión del usuario.

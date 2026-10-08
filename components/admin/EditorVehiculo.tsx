@@ -5,7 +5,7 @@
 //
 // Todo sale del registro de atributos: si mañana se agrega un campo, aparece
 // aquí solo. Arriba lo que más se toca (identidad, precio, concesionarios,
-// fotos por vista, datos clave y "Complementar con IA"); abajo la ficha técnica
+// fotos por vista, datos clave); abajo la ficha técnica
 // completa por grupos, con buscador. Los cambios se acumulan y se guardan en un
 // solo paso; dejar un campo vacío borra ese dato.
 // ============================================================================
@@ -18,7 +18,6 @@ import { adminFetch, mensajeDeErrorDeAuth } from '@/lib/admin-fetch';
 import { ATTRIBUTE_REGISTRY, attributeAppliesTo, type AttributeDef } from '@/lib/attributes/registry';
 import { sinDatoDeSpecs, valoresDeSpecs } from '@/lib/attributes/clave';
 import { DatosClave, numeroEscrito } from './DatosClave';
-import { ComplementarIA } from './ComplementarIA';
 import { RevisionFotos, VISTAS, type FotoRevision } from './RevisionFotos';
 import { CATEGORIAS, claseDeTipo, TIPOS_CARROCERIA } from '@/lib/attributes/clase';
 
@@ -375,7 +374,6 @@ export function EditorVehiculo({ vehicleId }: { vehicleId: string }) {
           onValor={(key, valor) => poner(key, valor)}
           onSinDato={(id, marcar) => setSinDato(marcar ? [...sinDato, id] : sinDato.filter(x => x !== id))}
         />
-        <ComplementarIA vehicleId={v.id} onAplicado={cargar} />
       </div>
 
       {/* Ficha técnica completa */}

@@ -6,7 +6,7 @@
 // Arriba: título, las tres acciones del día a día (subir con IA, concesionario
 // nuevo, leads) y un resumen del catálogo. Debajo: pestañas en pastillas.
 // La subida manual (formulario de 200 campos) ya no existe: los carros entran
-// por "Subir con IA", con revisión humana campo por campo.
+// por "Subir carro", con revisión humana campo por campo.
 // ============================================================================
 
 import Link from 'next/link';
@@ -89,7 +89,7 @@ export function AdminDashboard() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href="/admin/ingest" className="pastilla pastilla--wise h-12 px-5">
-            <Sparkles className="h-4 w-4" /> Subir con IA
+            <Sparkles className="h-4 w-4" /> Subir carro
           </Link>
           <Link href="/admin/dealerships/new" className="pastilla h-12 px-5">
             <Building2 className="h-4 w-4" /> Nuevo concesionario

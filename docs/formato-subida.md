@@ -1,7 +1,10 @@
-# Formato de subida de vehículos (propuesta, 8-oct-2026)
+# Formato de subida de vehículos (8-oct-2026)
 
 Reemplaza la subida con IA (que gastaba tokens por carro). Se llena un texto con
-este formato, siempre en el mismo orden, y WiseMotors lo lee sin IA.
+este formato, siempre en el mismo orden, y WiseMotors lo lee sin IA. La lista
+completa está abajo; en **Panel → Subir carro** se saca ya personalizada para cada
+carro (solo los campos de su tren motriz y carrocería). Cómo llenarla:
+`docs/como-llenar-la-guia.md`. El código de la lista es `lib/subida/formato.ts`.
 
 ## Reglas
 
