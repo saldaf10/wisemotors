@@ -94,6 +94,7 @@ const performance: AttributeDef[] = [
   num('performance.acceleration0to200', '0–200 km/h', { ...G_PERF, unit: 's', direction: 'lower_better', displayPriority: 40, coAvailability: 'rare', expectedMin: 5, expectedMax: 60 }),
   num('performance.quarterMile', 'Cuarto de milla', { ...G_PERF, unit: 's', direction: 'lower_better', displayPriority: 30, coAvailability: 'rare', expectedMin: 7, expectedMax: 25 }),
   num('performance.overtaking80to120', 'Adelantamiento 80–120', { ...G_PERF, unit: 's', direction: 'lower_better', displayPriority: 55, coAvailability: 'rare', expectedMin: 2, expectedMax: 20 }),
+  num('performance.powerToWeight', 'Relación potencia/peso', { ...G_PERF, unit: 'HP/t', direction: 'higher_better', displayPriority: 70, cardEligible: true, expectedMin: 20, expectedMax: 700 }),
   num('performance.maxSpeed', 'Velocidad máxima', { ...G_PERF, unit: 'km/h', direction: 'higher_better', displayPriority: 60, expectedMin: 90, expectedMax: 420 }),
   bool('performance.launchControl', 'Launch control', { ...G_PERF, displayPriority: 20, coAvailability: 'rare' }),
 ];
@@ -294,6 +295,7 @@ const electric: AttributeDef[] = [
   num('electric.realRangeMixed', 'Autonomía real mixta', { ...G_EV, unit: 'km', direction: 'higher_better', displayPriority: 80, cardEligible: true, coAvailability: 'rare', expectedMin: 50, expectedMax: 900 }),
   num('electric.acChargingTime', 'Carga AC', { ...G_EV, unit: 'h', direction: 'lower_better', displayPriority: 60, expectedMin: 1, expectedMax: 40 }),
   num('electric.dcChargingTime', 'Carga rápida DC (10–80 %)', { ...G_EV, unit: 'min', direction: 'lower_better', displayPriority: 85, cardEligible: true, expectedMin: 10, expectedMax: 240 }),
+  bool('electric.regenerativeBraking', 'Frenado regenerativo', { ...G_EV, displayPriority: 50 }),
   num('electric.batteryCapacity', 'Capacidad de batería', { ...G_EV, unit: 'kWh', direction: 'higher_better', displayPriority: 88, cardEligible: true, expectedMin: 10, expectedMax: 200 }),
   num('electric.batteryPrice', 'Precio de la batería', { ...G_EV, unit: 'COP', direction: 'lower_better', displayPriority: 35, dimension: 'costo', coAvailability: 'rare', expectedMin: 5_000_000, expectedMax: 300_000_000 }),
   num('electric.homeChargerCost', 'Costo cargador en casa', { ...G_EV, unit: 'COP', direction: 'lower_better', displayPriority: 40, dimension: 'costo', coAvailability: 'rare', expectedMin: 500_000, expectedMax: 20_000_000 }),
@@ -313,6 +315,7 @@ const hybrid: AttributeDef[] = [
   num('hybrid.fuelTankCapacity', 'Tanque (HEV)', { ...G_HEV, unit: 'gal', displayPriority: 45, expectedMin: 5, expectedMax: 30 }),
   num('hybrid.cityConsumption', 'Consumo ciudad (HEV)', { ...G_HEV, unit: 'km/gal', direction: 'higher_better', displayPriority: 90, cardEligible: true, dimension: 'eficiencia', expectedMin: 20, expectedMax: 130 }),
   num('hybrid.highwayConsumption', 'Consumo carretera (HEV)', { ...G_HEV, unit: 'km/gal', direction: 'higher_better', displayPriority: 82, dimension: 'eficiencia', expectedMin: 20, expectedMax: 120 }),
+  bool('hybrid.regenerativeBraking', 'Frenado regenerativo (HEV)', { ...G_HEV, displayPriority: 50 }),
   num('hybrid.batteryCapacity', 'Batería (HEV)', { ...G_HEV, unit: 'kWh', direction: 'higher_better', displayPriority: 55, expectedMin: 0.5, expectedMax: 5 }),
 ];
 
@@ -334,6 +337,7 @@ const phev: AttributeDef[] = [
   num('phev.electricRange', 'Autonomía eléctrica (PHEV)', { ...G_PHEV, unit: 'km', direction: 'higher_better', displayPriority: 92, cardEligible: true, expectedMin: 10, expectedMax: 200 }),
   num('phev.acChargingTime', 'Carga AC (PHEV)', { ...G_PHEV, unit: 'h', direction: 'lower_better', displayPriority: 55, expectedMin: 1, expectedMax: 15 }),
   num('phev.dcChargingTime', 'Carga DC (PHEV)', { ...G_PHEV, unit: 'min', direction: 'lower_better', displayPriority: 50, coAvailability: 'rare', expectedMin: 10, expectedMax: 240 }),
+  bool('phev.regenerativeBraking', 'Frenado regenerativo (PHEV)', { ...G_PHEV, displayPriority: 45 }),
   num('phev.batteryWeight', 'Peso de la batería (PHEV)', { ...G_PHEV, unit: 'kg', displayPriority: 20, coAvailability: 'rare', expectedMin: 50, expectedMax: 500 }),
   num('phev.homeChargerCost', 'Costo cargador en casa (PHEV)', { ...G_PHEV, unit: 'COP', direction: 'lower_better', displayPriority: 35, dimension: 'costo', coAvailability: 'rare', expectedMin: 500_000, expectedMax: 20_000_000 }),
 ];
@@ -499,9 +503,10 @@ const recuperados: AttributeDef[] = [
 //   Vadeo (altura)                        → offRoad.wadingDepth
 //   Sistema de frenos (ABS/EBD/BA)        → assistance.brakeAssist (el ABS es obligatorio)
 //   Suspensión general                    → chassis.front/rearSuspension
-//   Frenado regenerativo (todos los EV/HEV/PHEV lo tienen), relación potencia/peso
-//   (se calcula), capacidad bruta de batería (confunde con la útil), índice de
-//   conveniencia de carga y ahorro a 5 años (los reemplazan los Índices WiseMotors).
+//   Capacidad bruta de batería (confunde con la útil), índice de conveniencia de
+//   carga y ahorro a 5 años (los reemplazan los Índices WiseMotors).
+//   Se quedan (decisión del equipo): frenado regenerativo (no todos lo tienen) y
+//   relación potencia/peso (se muestra en la ficha; si falta se calcula).
 // ---------------------------------------------------------------------------
 // RANGOS POR CLASE — los de arriba son de un CARRO. Una pickup o una van/camión
 // pesa, mide y carga mucho más: aquí solo lo que cambia (lo que no está, vale
@@ -511,6 +516,7 @@ const recuperados: AttributeDef[] = [
 const RANGOS_POR_CLASE: Record<string, AttributeDef['rangos']> = {
   'performance.acceleration0to100': { comercial: { min: 3, max: 60 } },
   'performance.maxSpeed': { comercial: { min: 60, max: 220 } },
+  'performance.powerToWeight': { comercial: { min: 5 } },
   'chassis.groundClearance': { pickup: { max: 400 }, comercial: { max: 450 } },
   'weight.grossCombinedWeight': { pickup: { min: 2000, max: 12_000 }, comercial: { min: 2000, max: 80_000 } },
   'weight.payload': { comercial: { min: 200, max: 40_000 } },

@@ -371,6 +371,12 @@
     "value": "Eje torsional",
     "confidence": 0.4,
     "sourceTier": 3
+   },
+   {
+    "key": "performance.powerToWeight",
+    "value": 102,
+    "confidence": 0.4,
+    "sourceTier": 3
    }
   ]
  },
@@ -1150,6 +1156,18 @@
     "value": "Eje de torsión",
     "confidence": 0.4,
     "sourceTier": 3
+   },
+   {
+    "key": "performance.powerToWeight",
+    "value": 68,
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "electric.regenerativeBraking",
+    "value": true,
+    "confidence": 0.4,
+    "sourceTier": 3
    }
   ]
  },
@@ -1492,6 +1510,18 @@
    {
     "key": "chassis.rearSuspension",
     "value": "Multibrazo",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "performance.powerToWeight",
+    "value": 128,
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "hybrid.regenerativeBraking",
+    "value": true,
     "confidence": 0.4,
     "sourceTier": 3
    }
@@ -1861,6 +1891,12 @@
    {
     "key": "chassis.rearSuspension",
     "value": "Eje de torsión",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "performance.powerToWeight",
+    "value": 108,
     "confidence": 0.4,
     "sourceTier": 3
    }
@@ -2238,6 +2274,12 @@
     "value": "Eje torsional",
     "confidence": 0.4,
     "sourceTier": 3
+   },
+   {
+    "key": "performance.powerToWeight",
+    "value": 70,
+    "confidence": 0.4,
+    "sourceTier": 3
    }
   ]
  },
@@ -2611,6 +2653,12 @@
    {
     "key": "chassis.rearSuspension",
     "value": "Eje de torsión",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "performance.powerToWeight",
+    "value": 114,
     "confidence": 0.4,
     "sourceTier": 3
    }
@@ -3046,6 +3094,12 @@
    {
     "key": "chassis.rearSuspension",
     "value": "Eje rígido con ballestas",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "performance.powerToWeight",
+    "value": 73,
     "confidence": 0.4,
     "sourceTier": 3
    }
@@ -3525,6 +3579,18 @@
     "value": "Multibrazo con resortes helicoidales",
     "confidence": 0.4,
     "sourceTier": 3
+   },
+   {
+    "key": "performance.powerToWeight",
+    "value": 155,
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "electric.regenerativeBraking",
+    "value": true,
+    "confidence": 0.4,
+    "sourceTier": 3
    }
   ]
  },
@@ -3862,6 +3928,12 @@
    {
     "key": "chassis.rearSuspension",
     "value": "Eje torsional",
+    "confidence": 0.4,
+    "sourceTier": 3
+   },
+   {
+    "key": "performance.powerToWeight",
+    "value": 101,
     "confidence": 0.4,
     "sourceTier": 3
    }

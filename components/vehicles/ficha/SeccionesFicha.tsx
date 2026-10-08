@@ -173,7 +173,8 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
   const motor = leer(s, 'combustion.displacement', 'hybrid.displacement', 'phev.displacement');
   const config = valorEn(s, 'combustion.engineConfiguration') ?? valorEn(s, 'hybrid.engineConfiguration') ?? valorEn(s, 'phev.engineConfiguration');
   const caja = valorEn(s, 'combustion.transmissionType') ?? valorEn(s, 'hybrid.transmissionType') ?? valorEn(s, 'phev.transmissionType');
-  const turbo = valorEn(s, 'combustion.turbo') === true;
+  // El turbo hoy vive en «Tipo de inducción»; los carros viejos lo traen como sí/no.
+  const turbo = valorEn(s, 'combustion.turbo') === true || /turbo|supercarg/i.test(String(valorEn(s, 'combustion.inductionType') ?? ''));
   const rinde = rendimiento(s);
   const ciudad = leer(s, 'combustion.cityConsumption', 'hybrid.cityConsumption', 'phev.cityConsumption');
   const carretera = leer(s, 'combustion.highwayConsumption', 'hybrid.highwayConsumption', 'phev.highwayConsumption');
@@ -194,6 +195,8 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
   const baulAbatido = leer(s, 'interior.trunkCapacitySeatsDown');
   const pasajeros = leer(s, 'interior.passengerCapacity');
   const peso = leer(s, 'dimensions.curbWeight');
+  // Potencia por tonelada: el dato si viene; si no, se calcula con la potencia y el peso.
+  const potPeso = leer(s, 'performance.powerToWeight') ?? (potencia !== null && peso ? potencia / (peso / 1000) : null);
   const remolque = leer(s, 'weight.towingCapacity');
   // Pickups, vans y camiones: lo que importa para trabajar.
   const clase = claseDeTipo(vehicle.type);
@@ -229,10 +232,13 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
     },
     // Modo eco: hoy vive en «Modos de manejo»; los carros viejos lo traen como sí/no.
     (/\beco\b/i.test(String(valorEn(s, 'drivetrain.driveModes') ?? '')) || valorEn(s, 'combustion.ecoMode') === true || valorEn(s, 'hybrid.ecoMode') === true) && { t: 'Modo ECO', d: 'Suaviza el acelerador para gastar menos.' },
-    // Todo híbrido recupera energía al frenar: ya no es un dato que se pida.
-    vehicle.fuelType === 'Híbrido' && {
+    valorEn(s, 'hybrid.regenerativeBraking') === true && {
       t: 'Recupera energía al frenar',
       d: 'La batería se carga sola: este híbrido no se enchufa.',
+    },
+    (valorEn(s, 'phev.regenerativeBraking') === true || valorEn(s, 'electric.regenerativeBraking') === true) && {
+      t: 'Recupera energía al frenar',
+      d: 'Al frenar, la batería recupera parte de la energía y te rinde más la carga.',
     },
     valorEn(s, 'combustion.octanajeRecomendado') && { t: `Gasolina ${valorEn(s, 'combustion.octanajeRecomendado')}`, d: 'La que recomienda el fabricante.' },
   ].filter((x): x is { t: string; d: string } => !!x);
@@ -345,7 +351,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
               </Bloque>
             )}
 
-            {(vmax !== null || motor !== null || caja) && (
+            {(vmax !== null || motor !== null || potPeso !== null || caja) && (
               <Bloque tono="estudio" className="md:col-span-2">
                 <Titulito icono={Cpu}>Motor</Titulito>
                 <dl className="mt-5 space-y-3 text-[13px]">
@@ -353,6 +359,12 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                     <div>
                       <dt className="text-tinta-2">Cilindraje</dt>
                       <dd className="cifra text-[18px] font-semibold">{fmt(motor)} cc{turbo ? ' turbo' : ''}</dd>
+                    </div>
+                  )}
+                  {potPeso !== null && (
+                    <div>
+                      <dt className="text-tinta-2">Potencia por tonelada</dt>
+                      <dd className="cifra text-[18px] font-semibold">{fmt(potPeso)} hp/t</dd>
                     </div>
                   )}
                   {vmax !== null && (
