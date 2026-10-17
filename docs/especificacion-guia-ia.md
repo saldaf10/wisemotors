@@ -83,6 +83,7 @@ Formato del número: sin separador de miles y con punto decimal, máximo 2 decim
 - **Medida de llanta:** una sola medida, la de esa versión: `215/55 R18`. El `Rin (pulgadas)` tiene que coincidir con ella (`18`).
 - **Material de las sillas, volante, faros:** el de esa versión, en pocas palabras (`Cuero sintético`, `Forrado en cuero`, `LED`).
 - **Marchas:** solo las de avance (`6`, no `6 + reversa`). Una CVT no lleva marchas: deja el campo vacío.
+- **Autonomía oficial en un Híbrido Enchufable:** es solo la eléctrica (por ejemplo `80`), no la total con gasolina (por ejemplo `1000`).
 - **Híbridos:** `Potencia máxima` y `Torque máximo` son los combinados. `Potencia del motor a gasolina` y `Potencia del motor eléctrico` son de cada motor.
 - **Ceros:** solo pueden ir en `Airbags`, `Capacidad de remolque (kg)`, `Puertos USB-A`, `Puertos USB-C` y `Estrellas en prueba de choque`. En cualquier otro campo, si no tiene el dato, déjalo vacío.
 - **Datos de otro mercado** (Europa, EE. UU., Corea): úsalos solo si es la misma versión y el mismo motor. Si no hay una fuente colombiana oficial, márcalos con ` E`. El precio siempre es el de Colombia.
@@ -269,7 +270,7 @@ Cada línea: `nombre exacto` — tipo (rango válido u opciones) — a qué carr
 - `Tanque de combustible (gal)` — NÚMERO en gal (rango válido 5 a 40; pickup 5 a 45; van/camión 5 a 200). solo Gasolina, Diesel, Híbrido, Híbrido Enchufable.
 - `Consumo eléctrico ciudad (kWh/100 km)` — NÚMERO en kWh/100km (rango válido 8 a 35; van/camión 8 a 150). solo Eléctrico.
 - `Consumo eléctrico carretera (kWh/100 km)` — NÚMERO en kWh/100km (rango válido 10 a 40; van/camión 10 a 150). solo Eléctrico.
-- `Autonomía oficial (km)` — NÚMERO en km (rango válido 80 a 900). solo Eléctrico, Híbrido Enchufable.
+- `Autonomía oficial (km)` — NÚMERO en km. Eléctrico: la autonomía con la batería llena (rango válido 80 a 900). Híbrido Enchufable: SOLO la autonomía 100 % eléctrica, sin usar gasolina; no la total con el tanque (rango válido 10 a 350). solo Eléctrico, Híbrido Enchufable.
 
 ### Batería y carga
 - `Capacidad de batería (kWh)` — NÚMERO en kWh (rango válido 10 a 200; van/camión 10 a 600). solo Eléctrico, Híbrido, Híbrido Enchufable.
