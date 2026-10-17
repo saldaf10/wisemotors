@@ -38,7 +38,6 @@ Escribe exactamente una de estas opciones, con sus tildes y mayúsculas. Nunca d
 - `Llanta de repuesto`: Tamaño completo | Temporal | Kit de reparación | No trae
 - `Frenos delanteros`: Disco | Tambor
 - `Frenos traseros`: Disco | Tambor
-- `Quién hizo la prueba de choque`: Latin NCAP | Euro NCAP | ANCAP | ASEAN NCAP | C-NCAP | IIHS | NHTSA | Global NCAP (una sola; si hay varias, la de la región más cercana a Colombia: primero Latin NCAP)
 - `Techo`: Corredizo | Panorámico | Panorámico fijo (si no tiene techo, deja el campo vacío)
 - `Vidrios eléctricos`: Solo adelante | Adelante y atrás
 
@@ -70,23 +69,22 @@ Cada número va en la unidad que dice el nombre del campo, siempre la misma. Si 
 - **pulgadas:** Rin · Pantalla central · Tablero digital
 - **g:** aceleraciones lateral y longitudinal
 - **°:** ángulos de ataque, salida y ventral
-- **%:** Pendiente máxima · Asistencias NCAP
-- **estrellas (0 a 5):** Calificación NCAP
+- **%:** Pendiente máxima
+- **estrellas (0 a 5):** Estrellas en prueba de choque
 - **COP (pesos colombianos):** Precio de lista · Costo de los 3 primeros mantenimientos (nunca USD ni millones abreviados: `123990000`, no `123,99 M`)
-- **Sin unidad (conteo):** Número de cilindros · Motores eléctricos · Relación de compresión (`10.5`, no `10.5:1`) · Marchas · Niveles de regeneración · Pasajeros · Filas de asientos · Puertas · Airbags · Año de la prueba de choque · Zonas de climatizador · Puertos USB-A · Puertos USB-C · Parlantes
+- **Sin unidad (conteo):** Número de cilindros · Motores eléctricos · Relación de compresión (`10.5`, no `10.5:1`) · Marchas · Niveles de regeneración · Pasajeros · Filas de asientos · Puertas · Airbags · Zonas de climatizador · Puertos USB-A · Puertos USB-C · Parlantes
 
 Formato del número: sin separador de miles y con punto decimal, máximo 2 decimales (`4350`, `123990000`, `1.32`, `10.5`).
 
 ### E. Otras reglas que suelen fallar
 - **Remolque:** va la capacidad CON freno. Si solo hay sin freno, escribe esa y márcala con ` E`.
-- **Asistencias NCAP (%):** es SOLO el porcentaje de la categoría "asistencias de seguridad" de la prueba. No es el de adultos ni el de niños, ni un promedio. Si no lo tienes, deja el campo vacío.
-- **Calificación NCAP:** son las estrellas de la prueba de ESE modelo y generación. Si la prueba es de otra generación o de un modelo hermano, deja el campo vacío.
+- **Estrellas en prueba de choque:** solo el número de estrellas (`5`), sin decir quién hizo la prueba ni de qué año. Tienen que ser de ESE modelo y generación; si la prueba es de otra generación o de un modelo hermano, deja el campo vacío. Si hay varias pruebas, usa la de Latin NCAP; si no hay de Latin NCAP, la más reciente.
 - **CarPlay / Android Auto:** es TEXTO, no Sí/No: `Apple CarPlay y Android Auto`, `Solo Android Auto`. Si no trae ninguno, déjalo vacío.
 - **Medida de llanta:** una sola medida, la de esa versión: `215/55 R18`. El `Rin (pulgadas)` tiene que coincidir con ella (`18`).
 - **Material de las sillas, volante, faros:** el de esa versión, en pocas palabras (`Cuero sintético`, `Forrado en cuero`, `LED`).
 - **Marchas:** solo las de avance (`6`, no `6 + reversa`). Una CVT no lleva marchas: deja el campo vacío.
 - **Híbridos:** `Potencia máxima` y `Torque máximo` son los combinados. `Potencia del motor a gasolina` y `Potencia del motor eléctrico` son de cada motor.
-- **Ceros:** solo pueden ir en `Airbags`, `Capacidad de remolque (kg)`, `Puertos USB-A`, `Puertos USB-C`, `Calificación NCAP (estrellas)` y `Asistencias NCAP (%)`. En cualquier otro campo, si no tiene el dato, déjalo vacío.
+- **Ceros:** solo pueden ir en `Airbags`, `Capacidad de remolque (kg)`, `Puertos USB-A`, `Puertos USB-C` y `Estrellas en prueba de choque`. En cualquier otro campo, si no tiene el dato, déjalo vacío.
 - **Datos de otro mercado** (Europa, EE. UU., Corea): úsalos solo si es la misma versión y el mismo motor. Si no hay una fuente colombiana oficial, márcalos con ` E`. El precio siempre es el de Colombia.
 - **No copies las pistas** del nombre del campo. Escribe `Tracción: Delantera`, no `Tracción (Delantera / Trasera…): Delantera`. El sistema las tolera, pero así es más limpio.
 - **Revisión final:** si un número quedó fuera de su rango (sección 6), casi siempre es un error de unidad. Revísalo.
@@ -353,10 +351,7 @@ Cada línea: `nombre exacto` — tipo (rango válido u opciones) — a qué carr
 - `Control de estabilidad` — SÍ/NO. Todos.
 - `Control de tracción` — SÍ/NO. Todos.
 - `Monitoreo de presión de llantas` — SÍ/NO. Todos.
-- `Calificación NCAP (estrellas)` — NÚMERO en ★ (rango válido 0 a 5). solo clase carro (Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible) y Pickup.
-- `Quién hizo la prueba de choque` — OPCIÓN: Latin NCAP | Euro NCAP | ANCAP | ASEAN NCAP | C-NCAP | IIHS | NHTSA | Global NCAP. solo clase carro (Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible) y Pickup.
-- `Año de la prueba de choque` — NÚMERO (rango válido 2010 a 2030). solo clase carro (Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible) y Pickup.
-- `Asistencias NCAP (%)` — NÚMERO en % (rango válido 0 a 100). solo clase carro (Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible) y Pickup.
+- `Estrellas en prueba de choque` — NÚMERO de estrellas (rango válido 0 a 5). solo clase carro (Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible) y Pickup.
 
 ### Asistencias de manejo
 - `Frenado autónomo de emergencia` — SÍ/NO. Todos.

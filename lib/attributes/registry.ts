@@ -167,8 +167,7 @@ const interior: AttributeDef[] = [
 const G_SAF = { displayGroup: 'Seguridad', dimension: 'seguridad' };
 const safety: AttributeDef[] = [
   num('safety.airbags', 'Airbags', { ...G_SAF, direction: 'higher_better', displayPriority: 90, cardEligible: true, expectedMin: 0, expectedMax: 12 }),
-  num('safety.ncapRating', 'Calificación NCAP', { ...G_SAF, unit: '★', direction: 'higher_better', displayPriority: 95, cardEligible: true, expectedMin: 0, expectedMax: 5 }),
-  num('safety.assistanceScore', 'Asistencias NCAP', { ...G_SAF, unit: '%', direction: 'higher_better', displayPriority: 40, coAvailability: 'rare', expectedMin: 0, expectedMax: 100 }),
+  num('safety.ncapRating', 'Estrellas en prueba de choque', { ...G_SAF, unit: '★', direction: 'higher_better', displayPriority: 95, cardEligible: true, expectedMin: 0, expectedMax: 5 }),
   bool('safety.stabilityControl', 'Control de estabilidad', { ...G_SAF, displayPriority: 85 }),
   bool('safety.tractionControl', 'Control de tracción', { ...G_SAF, displayPriority: 80 }),
   bool('safety.autonomousEmergencyBraking', 'Frenado autónomo de emergencia', { ...G_SAF, displayPriority: 88 }),
@@ -418,8 +417,6 @@ const recuperados: AttributeDef[] = [
 
   // Seguridad
   bool('safety.isofix', 'Anclajes ISOFIX para sillas de niños', { ...G_SAF, displayPriority: 78 }),
-  enm('safety.ncapAgency', 'Quién hizo la prueba de choque', { ...G_SAF, displayPriority: 70, opciones: ['Latin NCAP', 'Euro NCAP', 'ANCAP', 'ASEAN NCAP', 'C-NCAP', 'IIHS', 'NHTSA', 'Global NCAP'] }),
-  num('safety.ncapYear', 'Año de la prueba de choque', { ...G_SAF, displayPriority: 45, expectedMin: 2010, expectedMax: 2030 }),
   bool('assistance.frontParkingSensors', 'Sensores de parqueo delanteros', { ...G_ASSIST, displayPriority: 55 }),
   bool('assistance.parkAssist', 'Se parquea solo', { ...G_ASSIST, displayPriority: 35, coAvailability: 'rare' }),
   bool('offRoad.hillDescentControl', 'Control de descenso', { ...G_OFF, displayPriority: 50 }),
@@ -486,6 +483,9 @@ const recuperados: AttributeDef[] = [
 //   cargador en casa, baúl con tercera fila, protección adultos/niños/peatones
 //   NCAP, tráfico cruzado, luces adaptativas, parabrisas térmico, tomas de 12 V,
 //   110 V y en el platón, amplificador, Wi-Fi, app conectada y navegación.
+//   Decisión del equipo (17-oct-2026), para simplificar: de la prueba de choque solo
+//   quedan las estrellas (safety.ncapRating); se retiraron quién la hizo, el año
+//   y el puntaje de asistencias.
 ////   Capacidad bruta de batería (confunde con la útil), índice de conveniencia de
 //   carga y ahorro a 5 años (los reemplazan los Índices WiseMotors).
 //   Se quedan (decisión del equipo): frenado regenerativo (no todos lo tienen) y

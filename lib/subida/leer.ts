@@ -17,7 +17,7 @@
 
 import { fueraDeRango, rangoDe } from '@/lib/attributes/registry';
 import { claseDeTipo } from '@/lib/attributes/clase';
-import { FORMATO, OPCIONES_IDENTIDAD, TRENES, aplica, defDe, keyDe, type CampoFormato, type CampoIdentidad, type Tren } from './formato';
+import { FORMATO, OPCIONES_IDENTIDAD, RETIRADOS, TRENES, aplica, defDe, keyDe, type CampoFormato, type CampoIdentidad, type Tren } from './formato';
 import { distancia, plano } from './texto';
 import { opcionMasCercana } from './opciones';
 
@@ -64,7 +64,8 @@ export interface Lectura {
 // Nombres de campo
 // ---------------------------------------------------------------------------
 
-const NOMBRES = FORMATO.map(c => ({ c, n: plano(c.nombre) }));
+const NOMBRES = FORMATO.flatMap(c => [c.nombre, ...(c.alias ?? [])].map(nombre => ({ c, n: plano(nombre) })));
+const RETIRADOS_PLANOS = RETIRADOS.map(plano);
 
 /** Qué campo es esta línea: el nombre más largo que coincide al inicio, o el más parecido. */
 export function campoDeLinea(nombreEscrito: string): CampoFormato | null {
@@ -163,6 +164,11 @@ export function leerGuia(texto: string): Lectura {
     }
     const nombre = l.slice(0, dosPuntos);
     const escrito = l.slice(dosPuntos + 1).trim().replace(/\.$/, '').trim();
+    // Primero los retirados: "Año de la prueba de choque" empieza como "Año".
+    if (RETIRADOS_PLANOS.some(r => plano(nombre) === r || plano(nombre).startsWith(`${r} `))) {
+      if (escrito) avisos.push({ linea: n, tipo: 'aviso', texto: `«${nombre.trim()}» ya no se usa en la guía; se ignora.` });
+      return;
+    }
     const campo = campoDeLinea(nombre);
     if (!campo) {
       if (escrito) avisos.push({ linea: n, tipo: 'error', texto: `No se reconoce el campo «${nombre.trim()}». Revisa que esté escrito como en la plantilla.` });

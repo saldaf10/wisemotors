@@ -39,7 +39,12 @@ export interface CampoFormato {
   clases?: ClaseVehiculo[];
   /** Solo para estas carrocerías (además de la clase). */
   carrocerias?: string[];
+  /** Nombres viejos que también se reconocen (guías hechas antes de un cambio). */
+  alias?: string[];
 }
+
+/** Campos retirados de la guía: si una guía vieja los trae, se ignoran con aviso (no es error). */
+export const RETIRADOS = ['Quién hizo la prueba de choque', 'Año de la prueba de choque', 'Asistencias NCAP (%)'];
 
 const DEF = new Map(ATTRIBUTE_REGISTRY.map(d => [d.key, d]));
 const TRABAJO: ClaseVehiculo[] = ['pickup', 'comercial'];
@@ -171,10 +176,7 @@ export const FORMATO: CampoFormato[] = [
   k(SEG, 'Control de estabilidad', 'safety.stabilityControl'),
   k(SEG, 'Control de tracción', 'safety.tractionControl'),
   k(SEG, 'Monitoreo de presión de llantas', 'safety.tirePressureMonitoring'),
-  k(SEG, 'Calificación NCAP (estrellas)', 'safety.ncapRating', { clases: NO_COMERCIAL }),
-  k(SEG, 'Quién hizo la prueba de choque', 'safety.ncapAgency', { clases: NO_COMERCIAL }),
-  k(SEG, 'Año de la prueba de choque', 'safety.ncapYear', { clases: NO_COMERCIAL }),
-  k(SEG, 'Asistencias NCAP (%)', 'safety.assistanceScore', { clases: NO_COMERCIAL }),
+  k(SEG, 'Estrellas en prueba de choque', 'safety.ncapRating', { clases: NO_COMERCIAL, alias: ['Calificación NCAP (estrellas)', 'Calificación NCAP'] }),
 
   k(ASIS, 'Frenado autónomo de emergencia', 'safety.autonomousEmergencyBraking'),
   k(ASIS, 'Alerta de colisión frontal', 'safety.forwardCollisionWarning'),

@@ -151,10 +151,7 @@ Anclajes ISOFIX (Sí/No):
 Control de estabilidad (Sí/No):
 Control de tracción (Sí/No):
 Monitoreo de presión de llantas (Sí/No):
-Calificación NCAP (estrellas):
-Quién hizo la prueba de choque (Latin NCAP / Euro NCAP / ANCAP / ASEAN NCAP / C-NCAP / IIHS / NHTSA / Global NCAP):
-Año de la prueba de choque:
-Asistencias NCAP (%):
+Estrellas en prueba de choque:
 
 # Asistencias de manejo
 Frenado autónomo de emergencia (Sí/No):

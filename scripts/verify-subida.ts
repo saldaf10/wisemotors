@@ -28,7 +28,7 @@ check('gasolina: pide cilindraje y consumo, no batería', gasSedan.includes('Cil
 check('eléctrico: pide batería y autonomía, no cilindraje ni tanque', ev.includes('Capacidad de batería (kWh):') && ev.includes('Autonomía oficial (km):') && !ev.includes('Cilindraje') && !ev.includes('Tanque'));
 check('sedán: sin todoterreno ni carga útil', !gasSedan.includes('Ángulo de ataque') && !gasSedan.includes('Capacidad de carga'));
 check('pickup: con carga útil, PBV y todoterreno, sin baúl', pickup.includes('Capacidad de carga (kg):') && pickup.includes('Peso bruto vehicular PBV (kg):') && pickup.includes('Ángulo de ataque (°):') && !pickup.includes('Baúl (L):'));
-check('van: sin 0–100, NCAP ni ISOFIX', !van.includes('0–100') && !van.includes('NCAP') && !van.includes('ISOFIX'));
+check('van: sin 0–100, prueba de choque ni ISOFIX', !van.includes('0–100') && !van.includes('prueba de choque') && !van.includes('ISOFIX'));
 check('las opciones salen como pista', gasSedan.includes('Tracción (Delantera / Trasera / Integral (AWD) / 4x4):'));
 check('el tren motriz y la carrocería vienen ya puestos', gasSedan.includes('Tren motriz: Gasolina') && gasSedan.includes('Carrocería: Sedán'));
 const nCampos = (p: string) => p.split('\n').filter(l => l.includes(':')).length;
@@ -120,6 +120,21 @@ check('precio con E → precio estimado', conE.identidad.precio === 320000000 &&
 check('datos con E: valor bien leído y marcado estimado', dE('performance.acceleration0to100')?.valor === 6.4 && dE('performance.acceleration0to100')?.estimado === true && dE('dimensions.curbWeight')?.valor === 1680 && dE('dimensions.curbWeight')?.estimado === true && dE('assistance.cameras360')?.valor === true && dE('assistance.cameras360')?.estimado === true && dE('drivetrain.traction')?.valor === 'Trasera' && dE('drivetrain.traction')?.estimado === true);
 check('dato sin E → oficial', dE('combustion.maxPower')?.estimado === false);
 check('una E sola no es un dato: error, no se guarda', !dE('chassis.groundClearance') && conE.avisos.some(a => a.campo === 'Despeje al piso (mm)' && a.tipo === 'error'));
+
+// --- Prueba de choque: solo estrellas ---
+const choque = leerGuia(`Marca: Hyundai
+Modelo: Kona
+Año: 2026
+Tren motriz: Híbrido
+Carrocería: SUV
+Precio de lista (COP): 123990000
+Calificación NCAP (estrellas): 5
+Quién hizo la prueba de choque: Euro NCAP
+Año de la prueba de choque: 2023
+Asistencias NCAP (%): 83`);
+check('nombre viejo "Calificación NCAP (estrellas)" → estrellas', choque.datos.some(d => d.key === 'safety.ncapRating' && d.valor === 5));
+check('campos retirados de NCAP: aviso, no error', !choque.avisos.some(a => a.tipo === 'error') && choque.avisos.filter(a => /ya no se usa/.test(a.texto)).length === 3);
+check('nombre nuevo "Estrellas en prueba de choque"', campoDeLinea('Estrellas en prueba de choque')?.key === 'safety.ncapRating');
 
 console.log(fallas ? `\n${fallas} fallas` : '\nTodo verificado ✓');
 process.exit(fallas ? 1 : 0);
