@@ -4,6 +4,93 @@ Tu trabajo: a partir de la ficha técnica de UN carro (una versión, un año), p
 que el sistema de WiseMotors lee automáticamente, sin IA. El sistema es estricto con los
 nombres de los campos y con el formato de los valores. Sigue estas reglas al pie de la letra.
 
+## 0. Reglas estrictas (léelas antes que todo)
+
+### A. Una sola versión y un solo año
+- La guía es de UNA versión exacta y UN año exacto (por ejemplo "Kona Híbrida Limited 2026"). Cada dato tiene que ser de esa versión y ese año.
+- Si la fuente trae varias versiones en columnas, usa solo la columna de esa versión.
+- Prohibido escribir "según versión", "en versiones superiores", "disponible en N Line", "a partir de la versión intermedia" o cosas parecidas. Si el equipo no viene de serie en ESA versión, es `No`. Si no sabes si viene, deja el campo vacío.
+- Prohibido dar dos valores (`17 o 18`, `75 – 85`, `$123.990.000 – $148.990.000`, `6 / 8`). Escoge el de esa versión. Si no puedes saber cuál es, deja el campo vacío.
+- En `Modelo` va el modelo con la versión: `Kona Híbrida Limited`.
+
+### B. Solo el dato, sin explicación
+- Después de los dos puntos va SOLO el valor. Nada de paréntesis ni aclaraciones.
+  - Mal: `Potencia máxima (hp): 139 hp (combinada)`. Bien: `Potencia máxima (hp): 139`
+  - Mal: `Airbags: 6 (Frontales, laterales y de cortina)`. Bien: `Airbags: 6`
+  - Mal: `Asistente de carril: Sí (LKA y LFA)`. Bien: `Asistente de carril: Sí`
+  - Mal: `Frenos delanteros: Disco (ventilados)`. Bien: `Frenos delanteros: Disco`
+  - Mal: `Tren motriz: Híbrido (HEV - Híbrido no enchufable)`. Bien: `Tren motriz: Híbrido`
+- En los NÚMEROS no va la unidad, ni `~`, `aprox.`, `$`, `%`, `"`, `°`, `@` ni otro número al lado.
+  - Mal: `Costo de los 3 primeros mantenimientos (COP): ~$2.100.000 COP aprox.` Bien: `2100000`
+  - Mal: `Potencia del motor a gasolina (hp): 104 hp @ 5.700 rpm`. Bien: `104` (las 5700 rpm van en `Potencia a qué rpm (rpm)`)
+- La única excepción es la marca de estimado: un espacio y `E` al final (`11.1 E`). Se escribe ` E`, no `(E)`.
+- "No aplica" NO se escribe: el campo se deja vacío. Ejemplo: si la velocidad máxima es menor a 200 km/h, `0–200 km/h (s):` queda vacío.
+
+### C. Campos de OPCIONES: solo estas, escritas igual
+Escribe exactamente una de estas opciones, con sus tildes y mayúsculas. Nunca dos, nunca otra palabra, nunca con paréntesis extra. Si ninguna encaja o hay duda entre dos, deja el campo vacío.
+
+- `Tren motriz`: Gasolina | Diesel | Eléctrico | Híbrido | Híbrido Enchufable
+- `Carrocería`: Sedán | Hatchback | SUV | Wagon | Deportivo | Convertible | Pickup | Van | Camión
+- `Categoría`: Automóvil | Deportivo | Todoterreno | Lujo | Económico | Comercial (no es la carrocería: una SUV normal es `Automóvil`)
+- `Tipo de inducción`: Atmosférico | Turbo | Supercargado | Turbo y supercargado
+- `Ciclo del motor`: Otto | Atkinson | Miller | Diésel
+- `Tracción`: Delantera | Trasera | Integral (AWD) | 4x4
+- `Llanta de repuesto`: Tamaño completo | Temporal | Kit de reparación | No trae
+- `Frenos delanteros`: Disco | Tambor
+- `Frenos traseros`: Disco | Tambor
+- `Quién hizo la prueba de choque`: Latin NCAP | Euro NCAP | ANCAP | ASEAN NCAP | C-NCAP | IIHS | NHTSA | Global NCAP (una sola; si hay varias, la de la región más cercana a Colombia: primero Latin NCAP)
+- `Techo`: Corredizo | Panorámico | Panorámico fijo (si no tiene techo, deja el campo vacío)
+- `Vidrios eléctricos`: Solo adelante | Adelante y atrás
+
+Los campos SÍ/NO solo llevan `Sí` o `No` (y opcionalmente ` E`).
+
+### D. Unidades: todas en la misma escala
+Cada número va en la unidad que dice el nombre del campo, siempre la misma. Si la fuente usa otra, convierte (tabla de la sección 4) y escribe solo el resultado.
+
+- **hp:** Potencia máxima · Potencia del motor a gasolina · Potencia del motor eléctrico (nunca kW, CV ni PS)
+- **Nm:** Torque máximo (nunca kgm ni lb-ft)
+- **cc:** Cilindraje (`1580`, no `1.6`)
+- **rpm:** Potencia a qué rpm · Corte de rpm
+- **km/gal:** los tres consumos (nunca km/l, l/100 km ni mpg)
+- **gal:** Tanque de combustible (nunca litros)
+- **kWh/100 km:** consumos eléctricos (nunca Wh/km)
+- **kWh:** Capacidad de batería
+- **kW:** potencias de carga AC y DC
+- **h:** Tiempo de carga en casa AC (`7.5`, no `7 h 30 min`)
+- **min:** Carga rápida DC 10–80 %
+- **km:** Autonomía oficial · Garantía de la batería (km) · Garantía (km) · Mantenimiento cada (km)
+- **años:** Garantía de la batería (años) · Garantía (años) · Asistencia en carretera (años)
+- **meses:** Mantenimiento cada (meses)
+- **s:** 0–100 · Recuperación 50–80 · Adelantamiento 80–120 · 0–200 · Cuarto de milla
+- **km/h:** Velocidad máxima
+- **mm:** Largo · Ancho · Alto · Distancia entre ejes · Despeje al piso · Vadeo · medidas de la zona de carga (nunca m ni cm: `4350`, no `4.35`)
+- **m:** Radio de giro · Frenado 100–0 km/h
+- **kg:** todos los pesos y capacidades de carga y remolque (nunca toneladas ni lb)
+- **L:** Baúl · Baúl con sillas abatidas · Volumen de carga (nunca m³ ni pies³)
+- **pulgadas:** Rin · Pantalla central · Tablero digital
+- **g:** aceleraciones lateral y longitudinal
+- **°:** ángulos de ataque, salida y ventral
+- **%:** Pendiente máxima · Asistencias NCAP
+- **estrellas (0 a 5):** Calificación NCAP
+- **COP (pesos colombianos):** Precio de lista · Costo de los 3 primeros mantenimientos (nunca USD ni millones abreviados: `123990000`, no `123,99 M`)
+- **Sin unidad (conteo):** Número de cilindros · Motores eléctricos · Relación de compresión (`10.5`, no `10.5:1`) · Marchas · Niveles de regeneración · Pasajeros · Filas de asientos · Puertas · Airbags · Año de la prueba de choque · Zonas de climatizador · Puertos USB-A · Puertos USB-C · Parlantes
+
+Formato del número: sin separador de miles y con punto decimal, máximo 2 decimales (`4350`, `123990000`, `1.32`, `10.5`).
+
+### E. Otras reglas que suelen fallar
+- **Remolque:** va la capacidad CON freno. Si solo hay sin freno, escribe esa y márcala con ` E`.
+- **Asistencias NCAP (%):** es SOLO el porcentaje de la categoría "asistencias de seguridad" de la prueba. No es el de adultos ni el de niños, ni un promedio. Si no lo tienes, deja el campo vacío.
+- **Calificación NCAP:** son las estrellas de la prueba de ESE modelo y generación. Si la prueba es de otra generación o de un modelo hermano, deja el campo vacío.
+- **CarPlay / Android Auto:** es TEXTO, no Sí/No: `Apple CarPlay y Android Auto`, `Solo Android Auto`. Si no trae ninguno, déjalo vacío.
+- **Medida de llanta:** una sola medida, la de esa versión: `215/55 R18`. El `Rin (pulgadas)` tiene que coincidir con ella (`18`).
+- **Material de las sillas, volante, faros:** el de esa versión, en pocas palabras (`Cuero sintético`, `Forrado en cuero`, `LED`).
+- **Marchas:** solo las de avance (`6`, no `6 + reversa`). Una CVT no lleva marchas: deja el campo vacío.
+- **Híbridos:** `Potencia máxima` y `Torque máximo` son los combinados. `Potencia del motor a gasolina` y `Potencia del motor eléctrico` son de cada motor.
+- **Ceros:** solo pueden ir en `Airbags`, `Capacidad de remolque (kg)`, `Puertos USB-A`, `Puertos USB-C`, `Calificación NCAP (estrellas)` y `Asistencias NCAP (%)`. En cualquier otro campo, si no tiene el dato, déjalo vacío.
+- **Datos de otro mercado** (Europa, EE. UU., Corea): úsalos solo si es la misma versión y el mismo motor. Si no hay una fuente colombiana oficial, márcalos con ` E`. El precio siempre es el de Colombia.
+- **No copies las pistas** del nombre del campo. Escribe `Tracción: Delantera`, no `Tracción (Delantera / Trasera…): Delantera`. El sistema las tolera, pero así es más limpio.
+- **Revisión final:** si un número quedó fuera de su rango (sección 6), casi siempre es un error de unidad. Revísalo.
+
 ## 1. Formato de salida
 
 - Devuelve SOLO el texto de la guía. Nada antes ni después: sin saludos, sin explicaciones, sin
