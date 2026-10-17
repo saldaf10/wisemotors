@@ -163,12 +163,12 @@ van/camión = Van, Camión.
 - `Tren motriz` — OPCIÓN: Gasolina | Diesel | Eléctrico | Híbrido | Híbrido Enchufable. OBLIGATORIO. Aplica: todos.
 - `Carrocería` — OPCIÓN: Sedán | Hatchback | SUV | Wagon | Deportivo | Convertible | Pickup | Van | Camión. OBLIGATORIO. Aplica: todos.
 - `Categoría` — OPCIÓN: Automóvil | Deportivo | Todoterreno | Lujo | Económico | Comercial. Aplica: todos.
-- `Precio de lista (COP)` — NÚMERO en pesos colombianos (5.000.000 a 5.000.000.000). OBLIGATORIO. Aplica: todos.
+- `Precio de lista (COP)` — NÚMERO en pesos colombianos (5000000 a 5000000000). OBLIGATORIO. Aplica: todos.
 
 ### Motor
-- `Potencia máxima (hp)` — Gasolina/Diesel/Eléctrico: NÚMERO en HP (40 a 1.600) · Híbrido: NÚMERO en HP (60 a 800) · Híbrido Enchufable: NÚMERO en HP (80 a 900). Aplica: todos.
-- `Torque máximo (Nm)` — Gasolina/Diesel/Eléctrico: NÚMERO en Nm (60 a 1.500; van/camión 60 a 3.000) · Híbrido: NÚMERO en Nm (90 a 1.000; van/camión 90 a 3.000) · Híbrido Enchufable: NÚMERO en Nm (120 a 1.200). Aplica: todos.
-- `Cilindraje (cc)` — Gasolina/Diesel: NÚMERO en cc (600 a 8.500; van/camión 600 a 16.000) · Híbrido/Híbrido Enchufable: NÚMERO en cc (600 a 6.000). Aplica: solo Gasolina, Diesel, Híbrido, Híbrido Enchufable.
+- `Potencia máxima (hp)` — Gasolina/Diesel/Eléctrico: NÚMERO en HP (40 a 1600) · Híbrido: NÚMERO en HP (60 a 800) · Híbrido Enchufable: NÚMERO en HP (80 a 900). Aplica: todos.
+- `Torque máximo (Nm)` — Gasolina/Diesel/Eléctrico: NÚMERO en Nm (60 a 1500; van/camión 60 a 3000) · Híbrido: NÚMERO en Nm (90 a 1000; van/camión 90 a 3000) · Híbrido Enchufable: NÚMERO en Nm (120 a 1200). Aplica: todos.
+- `Cilindraje (cc)` — Gasolina/Diesel: NÚMERO en cc (600 a 8500; van/camión 600 a 16000) · Híbrido/Híbrido Enchufable: NÚMERO en cc (600 a 6000). Aplica: solo Gasolina, Diesel, Híbrido, Híbrido Enchufable.
 - `Número de cilindros` — NÚMERO (2 a 12). Aplica: solo Gasolina, Diesel.
 - `Configuración del motor` — TEXTO. Aplica: solo Gasolina, Diesel, Híbrido, Híbrido Enchufable.
 - `Tipo de inducción` — OPCIÓN: Atmosférico | Turbo | Supercargado | Turbo y supercargado. Aplica: solo Gasolina, Diesel, Híbrido, Híbrido Enchufable.
@@ -176,8 +176,8 @@ van/camión = Van, Camión.
 - `Potencia del motor a gasolina (hp)` — NÚMERO en HP (40 a 600). Aplica: solo Híbrido, Híbrido Enchufable.
 - `Potencia del motor eléctrico (hp)` — Híbrido: NÚMERO en HP (10 a 400) · Híbrido Enchufable: NÚMERO en HP (20 a 700). Aplica: solo Híbrido, Híbrido Enchufable.
 - `Motores eléctricos` — NÚMERO (1 a 4). Aplica: solo Eléctrico.
-- `Potencia a qué rpm (rpm)` — NÚMERO en rpm (1.000 a 9.000). Aplica: solo Gasolina, Diesel.
-- `Corte de rpm (rpm)` — NÚMERO en rpm (4.000 a 10.000). Aplica: solo Gasolina, Diesel.
+- `Potencia a qué rpm (rpm)` — NÚMERO en rpm (1000 a 9000). Aplica: solo Gasolina, Diesel.
+- `Corte de rpm (rpm)` — NÚMERO en rpm (4000 a 10000). Aplica: solo Gasolina, Diesel.
 - `Relación de compresión` — NÚMERO (7 a 16). Aplica: solo Gasolina, Diesel.
 - `Octanaje recomendado` — TEXTO. Aplica: solo Gasolina, Diesel.
 - `Norma de emisiones` — TEXTO. Aplica: solo Gasolina, Diesel.
@@ -191,11 +191,11 @@ van/camión = Van, Camión.
 - `Tanque de combustible (gal)` — Gasolina/Diesel: NÚMERO en gal (5 a 40; pickup 5 a 45; van/camión 5 a 200) · Híbrido/Híbrido Enchufable: NÚMERO en gal (5 a 30). Aplica: solo Gasolina, Diesel, Híbrido, Híbrido Enchufable.
 - `Consumo eléctrico ciudad (kWh/100 km)` — NÚMERO en kWh/100km (8 a 35; van/camión 8 a 150). Aplica: solo Eléctrico.
 - `Consumo eléctrico carretera (kWh/100 km)` — NÚMERO en kWh/100km (10 a 40; van/camión 10 a 150). Aplica: solo Eléctrico.
-- `Autonomía oficial (km)` — Eléctrico: NÚMERO en km (80 a 900) · Híbrido Enchufable: NÚMERO en km (300 a 2.500). Aplica: solo Eléctrico, Híbrido Enchufable.
+- `Autonomía oficial (km)` — Eléctrico: NÚMERO en km (80 a 900) · Híbrido Enchufable: NÚMERO en km (300 a 2500). Aplica: solo Eléctrico, Híbrido Enchufable.
 - `Autonomía solo eléctrica (km)` — NÚMERO en km (10 a 350). Aplica: solo Híbrido Enchufable.
 
 ### Batería y carga
-- `Capacidad de batería (kWh)` — Eléctrico: NÚMERO en kWh (10 a 200; van/camión 10 a 600) · Híbrido: NÚMERO en kWh (0,5 a 5) · Híbrido Enchufable: NÚMERO en kWh (5 a 40). Aplica: solo Eléctrico, Híbrido, Híbrido Enchufable.
+- `Capacidad de batería (kWh)` — Eléctrico: NÚMERO en kWh (10 a 200; van/camión 10 a 600) · Híbrido: NÚMERO en kWh (0.5 a 5) · Híbrido Enchufable: NÚMERO en kWh (5 a 40). Aplica: solo Eléctrico, Híbrido, Híbrido Enchufable.
 - `Peso de la batería (kg)` — NÚMERO en kg (50 a 500). Aplica: solo Híbrido Enchufable.
 - `Tiempo de carga en casa AC (h)` — Eléctrico: NÚMERO en h (1 a 40) · Híbrido Enchufable: NÚMERO en h (1 a 15). Aplica: solo Eléctrico, Híbrido Enchufable.
 - `Potencia de carga en casa AC (kW)` — NÚMERO en kW (2 a 22). Aplica: solo Eléctrico, Híbrido Enchufable.
@@ -206,12 +206,12 @@ van/camión = Van, Camión.
 - `Niveles de regeneración` — NÚMERO (1 a 6). Aplica: solo Eléctrico, Híbrido Enchufable.
 - `Manejo con un solo pedal` — SÍ/NO. Aplica: solo Eléctrico.
 - `Garantía de la batería (años)` — NÚMERO en años (1 a 12). Aplica: solo Eléctrico, Híbrido, Híbrido Enchufable.
-- `Garantía de la batería (km)` — NÚMERO en km (20.000 a 1.500.000). Aplica: solo Eléctrico, Híbrido, Híbrido Enchufable.
+- `Garantía de la batería (km)` — NÚMERO en km (20000 a 1500000). Aplica: solo Eléctrico, Híbrido, Híbrido Enchufable.
 
 ### Desempeño
-- `0–100 km/h (s)` — NÚMERO en s (1,8 a 25; van/camión 3 a 60). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible, Pickup.
+- `0–100 km/h (s)` — NÚMERO en s (1.8 a 25; van/camión 3 a 60). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible, Pickup.
 - `Velocidad máxima (km/h)` — NÚMERO en km/h (90 a 420; van/camión 60 a 220). Aplica: todos.
-- `Recuperación 50–80 km/h (s)` — NÚMERO en s (1,5 a 15). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible, Pickup.
+- `Recuperación 50–80 km/h (s)` — NÚMERO en s (1.5 a 15). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible, Pickup.
 - `Adelantamiento 80–120 km/h (s)` — NÚMERO en s (2 a 20). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible, Pickup.
 - `0–200 km/h (s)` — NÚMERO en s (5 a 60). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible.
 - `Cuarto de milla (s)` — NÚMERO en s (7 a 25). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible.
@@ -227,35 +227,35 @@ van/camión = Van, Camión.
 - `Levas de cambio en el volante` — SÍ/NO. Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible, Pickup.
 
 ### Dimensiones y peso
-- `Largo (mm)` — NÚMERO en mm (2.500 a 6.500; van/camión 3.500 a 14.000). Aplica: todos.
-- `Ancho (mm)` — NÚMERO en mm (1.400 a 2.300; van/camión 1.400 a 2.600). Aplica: todos.
-- `Alto (mm)` — NÚMERO en mm (1.100 a 2.200; pickup 1.100 a 2.300; van/camión 1.100 a 4.300). Aplica: todos.
-- `Distancia entre ejes (mm)` — NÚMERO en mm (1.800 a 4.000; van/camión 1.800 a 7.500). Aplica: todos.
+- `Largo (mm)` — NÚMERO en mm (2500 a 6500; van/camión 3500 a 14000). Aplica: todos.
+- `Ancho (mm)` — NÚMERO en mm (1400 a 2300; van/camión 1400 a 2600). Aplica: todos.
+- `Alto (mm)` — NÚMERO en mm (1100 a 2200; pickup 1100 a 2300; van/camión 1100 a 4300). Aplica: todos.
+- `Distancia entre ejes (mm)` — NÚMERO en mm (1800 a 4000; van/camión 1800 a 7500). Aplica: todos.
 - `Despeje al piso (mm)` — NÚMERO en mm (80 a 350; pickup 80 a 400; van/camión 80 a 450). Aplica: todos.
 - `Radio de giro (m)` — NÚMERO en m (4 a 8). Aplica: todos.
-- `Peso en vacío (kg)` — NÚMERO en kg (600 a 3.500; pickup 900 a 4.000; van/camión 900 a 20.000). Aplica: todos.
+- `Peso en vacío (kg)` — NÚMERO en kg (600 a 3500; pickup 900 a 4000; van/camión 900 a 20000). Aplica: todos.
 - `Carga en el techo (kg)` — NÚMERO en kg (20 a 200). Aplica: todos.
 
 ### Espacio
 - `Pasajeros` — NÚMERO (2 a 9; pickup 2 a 6; van/camión 1 a 25). Aplica: todos.
 - `Filas de asientos` — NÚMERO (1 a 4; van/camión 1 a 7). Aplica: todos.
 - `Puertas` — NÚMERO (2 a 5; van/camión 2 a 6). Aplica: todos.
-- `Baúl (L)` — NÚMERO en L (50 a 1.200; pickup 50 a 3.000; van/camión 100 a 80.000). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible.
-- `Baúl con sillas abatidas (L)` — NÚMERO en L (100 a 3.500; van/camión 100 a 80.000). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible.
+- `Baúl (L)` — NÚMERO en L (50 a 1200; pickup 50 a 3000; van/camión 100 a 80000). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible.
+- `Baúl con sillas abatidas (L)` — NÚMERO en L (100 a 3500; van/camión 100 a 80000). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible.
 
 ### Carga y trabajo
-- `Capacidad de carga (kg)` — NÚMERO en kg (100 a 2.500; van/camión 200 a 40.000). Aplica: solo carrocería Pickup, Van, Camión.
-- `Capacidad de remolque (kg)` — NÚMERO en kg (0 a 5.000; van/camión 0 a 50.000). Aplica: todos.
-- `Peso bruto vehicular PBV (kg)` — NÚMERO en kg (900 a 4.500; pickup 1.500 a 6.000; van/camión 1.500 a 45.000). Aplica: solo carrocería Pickup, Van, Camión.
-- `Peso bruto combinado (kg)` — NÚMERO en kg (1.000 a 10.000; pickup 2.000 a 12.000; van/camión 2.000 a 80.000). Aplica: solo carrocería Pickup, Van, Camión.
-- `Volumen de carga del platón o furgón (L)` — NÚMERO en L (100 a 5.000; van/camión 100 a 80.000). Aplica: solo carrocería Pickup, Van, Camión.
-- `Largo de la zona de carga (mm)` — NÚMERO en mm (300 a 3.000; pickup 1.000 a 3.000; van/camión 1.000 a 14.000). Aplica: solo carrocería Pickup, Van, Camión.
-- `Ancho de la zona de carga (mm)` — NÚMERO en mm (300 a 2.000; van/camión 300 a 2.600). Aplica: solo carrocería Pickup, Van, Camión.
-- `Alto de la zona de carga (mm)` — NÚMERO en mm (200 a 1.500; van/camión 200 a 3.200). Aplica: solo carrocería Pickup, Van, Camión.
+- `Capacidad de carga (kg)` — NÚMERO en kg (100 a 2500; van/camión 200 a 40000). Aplica: solo carrocería Pickup, Van, Camión.
+- `Capacidad de remolque (kg)` — NÚMERO en kg (0 a 5000; van/camión 0 a 50000). Aplica: todos.
+- `Peso bruto vehicular PBV (kg)` — NÚMERO en kg (900 a 4500; pickup 1500 a 6000; van/camión 1500 a 45000). Aplica: solo carrocería Pickup, Van, Camión.
+- `Peso bruto combinado (kg)` — NÚMERO en kg (1000 a 10000; pickup 2000 a 12000; van/camión 2000 a 80000). Aplica: solo carrocería Pickup, Van, Camión.
+- `Volumen de carga del platón o furgón (L)` — NÚMERO en L (100 a 5000; van/camión 100 a 80000). Aplica: solo carrocería Pickup, Van, Camión.
+- `Largo de la zona de carga (mm)` — NÚMERO en mm (300 a 3000; pickup 1000 a 3000; van/camión 1000 a 14000). Aplica: solo carrocería Pickup, Van, Camión.
+- `Ancho de la zona de carga (mm)` — NÚMERO en mm (300 a 2000; van/camión 300 a 2600). Aplica: solo carrocería Pickup, Van, Camión.
+- `Alto de la zona de carga (mm)` — NÚMERO en mm (200 a 1500; van/camión 200 a 3200). Aplica: solo carrocería Pickup, Van, Camión.
 
 ### Llantas
 - `Medida de llanta` — TEXTO. Aplica: todos.
-- `Rin (pulgadas)` — NÚMERO en pulgadas (13 a 23; van/camión 13 a 24,5). Aplica: todos.
+- `Rin (pulgadas)` — NÚMERO en pulgadas (13 a 23; van/camión 13 a 24.5). Aplica: todos.
 - `Llanta de repuesto` — OPCIÓN: Tamaño completo | Temporal | Kit de reparación | No trae. Aplica: todos.
 
 ### Chasis y frenos
@@ -267,14 +267,14 @@ van/camión = Van, Camión.
 - `Material de los discos` — TEXTO. Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible.
 - `Pinzas de freno` — TEXTO. Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible.
 - `Frenado 100–0 km/h (m)` — NÚMERO en m (28 a 60). Aplica: todos.
-- `Aceleración lateral máxima (g)` — NÚMERO en g (0,5 a 1,6). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible.
-- `Aceleración longitudinal máxima (g)` — NÚMERO en g (0,3 a 1,8). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible.
+- `Aceleración lateral máxima (g)` — NÚMERO en g (0.5 a 1.6). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible.
+- `Aceleración longitudinal máxima (g)` — NÚMERO en g (0.3 a 1.8). Aplica: solo carrocería Sedán, Hatchback, SUV, Wagon, Deportivo, Convertible.
 
 ### Todoterreno
 - `Ángulo de ataque (°)` — NÚMERO en ° (5 a 55). Aplica: solo carrocería SUV, Pickup.
 - `Ángulo de salida (°)` — NÚMERO en ° (5 a 55). Aplica: solo carrocería SUV, Pickup.
 - `Ángulo ventral (°)` — NÚMERO en ° (5 a 45). Aplica: solo carrocería SUV, Pickup.
-- `Vadeo (mm)` — NÚMERO en mm (100 a 1.000). Aplica: solo carrocería SUV, Pickup.
+- `Vadeo (mm)` — NÚMERO en mm (100 a 1000). Aplica: solo carrocería SUV, Pickup.
 - `Pendiente máxima (%)` — NÚMERO en % (20 a 100). Aplica: solo carrocería SUV, Pickup.
 - `Control de descenso` — SÍ/NO. Aplica: solo carrocería SUV, Pickup.
 - `Control de tracción para trocha` — SÍ/NO. Aplica: solo carrocería SUV, Pickup.
@@ -349,9 +349,9 @@ van/camión = Van, Camión.
 
 ### Garantía y mantenimiento
 - `Garantía (años)` — NÚMERO en años (1 a 10). Aplica: todos.
-- `Garantía (km)` — NÚMERO en km (20.000 a 1.000.000). Aplica: todos.
+- `Garantía (km)` — NÚMERO en km (20000 a 1000000). Aplica: todos.
 - `Asistencia en carretera (años)` — NÚMERO en años (1 a 10). Aplica: todos.
-- `Mantenimiento cada (km)` — NÚMERO en km (5.000 a 40.000). Aplica: todos.
+- `Mantenimiento cada (km)` — NÚMERO en km (5000 a 40000). Aplica: todos.
 - `Mantenimiento cada (meses)` — NÚMERO en meses (3 a 24). Aplica: todos.
-- `Costo de los 3 primeros mantenimientos (COP)` — NÚMERO en COP (300.000 a 20.000.000). Aplica: todos.
+- `Costo de los 3 primeros mantenimientos (COP)` — NÚMERO en COP (300000 a 20000000). Aplica: todos.
 - `País donde se fabrica` — TEXTO. Aplica: todos.

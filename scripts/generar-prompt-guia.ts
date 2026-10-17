@@ -9,7 +9,8 @@ import { FORMATO, OPCIONES_IDENTIDAD, TRENES, aplica, defDe, type CampoFormato, 
 import { rangoDe } from '../lib/attributes/registry';
 import { TIPOS_CARROCERIA, type ClaseVehiculo } from '../lib/attributes/clase';
 
-const num = (n: number) => n.toLocaleString('es-CO');
+// Sin separador de miles y con punto decimal, igual a como se pide escribir los números.
+const num = (n: number) => String(n);
 const CLASE_TXT: Record<ClaseVehiculo, string> = { auto: 'carro', pickup: 'pickup', comercial: 'van/camión' };
 
 function aQuien(c: CampoFormato): string {
@@ -37,7 +38,7 @@ function tipo(c: CampoFormato): string {
     const op = OPCIONES_IDENTIDAD[c.identidad];
     if (op) return `OPCIÓN: ${op.join(' | ')}`;
     if (c.identidad === 'anio') return 'NÚMERO de 4 cifras (1990 a 2035)';
-    if (c.identidad === 'precio') return 'NÚMERO en pesos colombianos (5.000.000 a 5.000.000.000)';
+    if (c.identidad === 'precio') return 'NÚMERO en pesos colombianos (5000000 a 5000000000)';
     return 'TEXTO';
   }
   // Un campo puede significar algo distinto según el tren (ej. Autonomía oficial).
