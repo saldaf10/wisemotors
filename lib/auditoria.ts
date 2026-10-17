@@ -17,7 +17,7 @@ import { prisma } from '@/lib/prisma';
 import { ATTRIBUTE_REGISTRY, attributeAppliesTo, fueraDeRango } from '@/lib/attributes/registry';
 import { claseDeTipo, type ClaseVehiculo } from '@/lib/attributes/clase';
 import { computeCoverage } from '@/lib/attributes/coverage';
-import { fijarEnSpecs, specsDe } from '@/lib/vehiculo-datos';
+import { fijarEnSpecs, fijarEstimado, specsDe } from '@/lib/vehiculo-datos';
 import { clavesFaltantes, sinDatoDeSpecs, valoresDeSpecs } from '@/lib/attributes/clave';
 
 export const CONFIANZA_MINIMA = 0.7;
@@ -168,7 +168,7 @@ export function valorAuditado(key: string, crudo: unknown, clase: ClaseVehiculo 
  */
 export async function escribirHechos(
   vehicleId: string,
-  hechos: { key: string; valor: unknown; confianza: number; tier: number; fuente?: string | null }[],
+  hechos: { key: string; valor: unknown; confianza: number; tier: number; fuente?: string | null; estimado?: boolean }[],
   userId: string
 ): Promise<{ ok: true; escritos: number } | { ok: false; error: string }> {
   const v = await prisma.vehicle.findUnique({ where: { id: vehicleId }, select: { specifications: true, fuelType: true, type: true } });
@@ -187,6 +187,8 @@ export async function escribirHechos(
   const ops = limpios.map(h => {
     const d = DEF.get(h.key)!;
     fijarEnSpecs(s, h.key, h.valor);
+    // Un dato nuevo es oficial salvo que venga marcado como estimado.
+    fijarEstimado(s, h.key, h.estimado === true);
     const datos = {
       valueNum: d.dataType === 'numeric' ? (h.valor as number) : null,
       valueBool: d.dataType === 'boolean' ? (h.valor as boolean) : null,
@@ -194,6 +196,7 @@ export async function escribirHechos(
       confidence: Math.max(0, Math.min(1, h.confianza)),
       sourceTier: [1, 2, 3].includes(h.tier) ? h.tier : 3,
       sourceUrl: h.fuente ? String(h.fuente).slice(0, 500) : null,
+      estimado: h.estimado === true,
       verifiedBy: userId,
       verifiedAt: ahora,
       auditedBy: userId,
@@ -223,7 +226,10 @@ export async function quitarHechos(vehicleId: string, keys: string[]): Promise<{
   const v = await prisma.vehicle.findUnique({ where: { id: vehicleId }, select: { specifications: true, fuelType: true, type: true } });
   if (!v) return { ok: false, error: 'Vehículo no encontrado' };
   const s = specsDe(v.specifications);
-  for (const k of keys) fijarEnSpecs(s, k, undefined);
+  for (const k of keys) {
+    fijarEnSpecs(s, k, undefined);
+    fijarEstimado(s, k, false);
+  }
   const restantes = await prisma.vehicleAttribute.findMany({
     where: { vehicleId, attributeKey: { notIn: keys } },
     select: { attributeKey: true },
@@ -336,6 +342,7 @@ export async function aplicarAuditoria(a: AccionAuditoria, userId: string): Prom
 
   // quitar: el dato no se sostiene. Faltante es mejor que falso.
   fijarEnSpecs(s, hecho.attributeKey, undefined);
+  fijarEstimado(s, hecho.attributeKey, false);
   const restantes = await prisma.vehicleAttribute.findMany({
     where: { vehicleId: hecho.vehicleId, id: { not: a.id } },
     select: { attributeKey: true },

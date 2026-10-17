@@ -2,7 +2,7 @@
 // Uso: npx tsx scripts/verify-subida.ts  (sin BD ni API)
 
 import { FORMATO, aplica, generarPlantilla } from '../lib/subida/formato';
-import { campoDeLinea, leerGuia, leerNumero, leerSiNo } from '../lib/subida/leer';
+import { campoDeLinea, leerGuia, leerNumero, leerSiNo, separarEstimado } from '../lib/subida/leer';
 import { opcionMasCercana } from '../lib/subida/opciones';
 import { plano } from '../lib/subida/texto';
 import { ATTRIBUTE_REGISTRY } from '../lib/attributes/registry';
@@ -96,6 +96,30 @@ check('híbrido: la potencia va a hybrid.maxPower y la batería a hybrid.battery
 
 const sinIdentidad = leerGuia('Potencia máxima (hp): 150');
 check('sin tren motriz ni carrocería no se guarda nada y se avisa', sinIdentidad.datos.length === 0 && sinIdentidad.avisos.some(a => a.texto === 'Falta Tren motriz.'));
+
+// --- Datos estimados ("E" al final) ---
+const sep = (x: string) => JSON.stringify(separarEstimado(x));
+check('"153 E", "153e", "153 (E)" → 153 estimado', [ '153 E', '153e', '153 (E)', '153 [e]' ].every(x => sep(x) === JSON.stringify({ texto: '153', estimado: true })));
+check('"Sí E" y "Automática (CVT) E" → estimado', separarEstimado('Sí E').texto === 'Sí' && separarEstimado('Automática (CVT) E').texto === 'Automática (CVT)');
+check('sin E no cambia: "153", "Euro 6", "Cuero", "E"', ['153', 'Euro 6', 'Cuero', 'E'].every(x => !separarEstimado(x).estimado));
+const conE = leerGuia(`Marca: Mercedes-Benz
+Modelo: Clase E
+Año: 2026
+Tren motriz: Gasolina
+Carrocería: Sedán
+Precio de lista (COP): 320000000 E
+Potencia máxima (hp): 255
+0–100 km/h (s): 6,4 E
+Peso en vacío (kg): 1.680e
+Cámaras 360°: Sí E
+Tracción: Trasera E
+Despeje al piso (mm): E`);
+const dE = (k: string) => conE.datos.find(d => d.key === k);
+check('la marca y el modelo no se tocan ("Clase E" sigue igual)', conE.identidad.modelo === 'Clase E');
+check('precio con E → precio estimado', conE.identidad.precio === 320000000 && conE.identidad.precioEstimado === true);
+check('datos con E: valor bien leído y marcado estimado', dE('performance.acceleration0to100')?.valor === 6.4 && dE('performance.acceleration0to100')?.estimado === true && dE('dimensions.curbWeight')?.valor === 1680 && dE('dimensions.curbWeight')?.estimado === true && dE('assistance.cameras360')?.valor === true && dE('assistance.cameras360')?.estimado === true && dE('drivetrain.traction')?.valor === 'Trasera' && dE('drivetrain.traction')?.estimado === true);
+check('dato sin E → oficial', dE('combustion.maxPower')?.estimado === false);
+check('una E sola no es un dato: error, no se guarda', !dE('chassis.groundClearance') && conE.avisos.some(a => a.campo === 'Despeje al piso (mm)' && a.tipo === 'error'));
 
 console.log(fallas ? `\n${fallas} fallas` : '\nTodo verificado ✓');
 process.exit(fallas ? 1 : 0);

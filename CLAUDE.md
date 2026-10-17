@@ -229,6 +229,15 @@ cobertura, migración, seeds, motor de cohortes.
   Publica por el mismo `/api/admin/ingest/publish` (confianza 1, tier 1). Fotos: solo las que
   sube el equipo, procesadas en Cloudinary (`lib/ingest/fotos.ts`, sin IA).
   Guía para el equipo: `docs/formato-subida.md` y `docs/como-llenar-la-guia.md`. Test: `verify-subida.ts`.
+- Datos ESTIMADOS (17-oct-2026): una "E"/"e" al final del valor en la guía ("9.1 E", "Sí E")
+  = la marca no lo publica (video, revista o cálculo propio). `separarEstimado` en `leer.ts`
+  (no aplica a marca/modelo; en el precio → priceEstimated). Se guarda en
+  `VehicleAttribute.estimado` + espejo `specifications.meta.estimados` (`estimadosDe` /
+  `fijarEstimado` en `lib/vehiculo-datos.ts`); escribirHechos sin `estimado` lo vuelve oficial,
+  quitarHechos lo limpia, el editor tiene un botón "E" por campo (`estimados` en editar-vehiculo).
+  La ficha y el comparador lo pintan con `components/ui/Estimado.tsx` (subrayado `--estimado`
+  + pastilla "E", clases `.estimado`/`.marca-e` en globals.css) y `AvisoEstimados` explica que
+  no es fuente oficial. Al mostrar un dato nuevo en la ficha, envolverlo en `<Estimado k=…>`.
 
 ## Backlog en orden (del plan, secciones 8-9)
 

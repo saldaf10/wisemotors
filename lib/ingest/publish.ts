@@ -16,6 +16,8 @@ export interface AcceptedFact {
   confidence: number;
   sourceTier: number;
   sourceUrl?: string;
+  /** Dato estimado (la marca no lo publica): sale en amarillo con una "E". */
+  estimado?: boolean;
 }
 
 export interface PublishInput {
@@ -128,6 +130,9 @@ export async function publishDraft(input: PublishInput): Promise<PublishResult> 
     specs.commercial.priceReasoningEs = String(input.priceReasoningEs ?? '');
   }
 
+  const estimados = clean.filter(f => f.estimado === true).map(f => f.key);
+  if (estimados.length) specs.meta = { ...(specs.meta ?? {}), estimados };
+
   const sinDato = (input.sinDato ?? []).filter(x => typeof x === 'string').slice(0, 60);
   if (sinDato.length) specs.meta = { ...(specs.meta ?? {}), sinDato };
 
@@ -183,6 +188,7 @@ export async function publishDraft(input: PublishInput): Promise<PublishResult> 
             confidence: Math.max(0, Math.min(1, Number(f.confidence) || 0.5)),
             sourceTier: [1, 2, 3].includes(Number(f.sourceTier)) ? Number(f.sourceTier) : 3,
             sourceUrl: f.sourceUrl ? String(f.sourceUrl).slice(0, 500) : null,
+            estimado: f.estimado === true,
             verifiedBy: input.verifiedBy,
             verifiedAt: input.verifiedBy ? new Date() : null,
           };

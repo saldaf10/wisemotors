@@ -10,6 +10,9 @@
 //  3. Cada valor se convierte según el campo: número (coma o punto decimal,
 //     miles con punto), Sí/No, una de las opciones (la más parecida) o texto.
 //     Lo que no se entiende NO se guarda: queda como error para corregir.
+//  4. Una "E" al final del valor ("153 E", "153e", "Sí E") lo marca ESTIMADO:
+//     la marca no lo publica (video, revista o cálculo propio). Se guarda igual
+//     y la ficha lo muestra en amarillo.
 // ============================================================================
 
 import { fueraDeRango, rangoDe } from '@/lib/attributes/registry';
@@ -33,6 +36,8 @@ export interface Identidad {
   carroceria?: string;
   categoria?: string;
   precio?: number;
+  /** El precio vino con "E": no es el de lista oficial. */
+  precioEstimado?: boolean;
 }
 
 export interface DatoLeido {
@@ -43,6 +48,8 @@ export interface DatoLeido {
   /** Lo que estaba escrito, para mostrar "escribiste X → se entendió Y". */
   escrito: string;
   linea: number;
+  /** Vino marcado con "E": dato estimado, no oficial. */
+  estimado: boolean;
 }
 
 export interface Lectura {
@@ -97,6 +104,18 @@ export function leerNumero(texto: string): number | null {
   }
   const n = Number(s);
   return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Separa la marca de estimado del final del valor: "153 E", "153e", "153 (E)",
+ * "Sí E", "Turbo [e]" → { texto, estimado: true }. La "E" va separada por un
+ * espacio o pegada a un número; "Clase E" en un texto también se leería como
+ * estimado, por eso no se aplica a la marca ni al modelo.
+ */
+export function separarEstimado(escrito: string): { texto: string; estimado: boolean } {
+  const m = escrito.match(/^(.*?)(?:\s+|(?<=\d))[([]?\s*[eE]\s*[)\]]?$/);
+  if (m && m[1].trim()) return { texto: m[1].trim(), estimado: true };
+  return { texto: escrito, estimado: false };
 }
 
 const SI = ['si', 's', 'yes', 'y', 'x', 'true', '1', 'tiene', 'con', 'incluye', 'ok', 'sí'];
@@ -171,9 +190,12 @@ export function leerGuia(texto: string): Lectura {
       if (a && a >= 1990 && a <= 2035) identidad.anio = Math.round(a);
       else avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${l.escrito}» no es un año válido.` });
     } else if (id === 'precio') {
-      const p = leerNumero(l.escrito);
-      if (p && p >= 5_000_000 && p <= 5_000_000_000) identidad.precio = p;
-      else avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${l.escrito}» no parece un precio en pesos (ej. 113.000.000).` });
+      const { texto, estimado } = separarEstimado(l.escrito);
+      const p = leerNumero(texto);
+      if (p && p >= 5_000_000 && p <= 5_000_000_000) {
+        identidad.precio = p;
+        if (estimado) identidad.precioEstimado = true;
+      } else avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${l.escrito}» no parece un precio en pesos (ej. 113.000.000).` });
     } else if (id === 'marca') identidad.marca = l.escrito;
     else identidad.modelo = l.escrito;
   }
@@ -189,7 +211,8 @@ export function leerGuia(texto: string): Lectura {
     const clase = claseDeTipo(carroceria);
     const conValor = new Set<CampoFormato>();
     for (const l of lineas.filter(x => !x.campo.identidad)) {
-      if (VACIOS.has(plano(l.escrito))) continue;
+      const { texto: escrito, estimado } = separarEstimado(l.escrito);
+      if (VACIOS.has(plano(escrito))) continue;
       if (!aplica(l.campo, tren, carroceria)) {
         avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'aviso', texto: `«${l.campo.nombre}» no va en un ${tren.toLowerCase()} ${carroceria.toLowerCase()}; se ignora.` });
         continue;
@@ -198,25 +221,25 @@ export function leerGuia(texto: string): Lectura {
       const key = keyDe(l.campo, tren)!;
       let valor: number | string | boolean | null = null;
       if (d.dataType === 'boolean') {
-        valor = leerSiNo(l.escrito);
-        if (valor === null) avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${l.escrito}» no es Sí o No.` });
+        valor = leerSiNo(escrito);
+        if (valor === null) avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${escrito}» no es Sí o No.` });
       } else if (d.dataType === 'numeric') {
-        valor = leerNumero(l.escrito);
+        valor = leerNumero(escrito);
         if (valor === null) {
-          avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${l.escrito}» no es un número.` });
+          avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${escrito}» no es un número.` });
         } else if (fueraDeRango(d, valor, clase)) {
           const r = rangoDe(d, clase);
           avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `${valor}${d.unit ? ` ${d.unit}` : ''} está fuera de lo normal (${r.min ?? '—'} a ${r.max ?? '—'}${d.unit ? ` ${d.unit}` : ''}). Revisa la unidad.` });
           valor = null;
         }
       } else if (d.opciones?.length) {
-        valor = opcionMasCercana(l.escrito, d.opciones, key);
-        if (valor === null) avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${l.escrito}» no es una opción: ${d.opciones.join(', ')}.` });
+        valor = opcionMasCercana(escrito, d.opciones, key);
+        if (valor === null) avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${escrito}» no es una opción: ${d.opciones.join(', ')}.` });
       } else {
-        valor = l.escrito.slice(0, 200);
+        valor = escrito.slice(0, 200);
       }
       if (valor === null) continue;
-      datos.push({ campo: l.campo.nombre, key, valor, escrito: l.escrito, linea: l.n });
+      datos.push({ campo: l.campo.nombre, key, valor, escrito: l.escrito, linea: l.n, estimado });
       conValor.add(l.campo);
     }
     for (const c of FORMATO) if (!c.identidad && aplica(c, tren, carroceria) && !conValor.has(c)) vacios.push(c.nombre);

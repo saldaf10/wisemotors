@@ -17,6 +17,7 @@ import { ArrowUpRight, Loader2, Search, Trash2 } from 'lucide-react';
 import { adminFetch, mensajeDeErrorDeAuth } from '@/lib/admin-fetch';
 import { ATTRIBUTE_REGISTRY, attributeAppliesTo, type AttributeDef } from '@/lib/attributes/registry';
 import { sinDatoDeSpecs, valoresDeSpecs } from '@/lib/attributes/clave';
+import { estimadosDe } from '@/lib/vehiculo-datos';
 import { DatosClave, numeroEscrito } from './DatosClave';
 import { RevisionFotos, VISTAS, type FotoRevision } from './RevisionFotos';
 import { CATEGORIAS, claseDeTipo, TIPOS_CARROCERIA } from '@/lib/attributes/clase';
@@ -140,6 +141,7 @@ export function EditorVehiculo({ vehicleId }: { vehicleId: string }) {
   const [fotosTocadas, setFotosTocadas] = useState(false);
   const [dealerIds, setDealerIds] = useState<string[]>([]);
   const [sinDato, setSinDato] = useState<string[]>([]);
+  const [estimados, setEstimados] = useState<string[]>([]);
   const [concesionarios, setConcesionarios] = useState<{ id: string; name: string; location: string }[]>([]);
   const [filtro, setFiltro] = useState('');
   const [soloConDato, setSoloConDato] = useState(false);
@@ -159,6 +161,7 @@ export function EditorVehiculo({ vehicleId }: { vehicleId: string }) {
     setFotosTocadas(false);
     setDealerIds((d.vehicleDealers ?? []).map((x: any) => x.dealerId ?? x.dealer?.id));
     setSinDato(sinDatoDeSpecs(d.specifications ?? {}));
+    setEstimados(estimadosDe(d.specifications ?? {}));
   }, [vehicleId]);
 
   useEffect(() => {
@@ -209,8 +212,17 @@ export function EditorVehiculo({ vehicleId }: { vehicleId: string }) {
   const dealersOriginales = (v.vehicleDealers ?? []).map((x: any) => x.dealerId ?? x.dealer?.id).sort().join(',');
   const dealersCambiados = [...dealerIds].sort().join(',') !== dealersOriginales;
   const sinDatoCambiado = [...sinDato].sort().join(',') !== [...sinDatoDeSpecs(specs)].sort().join(',');
+  // Solo cuentan los estimados de campos que siguen con dato.
+  const estimadosVigentes = estimados.filter(k => valores[k] !== undefined);
+  const estimadosCambiados = [...estimadosVigentes].sort().join(',') !== [...estimadosDe(specs)].sort().join(',');
   const nCambios =
-    Object.keys(identidadCambiada).length + (precioCambiado ? 1 : 0) + Object.keys(cambios).length + (fotosTocadas ? 1 : 0) + (dealersCambiados ? 1 : 0) + (sinDatoCambiado ? 1 : 0);
+    Object.keys(identidadCambiada).length +
+    (precioCambiado ? 1 : 0) +
+    Object.keys(cambios).length +
+    (fotosTocadas ? 1 : 0) +
+    (dealersCambiados ? 1 : 0) +
+    (sinDatoCambiado ? 1 : 0) +
+    (estimadosCambiados ? 1 : 0);
   const precioEstimado = !!specs.commercial?.priceEstimated;
 
   const poner = (key: string, x: Valor | null) =>
@@ -237,6 +249,8 @@ export function EditorVehiculo({ vehicleId }: { vehicleId: string }) {
       if (quitar.length) cuerpo.quitar = quitar;
       if (dealersCambiados) cuerpo.dealerIds = dealerIds;
       if (sinDatoCambiado) cuerpo.sinDato = sinDato;
+      // Siempre que cambie un dato se manda la lista: escribir un dato lo vuelve oficial salvo que siga marcado.
+      if (estimadosCambiados || hechos.length) cuerpo.estimados = estimadosVigentes;
       if (fotosTocadas) {
         cuerpo.fotos = [...fotos.filter(f => f.usar && f.portada), ...fotos.filter(f => f.usar && !f.portada)]
           .filter(f => f.procesada)
@@ -391,7 +405,10 @@ export function EditorVehiculo({ vehicleId }: { vehicleId: string }) {
             </span>
           </div>
         </div>
-        <p className="mt-1 text-sm text-tinta-2">Deja un campo vacío (o "Sin dato") para quitarlo de la ficha.</p>
+        <p className="mt-1 text-sm text-tinta-2">
+          Deja un campo vacío (o "Sin dato") para quitarlo de la ficha. Toca la <span className="marca-e !align-middle !text-[11px]">E</span> de un dato
+          si es estimado (la marca no lo publica): sale en amarillo en la ficha.
+        </p>
         <div className="mt-4 columns-1 gap-6 lg:columns-2">
           {grupos.map(([grupo, defs]) => (
             <div key={grupo} className="mb-6 break-inside-avoid">
@@ -400,7 +417,21 @@ export function EditorVehiculo({ vehicleId }: { vehicleId: string }) {
                 {defs.map(d => (
                   <li key={d.key} className={`flex items-center justify-between gap-3 py-2 ${d.key in cambios ? 'bg-[#faf5ff]' : ''}`}>
                     <span className="text-[13px]">{d.labelEs}</span>
-                    <EntradaDato def={d} valor={valores[d.key] as Valor | undefined} onCambio={x => poner(d.key, x)} />
+                    <span className="flex items-center gap-2">
+                      <EntradaDato def={d} valor={valores[d.key] as Valor | undefined} onCambio={x => poner(d.key, x)} />
+                      <button
+                        type="button"
+                        disabled={valores[d.key] === undefined}
+                        aria-pressed={estimados.includes(d.key)}
+                        title={estimados.includes(d.key) ? 'Estimado: tocar para marcarlo oficial' : 'Marcar como estimado'}
+                        onClick={() => setEstimados(e => (e.includes(d.key) ? e.filter(k => k !== d.key) : [...e, d.key]))}
+                        className={`h-7 w-7 shrink-0 rounded-full text-[11px] font-bold transition-colors disabled:opacity-0 ${
+                          estimados.includes(d.key) ? 'bg-[#dbec43] text-[#23260a]' : 'border border-linea text-tinta-2/60 hover:border-tinta'
+                        }`}
+                      >
+                        E
+                      </button>
+                    </span>
                   </li>
                 ))}
               </ul>

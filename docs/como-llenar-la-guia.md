@@ -33,6 +33,12 @@ Si la ficha trae varias versiones en columnas, copia solo la columna de esa vers
   paréntesis o dejarlo. No importan las mayúsculas, las tildes ni un error de tipeo pequeño:
   "tambro" se entiende como Tambor.
 - **No cambies los nombres de los campos** ni pongas dos datos en una línea.
+- **Datos estimados: una `E` al final.** Si la marca no publica un dato pero lo sacaste de una
+  prueba en video, una revista de carros o lo calculaste, escríbelo con una `E` (o `e`) al
+  final: `0–100 km/h (s): 9,1 E`, `Cámaras 360°: Sí E`. En la tabla sale con la E amarilla y
+  en la página se ve en amarillo, con un aviso de que no es un dato oficial. Sirve también en
+  el precio (precio estimado), pero no en la marca ni el modelo. Si el dato está en la ficha
+  oficial, va sin `E`.
 
 ### Conversiones que más se necesitan
 
@@ -58,7 +64,8 @@ La potencia de cada motor va en sus propios campos.
    rojo no se puede publicar.
 3. **En amarillo** salen los avisos, por ejemplo un dato que no aplica a este carro. Se ignoran solos.
 4. En la tabla revisa la columna **Se guarda**: es lo que va a quedar en WiseMotors.
-5. Sube las fotos por vista (la lateral es la portada), marca quién lo vende y toca **Publicar**.
+5. Los datos con **E amarilla** son los estimados: revisa que de verdad no estén en la ficha oficial.
+6. Sube las fotos por vista (la lateral es la portada), marca quién lo vende y toca **Publicar**.
 
 ## Opcional: llenarla con un chat de IA
 
@@ -70,7 +77,9 @@ API de WiseMotors. Pega la plantilla, adjunta la ficha técnica en PDF y usa est
 > convierte unidades si hace falta (km/l × 3,785 = km/gal, kW × 1,341 = hp, litros ÷ 3,785 = gal);
 > Sí o No en los campos de sí o no; en los campos con opciones usa una de las opciones exactas;
 > **si un dato no está en la ficha, deja el campo vacío, nunca lo adivines ni lo saques de otra
-> versión**; no cambies ni reordenes los nombres de los campos; devuelve solo la plantilla llena.
+> versión**; si un dato no lo publica la marca pero sale de una prueba en video, una revista o un
+> cálculo, escríbelo con una E al final ("9.1 E"); no cambies ni reordenes los nombres de los
+> campos; devuelve solo la plantilla llena.
 
 Antes de publicar, revisa siempre la tabla **Se guarda** contra la ficha. La IA de un chat
 también se equivoca de versión o de unidad.

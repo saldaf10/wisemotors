@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { ArrowUpRight, Crown, Info } from 'lucide-react';
 import { ATTRIBUTE_REGISTRY, attributeAppliesTo, type AttributeDef } from '@/lib/attributes/registry';
 import { formatPrice } from '@/lib/utils';
+import { estimadosDe } from '@/lib/vehiculo-datos';
+import { MarcaE } from '@/components/ui/Estimado';
 
 // ============================================================================
 // MATRIZ DE COMPARACIÓN
@@ -42,7 +44,7 @@ interface Props {
 }
 
 type Celda =
-  | { estado: 'valor'; valor: number | string | boolean }
+  | { estado: 'valor'; valor: number | string | boolean; estimado?: boolean }
   | { estado: 'no_aplica' }
   | { estado: 'sin_dato' };
 
@@ -173,8 +175,9 @@ function Fila({
                   esGanador ? 'font-bold text-wise' : 'font-semibold text-foreground'
                 }`}
               >
-                {formatearValor(def, celda.valor)}
+                <span className={celda.estimado ? 'estimado' : undefined}>{formatearValor(def, celda.valor)}</span>
               </span>
+              {celda.estimado && <MarcaE />}
               {esGanador && <Crown className="h-3 w-3 shrink-0 text-wise" strokeWidth={2.5} />}
             </div>
             {esNum && (
@@ -199,8 +202,9 @@ function Fila({
 }
 
 export function CompareMatrix({ vehicles }: Props) {
-  const { grupos, sinDatos, totalFilas } = useMemo(() => {
+  const { grupos, sinDatos, totalFilas, hayEstimados } = useMemo(() => {
     const specsPorVehiculo = vehicles.map(parseSpecs);
+    const estimadosPorVehiculo = specsPorVehiculo.map(x => new Set(estimadosDe(x)));
 
     const comparables = ATTRIBUTE_REGISTRY.filter(
       d => d.comparable !== false && d.dimension !== 'editorial' && d.coAvailability !== 'never_published'
@@ -216,9 +220,9 @@ export function CompareMatrix({ vehicles }: Props) {
         if (def.dataType === 'numeric') {
           const n = Number(bruto);
           if (!Number.isFinite(n)) return { estado: 'sin_dato' };
-          return { estado: 'valor', valor: n };
+          return { estado: 'valor', valor: n, estimado: estimadosPorVehiculo[i].has(def.key) };
         }
-        return { estado: 'valor', valor: bruto };
+        return { estado: 'valor', valor: bruto, estimado: estimadosPorVehiculo[i].has(def.key) };
       });
 
       // Menos de dos valores reales: la fila no compara nada, no se muestra
@@ -240,7 +244,8 @@ export function CompareMatrix({ vehicles }: Props) {
       }))
       .sort((a, b) => b.items.length - a.items.length);
 
-    return { grupos, sinDatos: filas.length === 0, totalFilas: filas.length };
+    const hayEstimados = filas.some(f => f.celdas.some(c => c.estado === 'valor' && c.estimado));
+    return { grupos, sinDatos: filas.length === 0, totalFilas: filas.length, hayEstimados };
   }, [vehicles]);
 
   return (
@@ -308,6 +313,13 @@ export function CompareMatrix({ vehicles }: Props) {
             {totalFilas} datos comparables. Los que solo tiene un vehículo no se muestran: no
             comparan nada. «No aplica» significa que el dato no existe para ese tren motriz, no que
             falte.
+            {hayEstimados && (
+              <>
+                {' '}
+                Los marcados con <MarcaE className="!ml-0 !align-middle" /> son estimados: la marca no los publica, así que salen de
+                pruebas en video, revistas especializadas o un cálculo nuestro.
+              </>
+            )}
           </p>
         </>
       )}

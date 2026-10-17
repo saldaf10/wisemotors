@@ -23,14 +23,41 @@ nombres de los campos y con el formato de los valores. Sigue estas reglas al pie
 
 - Si un dato NO está en la ficha técnica, deja el campo vacío: `Torque máximo (Nm):` (nada
   después de los dos puntos). El sistema lo salta y no lo guarda.
-- NUNCA adivines, estimes, redondees a ojo ni copies un dato de otra versión, otro año u otro
+- NUNCA adivines, redondees a ojo ni copies un dato de otra versión, otro año u otro
   mercado. Un campo vacío es correcto; un dato inventado es un error grave.
+  (Un dato ESTIMADO con fuente real sí se permite, marcado con `E`: ver la sección 2.1.)
 - NUNCA escribas `No` en un campo de TEXTO para decir que no lo tiene: déjalo vacío.
   `No` solo se usa en los campos SÍ/NO.
 - Valores que el sistema también trata como vacíos (mejor no usarlos, deja vacío):
   `-`, `--`, `N/A`, `n/a`, `no aplica`, `sin dato`, `ND`, `?`.
 - Cada valor va en su propia línea. Nunca pongas dos datos en la misma línea ni dejes que un
   valor se corra a la línea de otro campo.
+
+## 2.1 Datos estimados: la marca `E`
+
+Un dato ESTIMADO es uno que la marca NO publica en su ficha oficial, pero que sí tiene una
+fuente real: una prueba en video (YouTube), una revista o portal de carros especializado, o un
+cálculo hecho a partir de datos oficiales. No es un dato inventado.
+
+- Se escribe el valor normal y, al final, un espacio y la letra `E`: `0–100 km/h (s): 9.1 E`
+- La `E` puede ir en mayúscula o minúscula (`E` o `e`). En un número también puede ir pegada
+  (`9.1E`), pero lo recomendado es con espacio: `9.1 E`.
+- Sirve en cualquier campo de datos: NÚMERO (`Peso en vacío (kg): 1260 E`), SÍ/NO
+  (`Cámaras 360°: Sí E`), OPCIÓN (`Tracción: Delantera E`) y TEXTO
+  (`Transmisión: Automática (6 velocidades) E`).
+- En la identidad solo sirve en `Precio de lista (COP)` (precio estimado, no el de lista
+  oficial). NUNCA la pongas en `Marca`, `Modelo`, `Año`, `Tren motriz`, `Carrocería` ni
+  `Categoría`. En `Modelo` una "E" es parte del nombre (`Clase E`) y se deja tal cual.
+- El valor estimado sigue TODAS las reglas de su tipo: sin unidad, dentro del rango, una
+  opción exacta, etc. La `E` va solo una vez, al final, después del valor.
+- Una `E` sola, sin valor (`Torque máximo (Nm): E`), es un ERROR. Si no hay dato, deja el
+  campo vacío.
+- Si el dato está en la ficha oficial, va SIN `E` aunque también salga en un video o revista.
+  La `E` es solo para lo que la marca no publica.
+- Si dos fuentes no oficiales no coinciden, usa la más seria (revista o prueba con equipo de
+  medición antes que una opinión) o deja el campo vacío. Nunca promedies a ojo.
+- En la página, los datos con `E` salen en amarillo con una "E" y la ficha avisa que no vienen
+  de una fuente oficial.
 
 ## 3. Cómo escribir cada tipo de valor
 
@@ -370,6 +397,7 @@ Tracción: Delantera
 # Dimensiones y peso
 Largo (mm): 4270
 Despeje al piso (mm): 175
+Peso en vacío (kg): 1260 E
 
 # Seguridad
 Airbags: 6
@@ -391,6 +419,7 @@ que aplican al carro, en el orden de la sección 6, vacíos los que no estén en
 3. Solo están los campos que aplican a ese tren motriz y esa carrocería.
 4. Cada número está sin unidad, sin separador de miles, con punto decimal y dentro de su rango.
 5. Los SÍ/NO dicen exactamente `Sí` o `No`, y las OPCIONES son una opción exacta de la lista.
-6. Nada está inventado: lo que no está en la ficha quedó vacío.
+6. Nada está inventado: lo que no está en ninguna fuente quedó vacío, y lo que no publica la
+   marca pero sí sale de un video, una revista o un cálculo lleva `E` al final.
 7. Todos los datos son de ESA versión y ESE año, no de otra versión ni de otro país.
 8. La respuesta es solo el texto de la guía, sin nada más.

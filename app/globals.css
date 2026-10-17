@@ -24,6 +24,8 @@
   --wise-profundo: #3b0d55;
   --lila: #d8b4fe;
   --wise-glow: 136, 28, 183;
+  /* Datos estimados (no oficiales): amarillo neón apagado, se lee sobre claro y oscuro */
+  --estimado: #dbec43;
 
   --motion-instant: 120ms;
   --motion-quick: 240ms;
@@ -678,4 +680,35 @@
 @keyframes brillo { to { transform: translateX(100%); } }
 @media (prefers-reduced-motion: reduce) {
   .ia-aurora, .brillo::after, .brillo-claro::after { animation: none; }
+}
+
+/* ── Datos estimados ─────────────────────────────────────────────────────
+   La marca no los publica: salen de pruebas en video, revistas o un cálculo
+   de WiseMotors. Subrayado amarillo + una "E" (components/ui/Estimado). */
+.estimado {
+  text-decoration-line: underline;
+  text-decoration-color: var(--estimado);
+  text-decoration-thickness: max(3px, 0.11em);
+  text-underline-offset: 0.12em;
+  text-decoration-skip-ink: none;
+}
+.marca-e {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5em;
+  height: 1.5em;
+  margin-left: 0.35em;
+  padding: 0 0.35em;
+  border-radius: 9999px;
+  background: var(--estimado);
+  color: #23260a;
+  font-family: var(--font-sans);
+  font-size: clamp(10px, 0.3em, 14px);
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1;
+  letter-spacing: 0;
+  vertical-align: super;
+  box-shadow: 0 0 12px rgba(219, 236, 67, 0.45);
 }

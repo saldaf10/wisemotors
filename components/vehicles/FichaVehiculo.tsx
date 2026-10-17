@@ -44,7 +44,8 @@ import { useMiUbicacion } from '@/hooks/useMiUbicacion';
 import { porCercania } from '@/lib/distancia';
 import { BotonCercania, TarjetaConcesionario, tieneUbicacion, type Concesionario } from '@/components/concesionarios/piezas';
 import { ListaContacto, useContactar, type Motivo } from '@/components/concesionarios/Contacto';
-import { leer, precioCompleto, rendimiento, specsDe } from '@/lib/vehiculo-datos';
+import { KEYS_RENDIMIENTO, estimadosDe, leer, precioCompleto, rendimiento, specsDe } from '@/lib/vehiculo-datos';
+import { AvisoEstimados, EstimadosProvider, MarcaE } from '@/components/ui/Estimado';
 import { claseDeTipo } from '@/lib/attributes/clase';
 import { fotoDe, pinturaDe } from '@/components/car/CarRender';
 
@@ -64,6 +65,8 @@ const P: Record<string, Punto> = {
 interface Hotspot {
   donde: Punto;
   texto: string;
+  /** Sale de un dato estimado (no oficial): lleva la "E". */
+  estimado?: boolean;
 }
 
 interface Categoria {
@@ -76,7 +79,9 @@ interface Categoria {
 
 const fmt = (n: number, dec = 0) => new Intl.NumberFormat('es-CO', { maximumFractionDigits: dec }).format(n);
 
-function categorias(fuelType: string, s: Record<string, any>, tipo?: string): Categoria[] {
+type Texto = string | { t: string; k: string[] } | null;
+
+function categorias(fuelType: string, s: Record<string, any>, tipo?: string, est: Set<string> = new Set()): Categoria[] {
   const trabajo = claseDeTipo(tipo) !== 'auto';
   const texto = (path: string) => {
     let cur: any = s;
@@ -88,10 +93,16 @@ function categorias(fuelType: string, s: Record<string, any>, tipo?: string): Ca
     for (const k of path.split('.')) cur = cur?.[k];
     return cur === true;
   };
-  const h = (donde: Punto, t: string | null): Hotspot | null => (t ? { donde, texto: t } : null);
-  const n = (path: string[], f: (x: number) => string) => {
+  // h(donde, texto, ...keys): las keys dicen si el dato es estimado.
+  const h = (donde: Punto, t: Texto, ...keys: string[]): Hotspot | null => {
+    if (!t) return null;
+    const texto = typeof t === 'string' ? t : t.t;
+    const ks = typeof t === 'string' ? keys : [...t.k, ...keys];
+    return { donde, texto, estimado: ks.some(k => est.has(k)) };
+  };
+  const n = (path: string[], f: (x: number) => string): Texto => {
     const v = leer(s, ...path);
-    return v !== null ? f(v) : null;
+    return v !== null ? { t: f(v), k: path } : null;
   };
   const electrico = fuelType === 'Eléctrico';
 
@@ -133,8 +144,8 @@ function categorias(fuelType: string, s: Record<string, any>, tipo?: string): Ca
       puntos: [
         h(P.cabina, n(['safety.airbags'], x => `${fmt(x)} airbags`)),
         h(P.techoF, n(['safety.ncapRating'], x => `${fmt(x)} estrellas en choques`)),
-        h(P.capo, si('safety.autonomousEmergencyBraking') ? 'Frena solo si ve un choque' : null),
-        h(P.ruedaR, si('safety.stabilityControl') ? 'Control de estabilidad' : null),
+        h(P.capo, si('safety.autonomousEmergencyBraking') ? 'Frena solo si ve un choque' : null, 'safety.autonomousEmergencyBraking'),
+        h(P.ruedaR, si('safety.stabilityControl') ? 'Control de estabilidad' : null, 'safety.stabilityControl'),
       ].filter((x): x is Hotspot => !!x),
     },
     {
@@ -151,10 +162,10 @@ function categorias(fuelType: string, s: Record<string, any>, tipo?: string): Ca
             h(P.capo, n(['electric.dcChargingTime'], x => `Carga rápida en ${fmt(x)} min`)),
           ].filter((x): x is Hotspot => !!x)
         : [
-            h(P.cabina, rendimiento(s) !== null ? `${fmt(rendimiento(s)!)} km por galón` : null),
+            h(P.cabina, rendimiento(s) !== null ? `${fmt(rendimiento(s)!)} km por galón` : null, ...KEYS_RENDIMIENTO),
             h(P.capo, n(['combustion.displacement', 'hybrid.displacement', 'phev.displacement'], x => `Motor de ${fmt(x)} cc`)),
             h(P.cola, n(['combustion.fuelTankCapacity', 'hybrid.fuelTankCapacity'], x => `Tanque de ${fmt(x, 1)} galones`)),
-            h(P.ruedaR, texto('combustion.transmissionType') ?? texto('hybrid.transmissionType')),
+            h(P.ruedaR, texto('combustion.transmissionType') ?? texto('hybrid.transmissionType'), 'combustion.transmissionType', 'hybrid.transmissionType'),
           ].filter((x): x is Hotspot => !!x),
     },
     {
@@ -164,10 +175,10 @@ function categorias(fuelType: string, s: Record<string, any>, tipo?: string): Ca
       explicacion:
         'Lo que usas todos los días: conectar el celular, ver hacia atrás al parquear, que el carro te avise si algo se acerca.',
       puntos: [
-        h(P.cabina, texto('technology.smartphoneIntegration') ? 'Conecta tu celular' : si('technology.bluetooth') ? 'Bluetooth' : null),
-        h(P.cola, si('assistance.reverseCamera') ? 'Cámara de reversa' : null),
-        h(P.ruedaR, si('assistance.parkingSensors') ? 'Sensores de parqueo' : null),
-        h(P.techoF, si('technology.touchscreen') ? 'Pantalla táctil' : null),
+        h(P.cabina, texto('technology.smartphoneIntegration') ? 'Conecta tu celular' : si('technology.bluetooth') ? 'Bluetooth' : null, texto('technology.smartphoneIntegration') ? 'technology.smartphoneIntegration' : 'technology.bluetooth'),
+        h(P.cola, si('assistance.reverseCamera') ? 'Cámara de reversa' : null, 'assistance.reverseCamera'),
+        h(P.ruedaR, si('assistance.parkingSensors') ? 'Sensores de parqueo' : null, 'assistance.parkingSensors'),
+        h(P.techoF, si('technology.touchscreen') ? 'Pantalla táctil' : null, 'technology.touchscreen'),
       ].filter((x): x is Hotspot => !!x),
     },
   ];
@@ -201,7 +212,9 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
   const { user } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
   const s = useMemo(() => specsDe(vehicle.specifications), [vehicle.specifications]);
-  const cats = useMemo(() => categorias(vehicle.fuelType, s, vehicle.type), [vehicle.fuelType, s, vehicle.type]);
+  const est = useMemo(() => new Set(estimadosDe(s)), [s]);
+  const cats = useMemo(() => categorias(vehicle.fuelType, s, vehicle.type, est), [vehicle.fuelType, s, vehicle.type, est]);
+  const precioEstimado = !!vehicle.priceEstimated || !!s.commercial?.priceEstimated;
   const [cat, setCat] = useState(0);
   // Un solo concesionario (o ninguno): el nombre junto al botón que se tocó y
   // directo a WhatsApp. Varios: la lista para elegir, ordenada por distancia.
@@ -256,9 +269,12 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
           </div>
           <div className="sube flex w-full flex-col items-start gap-4 md:w-auto md:items-end" style={{ '--d': '120ms' } as React.CSSProperties}>
             <div className="md:text-right">
-              <p className="text-[13px] text-tinta-2">Precio de lista</p>
+              <p className="text-[13px] text-tinta-2">{precioEstimado ? 'Precio estimado' : 'Precio de lista'}</p>
               <p className="cifra text-[32px] font-semibold md:text-[40px]">
-                <AnimatedNumber value={vehicle.price} format={n => precioCompleto(Math.round(n))} durationMs={1100} />
+                <span className={precioEstimado ? 'estimado' : undefined}>
+                  <AnimatedNumber value={vehicle.price} format={n => precioCompleto(Math.round(n))} durationMs={1100} />
+                </span>
+                {precioEstimado && <MarcaE />}
               </p>
             </div>
             <div className="flex gap-2">
@@ -337,7 +353,10 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
                     }
                   >
                     <span className="hotspot__punto" />
-                    <span className="hotspot__etiqueta">{p.texto}</span>
+                    <span className="hotspot__etiqueta">
+                      {p.texto}
+                      {p.estimado && <MarcaE />}
+                    </span>
                   </div>
                 );
               })}
@@ -348,6 +367,7 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
                 {actual.puntos.map(p => (
                   <li key={p.texto} className="rounded-2xl bg-blanco/90 px-3 py-2.5 text-[13px] font-medium">
                     {p.texto}
+                    {p.estimado && <MarcaE />}
                   </li>
                 ))}
               </ul>
@@ -368,7 +388,12 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
         </div>
       </section>
 
-      <SeccionesFicha vehicle={vehicle} indices={indices} />
+      <EstimadosProvider specs={vehicle.specifications}>
+        <div className="mx-auto mt-6 max-w-[1440px] px-5 md:px-8">
+          <AvisoEstimados className="md:max-w-[760px]" />
+        </div>
+        <SeccionesFicha vehicle={vehicle} indices={indices} />
+      </EstimadosProvider>
 
       {/* ── Contacto: hablar con quien lo vende (verde = una persona al otro lado) ── */}
       <section className="mx-auto mt-24 max-w-[1440px] px-5 md:px-8">

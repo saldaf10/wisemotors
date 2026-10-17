@@ -17,6 +17,7 @@ import { adminFetch, mensajeDeErrorDeAuth } from '@/lib/admin-fetch';
 import { CLASES, claseDeTipo } from '@/lib/attributes/clase';
 import { TRENES, generarPlantilla, type Tren } from '@/lib/subida/formato';
 import { leerGuia } from '@/lib/subida/leer';
+import { MarcaE } from '@/components/ui/Estimado';
 import { RevisionFotos, fotosIniciales, type FotoRevision } from '@/components/admin/RevisionFotos';
 
 const GUARDADO = 'wm_subida_guia';
@@ -84,11 +85,12 @@ export function SubidaGuia() {
           vehicleType: categoria,
           fuelType: id.tren,
           price: id.precio,
-          priceEstimated: false,
-          priceReasoningEs: 'Precio de la guía de subida.',
-          priceConfidence: 1,
+          priceEstimated: !!id.precioEstimado,
+          priceReasoningEs: id.precioEstimado ? 'Precio estimado (marcado con E en la guía).' : 'Precio de la guía de subida.',
+          priceConfidence: id.precioEstimado ? 0.6 : 1,
           // Lo escribió una persona del equipo con la ficha en la mano: confianza plena.
-          facts: lectura.datos.map(d => ({ key: d.key, value: d.valor, confidence: 1, sourceTier: 1 })),
+          // Los marcados con "E" son estimados: no salen de la marca (fuente secundaria).
+          facts: lectura.datos.map(d => ({ key: d.key, value: d.valor, confidence: 1, sourceTier: d.estimado ? 2 : 1, estimado: d.estimado })),
           dealerIds,
           fotos: [...fotos.filter(f => f.usar && f.portada), ...fotos.filter(f => f.usar && !f.portada)]
             .filter(f => f.procesada)
@@ -181,10 +183,13 @@ export function SubidaGuia() {
             {id?.marca ?? '¿Marca?'} {id?.modelo ?? '¿Modelo?'} {id?.anio ?? ''}
           </h2>
           <p className="mt-1 text-sm text-tinta-2">
-            {[id?.tren, id?.carroceria, id?.categoria, id?.precio ? `$${id.precio.toLocaleString('es-CO')}` : null].filter(Boolean).join(' · ') || 'Faltan los datos de identidad'}
+            {[id?.tren, id?.carroceria, id?.categoria, id?.precio ? `$${id.precio.toLocaleString('es-CO')}${id.precioEstimado ? ' (estimado)' : ''}` : null].filter(Boolean).join(' · ') || 'Faltan los datos de identidad'}
           </p>
           <div className="mt-4 flex flex-wrap gap-2 text-[13px]">
             <span className="rounded-full bg-wise/10 px-3 py-1 text-wise">{lectura.datos.length} datos leídos</span>
+            {lectura.datos.some(d => d.estimado) && (
+              <span className="rounded-full bg-[#dbec43]/40 px-3 py-1 text-[#4a5000]">{lectura.datos.filter(d => d.estimado).length} estimados (E)</span>
+            )}
             <span className="rounded-full bg-tarjeta px-3 py-1 text-tinta-2">{lectura.vacios.length} vacíos</span>
             {errores.length > 0 && <span className="rounded-full bg-rose-100 px-3 py-1 text-rose-700">{errores.length} por corregir</span>}
           </div>
@@ -231,7 +236,10 @@ export function SubidaGuia() {
                     <tr key={d.key} className="border-b border-linea/60">
                       <td className="py-1.5 pr-3 text-tinta-2">{d.campo}</td>
                       <td className="py-1.5 pr-3 font-mono text-[12.5px] text-tinta-2">{d.escrito}</td>
-                      <td className={`py-1.5 font-medium ${String(fmt(d.valor)) !== d.escrito ? 'text-wise' : 'text-tinta'}`}>{fmt(d.valor)}</td>
+                      <td className={`py-1.5 font-medium ${String(fmt(d.valor)) !== d.escrito ? 'text-wise' : 'text-tinta'}`}>
+                        {fmt(d.valor)}
+                        {d.estimado && <MarcaE />}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

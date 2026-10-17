@@ -27,6 +27,25 @@ export function specsDe(raw: unknown): Record<string, any> {
   return typeof raw === 'object' ? (raw as Record<string, any>) : {};
 }
 
+/**
+ * Datos ESTIMADOS (specifications.meta.estimados): la marca no los publica y
+ * salen de pruebas en video, revistas especializadas o un cálculo de
+ * WiseMotors. Se muestran en amarillo con una "E" (components/ui/Estimado).
+ */
+export function estimadosDe(specs: Record<string, any>): string[] {
+  const x = specs?.meta?.estimados;
+  return Array.isArray(x) ? x.filter((i: unknown) => typeof i === 'string') : [];
+}
+
+/** Pone o quita una key de specifications.meta.estimados (muta `specs`). */
+export function fijarEstimado(specs: Record<string, any>, key: string, estimado: boolean) {
+  const actual = new Set(estimadosDe(specs));
+  if (estimado) actual.add(key);
+  else actual.delete(key);
+  if (actual.size) specs.meta = { ...(specs.meta ?? {}), estimados: Array.from(actual) };
+  else if (specs.meta) delete specs.meta.estimados;
+}
+
 export function leer(specs: Record<string, any>, ...paths: string[]): number | null {
   for (const path of paths) {
     let cur: any = specs;
@@ -42,6 +61,9 @@ export function leer(specs: Record<string, any>, ...paths: string[]): number | n
  * carretera: el combinado se toma como el promedio de los dos (derivado, no
  * inventado).
  */
+/** Las keys de las que puede salir rendimiento() (para saber si es estimado). */
+export const KEYS_RENDIMIENTO = ['combustion', 'hybrid', 'phev'].flatMap(t => [`${t}.combinedConsumption`, `${t}.cityConsumption`, `${t}.highwayConsumption`]);
+
 export function rendimiento(specs: Record<string, any>): number | null {
   const combinado = leer(specs, 'combustion.combinedConsumption', 'hybrid.combinedConsumption', 'phev.combinedConsumption');
   if (combinado !== null) return combinado;

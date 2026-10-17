@@ -42,7 +42,8 @@ import {
 } from 'lucide-react';
 import { CarRender } from '@/components/car/CarRender';
 import { useEnVista } from '@/components/ui/useEnVista';
-import { leer, millones, rendimiento, specsDe, tanque } from '@/lib/vehiculo-datos';
+import { KEYS_RENDIMIENTO, leer, millones, rendimiento, specsDe, tanque } from '@/lib/vehiculo-datos';
+import { Estimado, SiEstimado } from '@/components/ui/Estimado';
 import { claseDeTipo } from '@/lib/attributes/clase';
 import { masParecidos } from '@/lib/similares';
 import { hayIndices, SeccionIndices } from './IndicesWise';
@@ -143,6 +144,25 @@ function valorEn(s: Record<string, any>, path: string) {
   return cur;
 }
 
+// Keys de cada dato (todas las variantes por tren motriz), para marcar los estimados.
+const tr = (campo: string, trenes = ['combustion', 'hybrid', 'phev', 'electric']) => trenes.map(t => `${t}.${campo}`);
+const K = {
+  potencia: tr('maxPower'),
+  torque: tr('maxTorque'),
+  motor: tr('displacement', ['combustion', 'hybrid', 'phev']),
+  config: tr('engineConfiguration', ['combustion', 'hybrid', 'phev']),
+  caja: tr('transmissionType', ['combustion', 'hybrid', 'phev']),
+  ciudad: tr('cityConsumption', ['combustion', 'hybrid', 'phev']),
+  carretera: tr('highwayConsumption', ['combustion', 'hybrid', 'phev']),
+  tanque: tr('fuelTankCapacity', ['combustion', 'hybrid', 'phev']),
+  autonomia: ['electric.realRangeMixed', 'electric.electricRange'],
+  autCiudadCarretera: ['electric.realRangeCity', 'electric.realRangeHighway'],
+  bateria: ['electric.batteryCapacity', 'phev.batteryCapacity'],
+  cargaAC: ['electric.acChargingTime', 'phev.acChargingTime'],
+  cargaDC: ['electric.dcChargingTime', 'phev.dcChargingTime'],
+  peso: ['dimensions.curbWeight'],
+};
+
 // ── Componente ─────────────────────────────────────────────────────────────
 export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indices?: IndicesVehiculo | null }) {
   const s = useMemo(() => specsDe(vehicle.specifications), [vehicle.specifications]);
@@ -207,16 +227,17 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
   const volumenCarga = clase === 'comercial' ? leer(s, 'dimensions.cargoCapacity', 'interior.interiorCargoCapacity', 'weight.cargoBoxVolume') : null;
   // Solo a vehículos de trabajo: una SUV con remolque lo sigue mostrando junto a la altura al piso.
   const datosTrabajo = (clase === 'auto' ? [] : [
-    cargaUtil !== null && { etiqueta: 'Carga útil', valor: `${fmt(cargaUtil)} kg`, ayuda: 'Lo que puede llevar encima' },
-    remolque !== null && { etiqueta: 'Remolque', valor: `${fmt(remolque)} kg`, ayuda: 'Lo que puede halar' },
-    pesoBruto !== null && { etiqueta: 'Peso bruto', valor: `${fmt(pesoBruto)} kg`, ayuda: 'Peso máximo ya cargado' },
-    volumenCarga !== null && { etiqueta: 'Volumen de carga', valor: `${fmt(volumenCarga / 1000, 1)} m³`, ayuda: 'Lo que cabe en el furgón o la caja' },
+    cargaUtil !== null && { etiqueta: 'Carga útil', valor: `${fmt(cargaUtil)} kg`, ayuda: 'Lo que puede llevar encima', k: ['weight.payload'] },
+    remolque !== null && { etiqueta: 'Remolque', valor: `${fmt(remolque)} kg`, ayuda: 'Lo que puede halar', k: ['weight.towingCapacity'] },
+    pesoBruto !== null && { etiqueta: 'Peso bruto', valor: `${fmt(pesoBruto)} kg`, ayuda: 'Peso máximo ya cargado', k: ['weight.grossVehicleWeight'] },
+    volumenCarga !== null && { etiqueta: 'Volumen de carga', valor: `${fmt(volumenCarga / 1000, 1)} m³`, ayuda: 'Lo que cabe en el furgón o la caja', k: ['dimensions.cargoCapacity', 'interior.interiorCargoCapacity', 'weight.cargoBoxVolume'] },
     zona.largo !== null && {
+      k: ['cargoArea.length', 'cargoArea.width', 'cargoArea.height'],
       etiqueta: clase === 'pickup' ? 'Platón' : 'Zona de carga',
       valor: [zona.largo, zona.ancho, zona.alto].filter((x): x is number => x !== null).map(x => fmt(x / 1000, 2)).join(' × ') + ' m',
       ayuda: zona.ancho !== null ? (zona.alto !== null ? 'Largo × ancho × alto' : 'Largo × ancho') : 'Largo',
     },
-  ]).filter((x): x is { etiqueta: string; valor: string; ayuda: string } => !!x);
+  ]).filter((x): x is { etiqueta: string; valor: string; ayuda: string; k: string[] } => !!x);
   const airbags = leer(s, 'safety.airbags');
   const ncap = leer(s, 'safety.ncapRating');
   const adultos = leer(s, 'safety.adultSafetyScore');
@@ -305,6 +326,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
               <Bloque tono="tinta" className="md:col-span-7 md:row-span-2">
                 <Titulito icono={Gauge} claro>
                   Potencia
+                  <SiEstimado k={K.potencia} />
                 </Titulito>
                 <div className="mt-6">
                   <Velocimetro
@@ -330,7 +352,10 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
 
             {carriles.length > 0 && (
               <Bloque className="md:col-span-5">
-                <Titulito icono={Timer}>De 0 a 100 km/h, en tiempo real</Titulito>
+                <Titulito icono={Timer}>
+                  De 0 a 100 km/h, en tiempo real
+                  <SiEstimado k="performance.acceleration0to100" />
+                </Titulito>
                 <p className="mt-2 text-[13px] text-tinta-2">
                   {carriles.length > 1 ? 'Contra los carros más parecidos a este. Cuenta los segundos.' : 'Cuenta los segundos: así de rápido responde.'}
                 </p>
@@ -344,8 +369,10 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
               <Bloque tono="lila" className="md:col-span-3">
                 <Titulito icono={Zap}>Torque</Titulito>
                 <p className="mt-6 text-[48px] font-light leading-none tracking-[-0.05em]">
-                  {fmt(torque)}
-                  <span className="ml-1 text-[16px] text-tinta-2">Nm</span>
+                  <Estimado k={K.torque}>
+                    {fmt(torque)}
+                    <span className="ml-1 text-[16px] text-tinta-2">Nm</span>
+                  </Estimado>
                 </p>
                 <p className="mt-3 text-[13px] leading-snug text-tinta-2">El empujón al arrancar en una loma. Más es mejor.</p>
               </Bloque>
@@ -358,19 +385,28 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                   {motor !== null && (
                     <div>
                       <dt className="text-tinta-2">Cilindraje</dt>
-                      <dd className="cifra text-[18px] font-semibold">{fmt(motor)} cc{turbo ? ' turbo' : ''}</dd>
+                      <dd className="cifra text-[18px] font-semibold">
+                        <Estimado k={K.motor}>
+                          {fmt(motor)} cc{turbo ? ' turbo' : ''}
+                        </Estimado>
+                      </dd>
                     </div>
                   )}
                   {potPeso !== null && (
                     <div>
                       <dt className="text-tinta-2">Potencia por tonelada</dt>
-                      <dd className="cifra text-[18px] font-semibold">{fmt(potPeso)} hp/t</dd>
+                      <dd className="cifra text-[18px] font-semibold">
+                        {/* Calculada con la potencia y el peso: es estimada si alguno lo es. */}
+                        <Estimado k={['performance.powerToWeight', ...K.potencia, ...K.peso]}>{fmt(potPeso)} hp/t</Estimado>
+                      </dd>
                     </div>
                   )}
                   {vmax !== null && (
                     <div>
                       <dt className="text-tinta-2">Vel. máxima</dt>
-                      <dd className="cifra text-[18px] font-semibold">{fmt(vmax)} km/h</dd>
+                      <dd className="cifra text-[18px] font-semibold">
+                        <Estimado k="performance.maxSpeed">{fmt(vmax)} km/h</Estimado>
+                      </dd>
                     </div>
                   )}
                 </dl>
@@ -383,20 +419,26 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                   {config && (
                     <p>
                       <span className="text-tinta-2">Motor: </span>
-                      <span className="font-medium">{config}</span>
+                      <span className="font-medium">
+                        <Estimado k={K.config}>{config}</Estimado>
+                      </span>
                     </p>
                   )}
                   {caja && (
                     <p>
                       <span className="text-tinta-2">Caja: </span>
-                      <span className="font-medium">{caja}</span>
+                      <span className="font-medium">
+                        <Estimado k={K.caja}>{caja}</Estimado>
+                      </span>
                       {/autom|cvt/i.test(caja) && <span className="ml-2 rounded-full bg-wise/10 px-2.5 py-0.5 text-[12px] text-wise">no hay que hacer cambios</span>}
                     </p>
                   )}
                   {peso !== null && (
                     <p>
                       <span className="text-tinta-2">Peso: </span>
-                      <span className="cifra font-medium">{fmt(peso)} kg</span>
+                      <span className="cifra font-medium">
+                        <Estimado k={K.peso}>{fmt(peso)} kg</Estimado>
+                      </span>
                     </p>
                   )}
                 </div>
@@ -427,6 +469,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
               <Bloque tono="tinta" className="md:col-span-8">
                 <Titulito icono={Map} claro>
                   ¿Hasta dónde llegas?
+                  <SiEstimado k={electrico ? K.autonomia : [...K.tanque, ...KEYS_RENDIMIENTO]} />
                 </Titulito>
                 <div className="mt-5">
                   <Ruta km={alcance} electrico={electrico} />
@@ -436,7 +479,10 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
 
             {(galones !== null || bateria !== null) && (
               <Bloque className="md:col-span-4">
-                <Titulito icono={electrico ? BatteryCharging : Fuel}>{electrico ? 'La batería' : 'El tanque'}</Titulito>
+                <Titulito icono={electrico ? BatteryCharging : Fuel}>
+                  {electrico ? 'La batería' : 'El tanque'}
+                  <SiEstimado k={electrico ? K.bateria : K.tanque} />
+                </Titulito>
                 <div className="mt-6">
                   {electrico && bateria !== null ? (
                     <Nivel etiqueta="Capacidad" valor={fmt(bateria, 1)} unidad="kWh" electrico />
@@ -446,7 +492,10 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                 </div>
                 {!electrico && rinde !== null && (
                   <p className="mt-5 border-t border-linea pt-4 text-[14px]">
-                    <span className="cifra text-[22px] font-semibold">{fmt(rinde)}</span> <span className="text-tinta-2">km por galón en promedio</span>
+                    <span className="cifra text-[22px] font-semibold">
+                      <Estimado k={KEYS_RENDIMIENTO}>{fmt(rinde)}</Estimado>
+                    </span>{' '}
+                    <span className="text-tinta-2">km por galón en promedio</span>
                   </p>
                 )}
               </Bloque>
@@ -454,7 +503,10 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
 
             {!electrico && ciudad !== null && carretera !== null && (
               <Bloque tono="lila" className={trucos.length ? 'md:col-span-5' : 'md:col-span-12'}>
-                <Titulito icono={Fuel}>Ciudad o carretera</Titulito>
+                <Titulito icono={Fuel}>
+                  Ciudad o carretera
+                  <SiEstimado k={[...K.ciudad, ...K.carretera]} />
+                </Titulito>
                 <div className="mt-6">
                   <BarrasPar
                     max={Math.max(ciudad, carretera)}
@@ -486,7 +538,10 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
 
             {electrico && autCiudad !== null && autCarretera !== null && (
               <Bloque tono="lila" className="md:col-span-5">
-                <Titulito icono={Map}>Ciudad o carretera</Titulito>
+                <Titulito icono={Map}>
+                  Ciudad o carretera
+                  <SiEstimado k={K.autCiudadCarretera} />
+                </Titulito>
                 <div className="mt-6">
                   <BarrasPar
                     max={Math.max(autCiudad, autCarretera)}
@@ -508,8 +563,10 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                     <div className="rounded-[22px] bg-wise p-5 text-white">
                       <p className="text-[13px] text-white/70">Cargador rápido (estación)</p>
                       <p className="mt-2 text-[44px] font-light leading-none tracking-[-0.05em]">
-                        {fmt(cargaDC)}
-                        <span className="ml-1 text-[16px] text-white/70">min</span>
+                        <Estimado k={K.cargaDC}>
+                          {fmt(cargaDC)}
+                          <span className="ml-1 text-[16px] text-white/70">min</span>
+                        </Estimado>
                       </p>
                       <p className="mt-2 text-[12px] text-white/60">Lo que dura un almuerzo</p>
                     </div>
@@ -518,8 +575,10 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                     <div className="rounded-[22px] bg-tarjeta p-5">
                       <p className="text-[13px] text-tinta-2">En la casa (toma normal o wallbox)</p>
                       <p className="mt-2 text-[44px] font-light leading-none tracking-[-0.05em]">
-                        {fmt(cargaAC, 1)}
-                        <span className="ml-1 text-[16px] text-tinta-2">horas</span>
+                        <Estimado k={K.cargaAC}>
+                          {fmt(cargaAC, 1)}
+                          <span className="ml-1 text-[16px] text-tinta-2">horas</span>
+                        </Estimado>
                       </p>
                       <p className="mt-2 text-[12px] text-tinta-2">Se conecta de noche y amanece lleno</p>
                     </div>
@@ -531,7 +590,10 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             {!electrico && (ciudad === null || carretera === null) && rinde !== null && (
               <Bloque tono="lila" className="md:col-span-12">
                 <p className="text-[15px]">
-                  <span className="cifra text-[28px] font-semibold">{fmt(rinde)}</span> km por galón en uso combinado.
+                  <span className="cifra text-[28px] font-semibold">
+                    <Estimado k={KEYS_RENDIMIENTO}>{fmt(rinde)}</Estimado>
+                  </span>{' '}
+                  km por galón en uso combinado.
                 </p>
               </Bloque>
             )}
@@ -563,7 +625,9 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                   {datosTrabajo.map(d => (
                     <div key={d.etiqueta}>
                       <dt className="text-[13px] text-white/60">{d.etiqueta}</dt>
-                      <dd className="cifra mt-1 text-[28px] font-light leading-none tracking-[-0.04em] md:text-[34px]">{d.valor}</dd>
+                      <dd className="cifra mt-1 text-[28px] font-light leading-none tracking-[-0.04em] md:text-[34px]">
+                        <Estimado k={d.k}>{d.valor}</Estimado>
+                      </dd>
                       <dd className="mt-2 text-[12px] leading-snug text-white/50">{d.ayuda}</dd>
                     </div>
                   ))}
@@ -572,19 +636,27 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             )}
             {(largo !== null || alto !== null) && (
               <Bloque tono="estudio" className="md:col-span-7 md:row-span-2">
-                <Titulito icono={Ruler}>Sus medidas</Titulito>
+                <Titulito icono={Ruler}>
+                  Sus medidas
+                  <SiEstimado k={['dimensions.length', 'dimensions.height', 'dimensions.wheelbase', 'dimensions.width', 'chassis.groundClearance']} />
+                </Titulito>
                 <Medidas vehicle={vehicle} largo={largo} alto={alto} entreEjes={entreEjes} altura={altura} ancho={ancho} />
               </Bloque>
             )}
             {baul !== null && clase !== 'comercial' && (
               <Bloque className="md:col-span-5">
-                <Titulito icono={Car}>El baúl</Titulito>
+                <Titulito icono={Car}>
+                  El baúl
+                  <SiEstimado k="dimensions.cargoCapacity" />
+                </Titulito>
                 <div className="mt-5">
                   <Maletas litros={baul} />
                 </div>
                 {baulAbatido !== null && (
                   <p className="mt-3 text-[13px] text-tinta-2">
-                    Con la silla de atrás abajo: <span className="cifra font-semibold text-tinta">{fmt(baulAbatido)} L</span>
+                    Con la silla de atrás abajo: <span className="cifra font-semibold text-tinta">
+                      <Estimado k="interior.trunkCapacitySeatsDown">{fmt(baulAbatido)} L</Estimado>
+                    </span>
                   </p>
                 )}
               </Bloque>
@@ -594,7 +666,9 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                 <Titulito icono={Armchair} claro>
                   Pasajeros
                 </Titulito>
-                <p className="mt-5 text-[56px] font-light leading-none tracking-[-0.05em]">{fmt(pasajeros)}</p>
+                <p className="mt-5 text-[56px] font-light leading-none tracking-[-0.05em]">
+                  <Estimado k="interior.passengerCapacity">{fmt(pasajeros)}</Estimado>
+                </p>
                 <div className="mt-4">
                   <Personas n={pasajeros} />
                 </div>
@@ -606,22 +680,30 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                   <>
                     <p className="text-[13px] text-tinta-2">Altura al piso</p>
                     <p className="mt-2 text-[34px] font-light leading-none tracking-[-0.05em]">
-                      {fmt(altura / 10, 1)}
-                      <span className="ml-1 text-[14px] text-tinta-2">cm</span>
+                      <Estimado k="chassis.groundClearance">
+                        {fmt(altura / 10, 1)}
+                        <span className="ml-1 text-[14px] text-tinta-2">cm</span>
+                      </Estimado>
                     </p>
                     <p className="mt-2 text-[12px] leading-snug text-tinta-2">{altura >= 190 ? 'Pasa huecos y reductores tranquilo' : altura >= 160 ? 'Bien para la ciudad' : 'Ojo con los reductores altos'}</p>
                   </>
                 )}
                 {remolque !== null && datosTrabajo.length === 0 && (
                   <p className="mt-4 text-[12px] text-tinta-2">
-                    Remolca <span className="cifra font-semibold text-tinta">{fmt(remolque)} kg</span>
+                    Remolca{' '}
+                    <span className="cifra font-semibold text-tinta">
+                      <Estimado k="weight.towingCapacity">{fmt(remolque)} kg</Estimado>
+                    </span>
                   </p>
                 )}
               </Bloque>
             )}
             {largo !== null && ancho !== null && (
               <Bloque tono="lila" className="md:col-span-12">
-                <Titulito icono={ParkingSquare}>¿Cabe en el parqueadero?</Titulito>
+                <Titulito icono={ParkingSquare}>
+                  ¿Cabe en el parqueadero?
+                  <SiEstimado k={['dimensions.length', 'dimensions.width']} />
+                </Titulito>
                 <div className="mt-5">
                   <Parqueadero largo={largo} ancho={ancho} nombre={`${vehicle.brand} ${vehicle.model}`} />
                 </div>
@@ -640,6 +722,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
               <Bloque tono="tinta" className={adultos !== null || ninos !== null ? 'md:col-span-5' : 'md:col-span-7'}>
                 <Titulito icono={ShieldCheck} claro>
                   Pruebas de choque
+                  <SiEstimado k="safety.ncapRating" />
                 </Titulito>
                 <div className="mt-8">
                   <Estrellas n={ncap} />
@@ -662,7 +745,9 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             {airbags !== null && (
               <Bloque tono="lila" className={adultos !== null || ninos !== null ? 'md:col-span-4' : 'md:col-span-5'}>
                 <Titulito icono={Shield}>Airbags</Titulito>
-                <p className="mt-5 text-[64px] font-light leading-none tracking-[-0.05em]">{fmt(airbags)}</p>
+                <p className="mt-5 text-[64px] font-light leading-none tracking-[-0.05em]">
+                  <Estimado k="safety.airbags">{fmt(airbags)}</Estimado>
+                </p>
                 <div className="mt-4 flex gap-1.5">
                   {Array.from({ length: Math.min(12, airbags) }).map((_, i) => (
                     <span key={i} className="h-3 w-3 rounded-full bg-wise" style={{ opacity: 0.45 + (i / airbags) * 0.55 }} />
@@ -682,7 +767,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                       style={{ animationDelay: `${i * 40}ms` }}
                     >
                       <a.icono className="h-4 w-4 shrink-0 text-wise" />
-                      {a.texto}
+                      <Estimado k={a.key}>{a.texto}</Estimado>
                     </li>
                   ))}
                 </ul>
@@ -702,7 +787,9 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                 <Titulito icono={Smartphone} claro>
                   Tu celular en la pantalla
                 </Titulito>
-                <p className="mt-6 text-[26px] font-medium leading-tight tracking-[-0.03em]">{celular}</p>
+                <p className="mt-6 text-[26px] font-medium leading-tight tracking-[-0.03em]">
+                  <Estimado k="technology.smartphoneIntegration">{celular}</Estimado>
+                </p>
                 <p className="mt-3 text-[13px] text-white/60">Mapas, música y WhatsApp en la pantalla del carro.</p>
               </Bloque>
             )}
@@ -715,7 +802,9 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blanco text-wise transition-colors group-hover:bg-white/15 group-hover:text-white">
                         <e.icono className="h-4 w-4" />
                       </span>
-                      <span className="text-[14px] leading-snug">{e.texto}</span>
+                      <span className="text-[14px] leading-snug">
+                        <Estimado k={e.key}>{e.texto}</Estimado>
+                      </span>
                     </div>
                   ))}
                 {luces && (
@@ -723,7 +812,9 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blanco text-wise transition-colors group-hover:bg-white/15 group-hover:text-white">
                       <Lightbulb className="h-4 w-4" />
                     </span>
-                    <span className="text-[14px] leading-snug">Luces {luces}</span>
+                    <span className="text-[14px] leading-snug">
+                      <Estimado k="lighting.headlightType">Luces {luces}</Estimado>
+                    </span>
                   </div>
                 )}
               </div>
@@ -734,7 +825,9 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                   <div>
                     <p className="text-[13px] text-white/55">Garantía de fábrica</p>
                     <p className="mt-1 text-[34px] font-light tracking-[-0.04em]">
-                      {fmt(garantiaAnos)} años{garantiaKm !== null && <span className="text-white/50"> o {fmt(garantiaKm)} km</span>}
+                      <Estimado k={['commercial.warrantyYears', 'commercial.warrantyKm']}>
+                        {fmt(garantiaAnos)} años{garantiaKm !== null && <span className="text-white/50"> o {fmt(garantiaKm)} km</span>}
+                      </Estimado>
                     </p>
                   </div>
                   <div className="flex flex-1 gap-1.5 md:max-w-[520px]">

@@ -24,6 +24,8 @@ export interface CambiosVehiculo {
   fotos?: { url: string; angulo: string; portada?: boolean }[];
   /** Campos clave marcados "el dato no existe" (reemplaza la lista). */
   sinDato?: string[];
+  /** Keys de los datos estimados (reemplaza la lista). */
+  estimados?: string[];
 }
 
 const TIPOS = TIPOS_CARROCERIA;
@@ -144,6 +146,21 @@ export async function editarVehiculo(id: string, c: CambiosVehiculo, userId: str
     const s = specsDe(actual?.specifications);
     s.meta = { ...(s.meta ?? {}), sinDato: c.sinDato.filter(x => typeof x === 'string').slice(0, 60) };
     await prisma.vehicle.update({ where: { id }, data: { specifications: JSON.stringify(s) } });
+  }
+  // Estimados: también al final, sobre los datos ya escritos (solo keys con dato).
+  if (c.estimados) {
+    const actual = await prisma.vehicle.findUnique({ where: { id }, select: { specifications: true } });
+    const s = specsDe(actual?.specifications);
+    const conDato = await prisma.vehicleAttribute.findMany({ where: { vehicleId: id }, select: { attributeKey: true } });
+    const validas = new Set(conDato.map(x => x.attributeKey));
+    const lista = Array.from(new Set(c.estimados.filter(k => typeof k === 'string' && validas.has(k) && k !== 'commercial.priceCop')));
+    if (lista.length) s.meta = { ...(s.meta ?? {}), estimados: lista };
+    else if (s.meta) delete s.meta.estimados;
+    await prisma.$transaction([
+      prisma.vehicle.update({ where: { id }, data: { specifications: JSON.stringify(s) } }),
+      prisma.vehicleAttribute.updateMany({ where: { vehicleId: id, attributeKey: { in: lista } }, data: { estimado: true } }),
+      prisma.vehicleAttribute.updateMany({ where: { vehicleId: id, attributeKey: { notIn: lista } }, data: { estimado: false } }),
+    ]);
   }
   return { ok: true };
 }
