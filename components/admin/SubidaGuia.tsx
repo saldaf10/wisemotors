@@ -200,7 +200,9 @@ export function SubidaGuia() {
                 <li key={i} className="flex gap-2 text-[13.5px] text-rose-700">
                   <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>
-                    {a.linea ? <span className="font-mono text-rose-500">línea {a.linea} · </span> : null}
+                    {a.campo ? <span className="font-semibold">{a.campo}</span> : null}
+                    {a.linea ? <span className="text-rose-500/70"> (línea {a.linea})</span> : null}
+                    {a.campo || a.linea ? <span className="text-rose-500/70"> · </span> : null}
                     {a.texto}
                   </span>
                 </li>
@@ -213,7 +215,9 @@ export function SubidaGuia() {
                 <li key={i} className="flex gap-2 text-[13px] text-amber-700">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>
-                    {a.linea ? <span className="font-mono">línea {a.linea} · </span> : null}
+                    {a.campo ? <span className="font-semibold">{a.campo}</span> : null}
+                    {a.linea ? <span className="opacity-70"> (línea {a.linea})</span> : null}
+                    {a.campo || a.linea ? <span className="opacity-70"> · </span> : null}
                     {a.texto}
                   </span>
                 </li>
