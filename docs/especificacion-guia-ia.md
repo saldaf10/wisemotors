@@ -89,6 +89,18 @@ Formato del número: sin separador de miles y con punto decimal, máximo 2 decim
 - **No copies las pistas** del nombre del campo. Escribe `Tracción: Delantera`, no `Tracción (Delantera / Trasera…): Delantera`. El sistema las tolera, pero así es más limpio.
 - **Revisión final:** si un número quedó fuera de su rango (sección 6), casi siempre es un error de unidad. Revísalo.
 
+### F. La `E` de estimado: siempre se puede usar, nunca a la loca
+- La `E` se puede poner en CUALQUIER campo de datos (y en el precio) cuando la marca no publica ese dato para esta versión. No hay un límite de cuántas `E` lleva una guía.
+- Que se pueda poner siempre NO significa que se pueda poner cualquier cosa. Un dato con `E` tiene que salir de una de estas tres fuentes:
+  1. **Una medición o prueba confiable:** revista o portal de carros reconocido (Motor, Autobild, Car and Driver, km77, Edmunds…), o una prueba en video de un canal serio que muestre cómo midió (cronómetro, GPS, báscula).
+  2. **El dato oficial de la misma versión y el mismo motor en otro mercado**, cuando en Colombia no se publica y no hay motivo para que cambie.
+  3. **Un cálculo a partir de datos oficiales,** hecho con una fórmula clara. Por ejemplo, km/l × 3.785 de la ficha de otro mercado, o litros ÷ 3.785.
+- **Tiene que ser coherente** con el resto de la guía y con carros parecidos. Ejemplos que no pasan: un 0–100 de 6 s en un SUV de 139 hp, un peso más bajo que el de la versión más sencilla, un consumo mejor que el de un híbrido rival muy superior.
+- **NO vale:** adivinar, "lo normal en este segmento", el dato de otra versión o de otra generación, comentarios de foros o redes sin medición, promedios a ojo entre fuentes que no coinciden, ni rellenar por rellenar.
+- **Si las fuentes no coinciden,** usa la más confiable (medición con equipo > revista > video). Si no hay una claramente mejor, deja el campo vacío.
+- **Si no hay una fuente que cumpla esto, el campo queda VACÍO.** Un vacío es mejor que un estimado flojo: en la página el estimado se muestra como dato, solo que en amarillo.
+- Un dato que SÍ está en la ficha oficial de esta versión va sin `E`, aunque también salga en otras fuentes.
+
 ## 1. Formato de salida
 
 - Devuelve SOLO el texto de la guía. Nada antes ni después: sin saludos, sin explicaciones, sin
