@@ -205,7 +205,9 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
   const bateria = leer(s, 'electric.batteryCapacity', 'phev.batteryCapacity');
   const cargaAC = leer(s, 'electric.acChargingTime', 'phev.acChargingTime');
   const cargaDC = leer(s, 'electric.dcChargingTime', 'phev.dcChargingTime');
-  const alcance = electrico ? autonomia : galones && rinde ? galones * rinde : null;
+  // Híbrido enchufable: la autonomía total oficial (tanque + batería) si viene; si no, tanque × consumo.
+  const autonomiaTotal = leer(s, 'phev.totalRange');
+  const alcance = electrico ? autonomia : autonomiaTotal ?? (galones && rinde ? galones * rinde : null);
   const largo = leer(s, 'dimensions.length');
   const ancho = leer(s, 'dimensions.width');
   const alto = leer(s, 'dimensions.height');
@@ -469,7 +471,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
               <Bloque tono="tinta" className="md:col-span-8">
                 <Titulito icono={Map} claro>
                   ¿Hasta dónde llegas?
-                  <SiEstimado k={electrico ? K.autonomia : [...K.tanque, ...KEYS_RENDIMIENTO]} />
+                  <SiEstimado k={electrico ? K.autonomia : autonomiaTotal !== null ? ['phev.totalRange'] : [...K.tanque, ...KEYS_RENDIMIENTO]} />
                 </Titulito>
                 <div className="mt-5">
                   <Ruta km={alcance} electrico={electrico} />

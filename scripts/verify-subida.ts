@@ -17,7 +17,7 @@ function check(nombre: string, ok: boolean) {
 const planos = FORMATO.map(c => plano(c.nombre));
 check('ningún nombre de campo se repite (sin tildes ni mayúsculas)', new Set(planos).size === planos.length);
 const keys = new Set(ATTRIBUTE_REGISTRY.map(d => d.key));
-check('todo campo fijo existe en el registro', FORMATO.every(c => c.identidad || c.porTren || keys.has(c.key!)));
+check('todo campo fijo existe en el registro', FORMATO.every(c => c.identidad || c.porTren || (c.keys ? Object.values(c.keys).every(k => keys.has(k!)) : keys.has(c.key!))));
 
 // --- Plantilla personalizada ---
 const gasSedan = generarPlantilla({ tren: 'Gasolina', carroceria: 'Sedán' });
@@ -135,6 +135,13 @@ Asistencias NCAP (%): 83`);
 check('nombre viejo "Calificación NCAP (estrellas)" → estrellas', choque.datos.some(d => d.key === 'safety.ncapRating' && d.valor === 5));
 check('campos retirados de NCAP: aviso, no error', !choque.avisos.some(a => a.tipo === 'error') && choque.avisos.filter(a => /ya no se usa/.test(a.texto)).length === 3);
 check('nombre nuevo "Estrellas en prueba de choque"', campoDeLinea('Estrellas en prueba de choque')?.key === 'safety.ncapRating');
+
+// --- Autonomía: eléctrico vs. híbrido enchufable ---
+const phev = leerGuia('Marca: BYD\nModelo: Song Plus DM-i\nAño: 2026\nTren motriz: Híbrido Enchufable\nCarrocería: SUV\nPrecio de lista (COP): 180000000\nAutonomía oficial (km): 1100\nAutonomía solo eléctrica (km): 110');
+check('PHEV: autonomía oficial = total, y la solo eléctrica aparte', phev.datos.some(d => d.key === 'phev.totalRange' && d.valor === 1100) && phev.datos.some(d => d.key === 'phev.electricRange' && d.valor === 110));
+const evR = leerGuia('Marca: BYD\nModelo: Dolphin\nAño: 2026\nTren motriz: Eléctrico\nCarrocería: Hatchback\nPrecio de lista (COP): 120000000\nAutonomía oficial (km): 410\nAutonomía solo eléctrica (km): 410');
+check('eléctrico: autonomía oficial a electric.electricRange; "solo eléctrica" no aplica', evR.datos.some(d => d.key === 'electric.electricRange' && d.valor === 410) && !evR.datos.some(d => d.key === 'phev.electricRange'));
+check('plantilla PHEV trae las dos autonomías; la de gasolina ninguna', generarPlantilla({ tren: 'Híbrido Enchufable', carroceria: 'SUV' }).includes('Autonomía solo eléctrica (km):') && !gasSedan.includes('Autonomía'));
 
 console.log(fallas ? `\n${fallas} fallas` : '\nTodo verificado ✓');
 process.exit(fallas ? 1 : 0);

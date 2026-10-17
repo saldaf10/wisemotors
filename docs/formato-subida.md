@@ -57,7 +57,8 @@ Consumo mixto (km/gal):
 Tanque de combustible (gal):
 Consumo eléctrico ciudad (kWh/100 km): [solo eléctrico]
 Consumo eléctrico carretera (kWh/100 km): [solo eléctrico]
-Autonomía oficial (km): [solo eléctrico y enchufable]
+Autonomía oficial (km): [eléctrico: con la batería llena · enchufable: tanque lleno + batería llena]
+Autonomía solo eléctrica (km): [solo enchufable: con la batería sola]
 
 # Batería y carga
 Capacidad de batería (kWh): [eléctrico, híbrido y enchufable]

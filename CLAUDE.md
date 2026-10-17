@@ -238,6 +238,11 @@ cobertura, migración, seeds, motor de cohortes.
   La ficha y el comparador lo pintan con `components/ui/Estimado.tsx` (subrayado `--estimado`
   + pastilla "E", clases `.estimado`/`.marca-e` en globals.css) y `AvisoEstimados` explica que
   no es fuente oficial. Al mostrar un dato nuevo en la ficha, envolverlo en `<Estimado k=…>`.
+- Prompt para la IA que llena la guía: `docs/prompt-ia-guia.md`, GENERADO por
+  `scripts/generar-prompt-guia.ts` desde formato.ts + registro. Si cambia un campo, volver a
+  correrlo. "Autonomía oficial (km)" = eléctrico: batería llena (`electric.electricRange`);
+  enchufable: tanque + batería (`phev.totalRange`). "Autonomía solo eléctrica (km)" =
+  `phev.electricRange` (campo `keys` por tren en CampoFormato).
 
 ## Backlog en orden (del plan, secciones 8-9)
 

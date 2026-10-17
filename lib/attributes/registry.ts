@@ -324,7 +324,9 @@ const phev: AttributeDef[] = [
   num('phev.cityConsumption', 'Consumo ciudad (PHEV)', { ...G_PHEV, unit: 'km/gal', direction: 'higher_better', displayPriority: 80, dimension: 'eficiencia', expectedMin: 20, expectedMax: 200 }),
   num('phev.highwayConsumption', 'Consumo carretera (PHEV)', { ...G_PHEV, unit: 'km/gal', direction: 'higher_better', displayPriority: 75, dimension: 'eficiencia', expectedMin: 20, expectedMax: 180 }),
   num('phev.batteryCapacity', 'Batería (PHEV)', { ...G_PHEV, unit: 'kWh', direction: 'higher_better', displayPriority: 82, expectedMin: 5, expectedMax: 40 }),
-  num('phev.electricRange', 'Autonomía eléctrica (PHEV)', { ...G_PHEV, unit: 'km', direction: 'higher_better', displayPriority: 92, cardEligible: true, expectedMin: 10, expectedMax: 350 }),
+  // Autonomía total = tanque lleno + batería llena (lo que la marca llama "autonomía" en un PHEV).
+  num('phev.totalRange', 'Autonomía total (tanque + batería)', { ...G_PHEV, unit: 'km', direction: 'higher_better', displayPriority: 91, expectedMin: 300, expectedMax: 2500 }),
+  num('phev.electricRange', 'Autonomía solo eléctrica (PHEV)', { ...G_PHEV, unit: 'km', direction: 'higher_better', displayPriority: 92, cardEligible: true, expectedMin: 10, expectedMax: 350 }),
   num('phev.acChargingTime', 'Carga AC (PHEV)', { ...G_PHEV, unit: 'h', direction: 'lower_better', displayPriority: 55, expectedMin: 1, expectedMax: 15 }),
   num('phev.dcChargingTime', 'Carga DC (PHEV)', { ...G_PHEV, unit: 'min', direction: 'lower_better', displayPriority: 50, coAvailability: 'rare', expectedMin: 10, expectedMax: 240 }),
   bool('phev.regenerativeBraking', 'Frenado regenerativo (PHEV)', { ...G_PHEV, displayPriority: 45 }),

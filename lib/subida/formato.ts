@@ -35,6 +35,8 @@ export interface CampoFormato {
   /** Key del registro, o el sufijo por tren motriz ("maxPower" → combustion.maxPower…). */
   key?: string;
   porTren?: string;
+  /** Key distinta por tren motriz cuando el mismo nombre significa cosas distintas. */
+  keys?: Partial<Record<Tren, string>>;
   /** Solo para estas clases (carro, pickup, van/camión). */
   clases?: ClaseVehiculo[];
   /** Solo para estas carrocerías (además de la clase). */
@@ -91,7 +93,9 @@ export const FORMATO: CampoFormato[] = [
   t(CONSUMO, 'Tanque de combustible (gal)', 'fuelTankCapacity'),
   k(CONSUMO, 'Consumo eléctrico ciudad (kWh/100 km)', 'electric.cityElectricConsumption'),
   k(CONSUMO, 'Consumo eléctrico carretera (kWh/100 km)', 'electric.highwayElectricConsumption'),
-  t(CONSUMO, 'Autonomía oficial (km)', 'electricRange'),
+  // Eléctrico: con la batería llena. Híbrido enchufable: tanque lleno + batería llena.
+  { seccion: CONSUMO, nombre: 'Autonomía oficial (km)', keys: { Eléctrico: 'electric.electricRange', 'Híbrido Enchufable': 'phev.totalRange' } },
+  k(CONSUMO, 'Autonomía solo eléctrica (km)', 'phev.electricRange'),
 
   t(BAT, 'Capacidad de batería (kWh)', 'batteryCapacity'),
   k(BAT, 'Peso de la batería (kg)', 'phev.batteryWeight'),
@@ -252,7 +256,8 @@ export const OPCIONES_IDENTIDAD: Partial<Record<CampoIdentidad, readonly string[
 /** La key del registro de un campo para este tren motriz (null = no existe para él). */
 export function keyDe(campo: CampoFormato, tren: Tren): string | null {
   if (campo.identidad) return null;
-  const key = campo.porTren ? `${PREFIJO[tren]}.${campo.porTren}` : campo.key!;
+  const key = campo.keys ? campo.keys[tren] : campo.porTren ? `${PREFIJO[tren]}.${campo.porTren}` : campo.key;
+  if (!key) return null;
   const d = DEF.get(key);
   return d && attributeAppliesTo(d, tren) ? key : null;
 }
