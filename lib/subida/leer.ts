@@ -86,6 +86,12 @@ export function campoDeLinea(nombreEscrito: string): CampoFormato | null {
 // ---------------------------------------------------------------------------
 
 const VACIOS = new Set(['', '-', '--', 'na', 'n a', 'no aplica', 'sin dato', 'no se', 'nd', '?', 'x x']);
+/** "No aplica (velocidad limitada a 161 km/h)": vacío aunque traiga números en la explicación. */
+const EMPIEZA_VACIO = /^(no aplica|n a|na|sin dato|no disponible|no publicad[oa]|no informad[oa]|nd|desconocid[oa])\b/;
+const esVacio = (texto: string) => VACIOS.has(plano(texto)) || EMPIEZA_VACIO.test(plano(texto));
+
+/** "75 – 85", "4.350 mm – 4.355 mm", '17" o 18"': dos números como rango o alternativa. */
+const RANGO = /\d[\d.,]*\s*[a-zA-Z"'°%/]{0,6}\s*(?:–|—|-|\ba\b|\bo\b|\/)\s*\$?\d/;
 
 /** "4.270" → 4270 · "10,9" → 10.9 · "1.5" → 1.5 · "113.000.000" → 113000000 · "4270 mm" → 4270. */
 export function leerNumero(texto: string): number | null {
@@ -173,7 +179,7 @@ export function leerGuia(texto: string): Lectura {
   // 1. Identidad
   const identidad: Identidad = {};
   for (const l of lineas.filter(x => x.campo.identidad)) {
-    if (VACIOS.has(plano(l.escrito))) continue;
+    if (esVacio(l.escrito)) continue;
     const id = l.campo.identidad as CampoIdentidad;
     const opciones = OPCIONES_IDENTIDAD[id];
     if (opciones) {
@@ -195,6 +201,7 @@ export function leerGuia(texto: string): Lectura {
       if (p && p >= 5_000_000 && p <= 5_000_000_000) {
         identidad.precio = p;
         if (estimado) identidad.precioEstimado = true;
+        if (RANGO.test(texto)) avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'aviso', texto: `«${texto}» trae dos precios; se guardó el primero ($${p.toLocaleString('es-CO')}). Cada versión va en su propia guía.` });
       } else avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${l.escrito}» no parece un precio en pesos (ej. 113.000.000).` });
     } else if (id === 'marca') identidad.marca = l.escrito;
     else identidad.modelo = l.escrito;
@@ -212,7 +219,7 @@ export function leerGuia(texto: string): Lectura {
     const conValor = new Set<CampoFormato>();
     for (const l of lineas.filter(x => !x.campo.identidad)) {
       const { texto: escrito, estimado } = separarEstimado(l.escrito);
-      if (VACIOS.has(plano(escrito))) continue;
+      if (esVacio(escrito)) continue;
       if (!aplica(l.campo, tren, carroceria)) {
         avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'aviso', texto: `«${l.campo.nombre}» no va en un ${tren.toLowerCase()} ${carroceria.toLowerCase()}; se ignora.` });
         continue;
@@ -225,6 +232,9 @@ export function leerGuia(texto: string): Lectura {
         if (valor === null) avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${escrito}» no es Sí o No.` });
       } else if (d.dataType === 'numeric') {
         valor = leerNumero(escrito);
+        if (valor !== null && RANGO.test(escrito)) {
+          avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'aviso', texto: `«${escrito}» trae dos números; se guardó el primero (${valor}). Si no es el de esta versión, deja uno solo.` });
+        }
         if (valor === null) {
           avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${escrito}» no es un número.` });
         } else if (fueraDeRango(d, valor, clase)) {

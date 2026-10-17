@@ -439,8 +439,8 @@ const recuperados: AttributeDef[] = [
   bool('technology.wirelessSmartphone', 'CarPlay / Android Auto sin cable', { ...G_INFO, displayPriority: 55 }),
   txt('technology.audioBrand', 'Marca del sonido', { ...G_INFO, displayPriority: 35 }),
   num('technology.speakers', 'Parlantes', { ...G_INFO, direction: 'higher_better', displayPriority: 35, expectedMin: 2, expectedMax: 30 }),
-  num('technology.usbA', 'Puertos USB-A', { ...G_INFO, displayPriority: 20, expectedMin: 1, expectedMax: 10 }),
-  num('technology.usbC', 'Puertos USB-C', { ...G_INFO, displayPriority: 30, expectedMin: 1, expectedMax: 10 }),
+  num('technology.usbA', 'Puertos USB-A', { ...G_INFO, displayPriority: 20, expectedMin: 0, expectedMax: 10 }),
+  num('technology.usbC', 'Puertos USB-C', { ...G_INFO, displayPriority: 30, expectedMin: 0, expectedMax: 10 }),
 
   // Confort
   bool('comfort.keyless', 'Encendido sin llave', { ...G_COMF, displayPriority: 55 }),
