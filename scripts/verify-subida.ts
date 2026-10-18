@@ -171,5 +171,35 @@ check('precio con letra y nota', traz.identidad.precioOrigen === 'C' && /concesi
 check('nota sin campo → nota general', traz.notasGenerales.some(n => /mercedes-benz\.com\.co/.test(n)));
 check('E sin nota → aviso; las notas no se leen como datos', traz.avisos.some(a => a.campo === 'Peso en vacío (kg)' && /nota/.test(a.texto)) && !traz.avisos.some(a => a.tipo === 'error'));
 
+// --- Guías reales con notas desordenadas (Polo, 18-oct-2026) ---
+const polo = leerGuia(`Marca: Volkswagen O
+Modelo: Polo PA Track O
+Año: 2026 O
+Tren motriz: Gasolina O
+Carrocería: Hatchback O
+Precio de lista (COP): 65990000 O
+Consumo ciudad (km/gal): 42.5 E
+Consumo carretera (km/gal): 60.1 E
+Tanque de combustible (gal): 13.74 X
+Radio de giro (m): 10.6 C
+
+---
+
+Detalles de Cálculos (X)
+
+* Tanque de combustible (gal): Calculado a partir de 52 Litros.
+
+$$\\text{gal} = \\frac{52}{3.785} = 13.74$$
+
+Notas sobre Estimaciones (E)
+
+* Consumo ciudad (42.5 E) y carretera (60.1 E): pruebas reales.`);
+const dP = (k: string) => polo.datos.find(d => d.key === k);
+check('Polo: " O" final se quita del modelo', polo.identidad.modelo === 'Polo PA Track' && polo.identidad.marca === 'Volkswagen');
+check('Polo: "Detalles de Cálculos (X)" abre las notas; la fórmula sigue la nota', /52 Litros/.test(dP('combustion.fuelTankCapacity')?.nota ?? '') && /13\.74/.test(dP('combustion.fuelTankCapacity')?.nota ?? '') && !/\$|\\\\/.test(dP('combustion.fuelTankCapacity')?.nota ?? ''));
+check('Polo: "Consumo ciudad (…) y carretera (…)" va a los dos', /pruebas/.test(dP('combustion.cityConsumption')?.nota ?? '') && /pruebas/.test(dP('combustion.highwayConsumption')?.nota ?? ''));
+check('Polo: diámetro de giro 10.6 → radio 5.3', dP('dimensions.turningRadius')?.valor === 5.3);
+check('Polo: sin errores ni avisos de "---" o repetidos', !polo.avisos.some(a => a.tipo === 'error' || /repetido|no tiene/.test(a.texto)));
+
 console.log(fallas ? `\n${fallas} fallas` : '\nTodo verificado ✓');
 process.exit(fallas ? 1 : 0);

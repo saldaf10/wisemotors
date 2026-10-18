@@ -85,7 +85,10 @@ export interface Lectura {
 // Nombres de campo
 // ---------------------------------------------------------------------------
 
-const NOMBRES = FORMATO.flatMap(c => [c.nombre, ...(c.alias ?? [])].map(nombre => ({ c, n: plano(nombre) })));
+const NOMBRES = FORMATO.flatMap(c =>
+  [c.nombre, ...(c.alias ?? [])].map(nombre => ({ c, n: plano(nombre), sinUnidad: plano(nombre.replace(/\s*\([^()]*\)\s*$/, '')) }))
+);
+const SECCIONES = new Set(FORMATO.map(c => plano(c.seccion)));
 const RETIRADOS_PLANOS = RETIRADOS.map(plano);
 
 /** Qué campo es esta línea: el nombre más largo que coincide al inicio, o el más parecido. */
@@ -95,7 +98,10 @@ export function campoDeLinea(nombreEscrito: string): CampoFormato | null {
   // 1. Coincidencia exacta o con la pista de opciones detrás ("traccion delantera trasera…").
   const prefijos = NOMBRES.filter(x => n === x.n || n.startsWith(`${x.n} `)).sort((a, b) => b.n.length - a.n.length);
   if (prefijos.length) return prefijos[0].c;
-  // 2. Error de tipeo: el más parecido, si es claramente el más parecido.
+  // 2. El nombre sin la unidad ("Consumo ciudad" → "Consumo ciudad (km/gal)"), si es uno solo.
+  const sinUnidad = NOMBRES.filter(x => x.sinUnidad === n);
+  if (sinUnidad.length && sinUnidad.every(x => x.c === sinUnidad[0].c)) return sinUnidad[0].c;
+  // 3. Error de tipeo: el más parecido, si es claramente el más parecido.
   const sinPista = plano(nombreEscrito.replace(/\((?:[^()]|\([^()]*\))*\/(?:[^()]|\([^()]*\))*\)/g, ' ').replace(/\[[^\]]*\]/g, ' '));
   const puntajes = NOMBRES.map(x => ({ c: x.c, d: distancia(sinPista, x.n) / Math.max(x.n.length, 1) })).sort((a, b) => a.d - b.d);
   const [mejor, segundo] = puntajes;
@@ -161,11 +167,50 @@ export function separarOrigen(escrito: string): { texto: string; origen: Origen 
 }
 
 /** ¿La línea abre la sección de notas? ("# Notas", "Fuentes y cálculos:", "Notas al pie"…) */
-const TITULO_NOTAS = /^(notas?|fuentes?|calculos?|explicacion(es)?|justificacion(es)?|referencias?|trazabilidad|observaciones)\b/;
+// Un título corto (sin valor) que hable de notas, fuentes, cálculos o estimaciones:
+// "# Notas", "Detalles de Cálculos (X)", "Notas sobre Estimaciones (E)", "Fuentes:".
+const TITULO_NOTAS = /\b(notas?|fuentes?|calculos?|calculados?|estimacion(es)?|estimados?|explicacion(es)?|justificacion(es)?|referencias?|trazabilidad|observaciones|detalles?)\b/;
 function abreNotas(linea: string): boolean {
   const sinMarca = linea.replace(/^#+\s*/, '').replace(/[*_]/g, '').trim();
   const [nombre, ...resto] = sinMarca.split(':');
-  return TITULO_NOTAS.test(plano(nombre)) && !resto.join(':').trim() && plano(nombre).split(' ').length <= 6;
+  const p = plano(nombre);
+  return TITULO_NOTAS.test(p) && !resto.join(':').trim() && p.split(' ').length <= 8 && !campoDeLinea(nombre);
+}
+
+/** Fórmulas en LaTeX que algunas IA ponen en las notas → texto legible. */
+function sinLatex(t: string): string {
+  return t
+    .replace(/\$\$?/g, '')
+    .replace(/\\text\{([^}]*)\}/g, '$1')
+    .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '($1) / ($2)')
+    .replace(/\\times/g, '×')
+    .replace(/\\approx/g, '≈')
+    .replace(/\\cdot/g, '·')
+    .replace(/\\[a-zA-Z]+/g, '')
+    .replace(/[{}]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Los campos que nombra el título de una nota. Uno ("Octanaje recomendado (91 E)") o
+ * varios juntos ("Consumo ciudad (42.5 E) y carretera (60.1 E)").
+ */
+function camposDeNota(nombre: string): CampoFormato[] {
+  // Sin lo que va entre paréntesis con un valor o una letra: "(91 E)", "(X)".
+  const limpio = nombre.replace(/\(([^()]*\d[^()]*|\s*[OCXEe]\s*)\)/g, ' ').replace(/\s+/g, ' ').trim();
+  const uno = campoDeLinea(separarOrigen(limpio).texto || limpio);
+  if (uno) return [uno];
+  const partes = limpio.split(/\s*(?:,|\by\b|\be\b|\/)\s*/).map(x => x.trim()).filter(Boolean);
+  if (partes.length < 2) return [];
+  const raiz = partes[0].split(' ')[0];
+  const out: CampoFormato[] = [];
+  for (const p of partes) {
+    const c = campoDeLinea(p) ?? campoDeLinea(`${raiz} ${p}`);
+    if (!c) return [];
+    out.push(c);
+  }
+  return out;
 }
 
 const SI = ['si', 's', 'yes', 'y', 'x', 'true', '1', 'tiene', 'con', 'incluye', 'ok', 'sí'];
@@ -200,6 +245,7 @@ export function leerGuia(texto: string): Lectura {
   const notas = new Map<CampoFormato, string[]>();
   const notasGenerales: string[] = [];
   let enNotas = false;
+  let ultimaNota: CampoFormato[] = [];
 
   texto.split(/\r?\n/).forEach((cruda, i) => {
     const n = i + 1;
@@ -209,15 +255,25 @@ export function leerGuia(texto: string): Lectura {
       enNotas = true;
       return;
     }
+    // Separadores de markdown ("---", "***") y títulos de sección sin "#" ("Motor").
+    if (/^[-*_=\s]{3,}$/.test(l) || SECCIONES.has(plano(l.replace(/^#+\s*/, '')))) return;
     if (enNotas) {
       // "- Peso en vacío (kg) (E): calculado con…" · "1. Consumo mixto: …" · texto suelto.
-      const limpia = l.replace(/^#+\s*/, '').replace(/^([-*•]|\d+[.)])\s*/, '').replace(/\*\*/g, '').trim();
+      const limpia = sinLatex(l.replace(/^#+\s*/, '').replace(/^([-*•]|\d+[.)])\s*/, '').replace(/\*\*/g, '').trim());
       if (!limpia) return;
       const dp = limpia.indexOf(':');
-      const campo = dp > 0 ? campoDeLinea(separarOrigen(limpia.slice(0, dp)).texto || limpia.slice(0, dp)) : null;
+      const campos = dp > 0 && !/^https?$/i.test(limpia.slice(0, dp)) ? camposDeNota(limpia.slice(0, dp)) : [];
       const cuerpo = dp > 0 ? limpia.slice(dp + 1).trim() : limpia;
-      if (campo && cuerpo) notas.set(campo, [...(notas.get(campo) ?? []), cuerpo]);
-      else notasGenerales.push(limpia);
+      if (campos.length && cuerpo) {
+        for (const c of campos) notas.set(c, [...(notas.get(c) ?? []), cuerpo]);
+        ultimaNota = campos;
+      } else if (dp < 0 && ultimaNota.length) {
+        // Una línea suelta (por ejemplo una fórmula) sigue la nota anterior.
+        for (const c of ultimaNota) notas.set(c, [...(notas.get(c) ?? []), limpia]);
+      } else {
+        notasGenerales.push(limpia);
+        ultimaNota = [];
+      }
       return;
     }
     if (l.startsWith('#')) return;
@@ -239,6 +295,12 @@ export function leerGuia(texto: string): Lectura {
       return;
     }
     if (vistos.has(campo)) {
+      // Repetido con una explicación (no un dato): es una nota que vino sin título.
+      const explicacion = /calcul|estim|fuente|seg[uú]n|oficial|prueba|homolog|https?:/i.test(escrito) || leerNumero(escrito) === null || escrito.length > 40;
+      if (!campo.identidad && explicacion) {
+        notas.set(campo, [...(notas.get(campo) ?? []), sinLatex(escrito)]);
+        return;
+      }
       avisos.push({ linea: n, campo: campo.nombre, tipo: 'aviso', texto: `«${campo.nombre}» está repetido; se usa el primero.` });
       return;
     }
@@ -251,7 +313,8 @@ export function leerGuia(texto: string): Lectura {
   for (const cruda of lineas.filter(x => x.campo.identidad)) {
     const id = cruda.campo.identidad as CampoIdentidad;
     // La letra de trazabilidad no se separa en la marca ni en el modelo ("Clase C", "Clase E").
-    const sep = id === 'marca' || id === 'modelo' ? { texto: cruda.escrito, origen: null } : separarOrigen(cruda.escrito);
+    // En marca y modelo solo se quita una " O" final (oficial): "Clase C", "Clase E" o "Model X" son nombres.
+    const sep = id === 'marca' || id === 'modelo' ? { texto: cruda.escrito.replace(/\s+\(?O\)?$/, ''), origen: null } : separarOrigen(cruda.escrito);
     const l = { ...cruda, escrito: sep.texto };
     if (esVacio(l.escrito)) continue;
     const opciones = OPCIONES_IDENTIDAD[id];
@@ -313,6 +376,11 @@ export function leerGuia(texto: string): Lectura {
         if (valor === null) avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${escrito}» no es Sí o No.` });
       } else if (d.dataType === 'numeric') {
         valor = leerNumero(escrito);
+        // Muchas fichas dan el DIÁMETRO de giro (≈10–12 m), no el radio: se guarda la mitad.
+        if (key === 'dimensions.turningRadius' && valor !== null && valor > 8 && valor <= 16) {
+          avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'aviso', texto: `${valor} m parece el diámetro de giro; se guardó el radio (${valor / 2} m).` });
+          valor = Math.round((valor / 2) * 100) / 100;
+        }
         if (valor !== null && RANGO.test(escrito)) {
           avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'aviso', texto: `«${escrito}» trae dos números; se guardó el primero (${valor}). Si no es el de esta versión, deja uno solo.` });
         }

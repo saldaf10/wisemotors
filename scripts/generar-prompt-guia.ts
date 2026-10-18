@@ -166,6 +166,12 @@ Coherencia: en un gasolina, carretera rinde más que ciudad; en un híbrido suel
 - Una línea por dato, con el nombre EXACTO del campo, dos puntos y la explicación:
   \`Consumo mixto (km/gal): 10.2 km/l de la ficha oficial de México (WLTP) × 3.785 = 38.6\`
   \`0–100 km/h (s): prueba instrumentada de Motor, https://www.motor.com.co/…\`
+- El título va EXACTO: \`# Notas\` (una sola sección para todo, no "Detalles de cálculos" y
+  "Notas sobre estimaciones" por aparte).
+- Un campo por línea, con su nombre exacto y sin el valor en el nombre: \`Consumo ciudad (km/gal): …\`,
+  no \`Consumo ciudad (42.5 E) y carretera (60.1 E): …\`.
+- Fórmulas en texto plano, en la misma línea (\`52 L ÷ 3.785 = 13.74 gal\`). Nada de LaTeX
+  (\`$$\`, \`\\frac\`), ni separadores \`---\`.
 - Obligatorias para cada \`X\` y cada \`E\`. Para \`O\` y \`C\` son opcionales pero útiles: pon la
   fuente (nombre y enlace).
 - Si una fuente sirve para muchos datos, una línea sin nombre de campo:
@@ -230,6 +236,11 @@ Los campos SÍ/NO llevan solo \`Sí\` o \`No\` y su letra (\`Sí O\`). Si el equ
 - **Transmisión:** empieza con \`Automática\` o \`Manual\`: \`Automática (CVT)\`,
   \`Automática (6 velocidades)\`, \`Automática (doble embrague)\`, \`Manual\`.
 - **Remolque:** la capacidad CON freno.
+- **Radio de giro (m):** es el RADIO (≈5 m). Si la fuente da el diámetro de giro (≈10–12 m),
+  divídelo entre 2 y márcalo \`X\`, explicándolo en las notas.
+- **Marca del sonido:** la marca del equipo de audio (\`Beats\`, \`Bose\`). El nombre del sistema
+  de infoentretenimiento (\`VW Play\`, \`MyLink\`) no es la marca del sonido: si es el genérico,
+  déjalo vacío.
 - **Letras:** O, C y X siempre en MAYÚSCULA y separadas por un espacio (\`139 O\`), nunca entre
   paréntesis ni pegadas a una palabra.
 - **Estrellas en prueba de choque:** solo el número (\`5\`), de ese modelo y generación. Si
