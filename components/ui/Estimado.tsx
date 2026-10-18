@@ -8,10 +8,17 @@
 import { createContext, useCallback, useContext, useMemo } from 'react';
 import { estimadosDe, specsDe } from '@/lib/vehiculo-datos';
 
+/**
+ * Decisión del equipo (18-oct-2026): por ahora los estimados NO se muestran en la página
+ * pública (ni amarillo, ni "E", ni aviso). Se siguen guardando. Para volver a mostrarlos,
+ * poner true: ficha y comparador ya están marcados.
+ */
+export const MOSTRAR_ESTIMADOS = false;
+
 const Contexto = createContext<Set<string>>(new Set());
 
 export function EstimadosProvider({ specs, children }: { specs: unknown; children: React.ReactNode }) {
-  const set = useMemo(() => new Set(estimadosDe(specsDe(specs))), [specs]);
+  const set = useMemo(() => new Set(MOSTRAR_ESTIMADOS ? estimadosDe(specsDe(specs)) : []), [specs]);
   return <Contexto.Provider value={set}>{children}</Contexto.Provider>;
 }
 

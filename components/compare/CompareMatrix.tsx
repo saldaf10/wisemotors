@@ -7,7 +7,7 @@ import { ArrowUpRight, Crown, Info } from 'lucide-react';
 import { ATTRIBUTE_REGISTRY, attributeAppliesTo, type AttributeDef } from '@/lib/attributes/registry';
 import { formatPrice } from '@/lib/utils';
 import { estimadosDe } from '@/lib/vehiculo-datos';
-import { MarcaE } from '@/components/ui/Estimado';
+import { MOSTRAR_ESTIMADOS, MarcaE } from '@/components/ui/Estimado';
 import { AvisoIA } from '@/components/ui/AvisoIA';
 
 // ============================================================================
@@ -205,7 +205,7 @@ function Fila({
 export function CompareMatrix({ vehicles }: Props) {
   const { grupos, sinDatos, totalFilas, hayEstimados } = useMemo(() => {
     const specsPorVehiculo = vehicles.map(parseSpecs);
-    const estimadosPorVehiculo = specsPorVehiculo.map(x => new Set(estimadosDe(x)));
+    const estimadosPorVehiculo = specsPorVehiculo.map(x => new Set(MOSTRAR_ESTIMADOS ? estimadosDe(x) : []));
 
     const comparables = ATTRIBUTE_REGISTRY.filter(
       d => d.comparable !== false && d.dimension !== 'editorial' && d.coAvailability !== 'never_published'

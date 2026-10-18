@@ -238,6 +238,8 @@ cobertura, migración, seeds, motor de cohortes.
   La ficha y el comparador lo pintan con `components/ui/Estimado.tsx` (subrayado `--estimado`
   + pastilla "E", clases `.estimado`/`.marca-e` en globals.css) y `AvisoEstimados` explica que
   no es fuente oficial. Al mostrar un dato nuevo en la ficha, envolverlo en `<Estimado k=…>`.
+  18-oct-2026: APAGADO en la página pública (`MOSTRAR_ESTIMADOS = false` en Estimado.tsx);
+  los datos se siguen guardando y el panel los sigue mostrando.
 - Prompt para la IA que llena la guía: `docs/prompt-ia-guia.md`, GENERADO por
   `scripts/generar-prompt-guia.ts` desde formato.ts + registro. Si cambia un campo, volver a
   correrlo. "Autonomía oficial (km)" = eléctrico: batería llena (`electric.electricRange`);

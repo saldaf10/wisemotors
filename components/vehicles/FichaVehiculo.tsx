@@ -45,7 +45,7 @@ import { porCercania } from '@/lib/distancia';
 import { BotonCercania, TarjetaConcesionario, tieneUbicacion, type Concesionario } from '@/components/concesionarios/piezas';
 import { ListaContacto, useContactar, type Motivo } from '@/components/concesionarios/Contacto';
 import { KEYS_RENDIMIENTO, estimadosDe, leer, precioCompleto, rendimiento, specsDe } from '@/lib/vehiculo-datos';
-import { AvisoEstimados, EstimadosProvider, MarcaE } from '@/components/ui/Estimado';
+import { AvisoEstimados, EstimadosProvider, MOSTRAR_ESTIMADOS, MarcaE } from '@/components/ui/Estimado';
 import { AvisoIA } from '@/components/ui/AvisoIA';
 import { claseDeTipo } from '@/lib/attributes/clase';
 import { fotoDe, pinturaDe } from '@/components/car/CarRender';
@@ -213,9 +213,9 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
   const { user } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
   const s = useMemo(() => specsDe(vehicle.specifications), [vehicle.specifications]);
-  const est = useMemo(() => new Set(estimadosDe(s)), [s]);
+  const est = useMemo(() => new Set(MOSTRAR_ESTIMADOS ? estimadosDe(s) : []), [s]);
   const cats = useMemo(() => categorias(vehicle.fuelType, s, vehicle.type, est), [vehicle.fuelType, s, vehicle.type, est]);
-  const precioEstimado = !!vehicle.priceEstimated || !!s.commercial?.priceEstimated;
+  const precioEstimado = MOSTRAR_ESTIMADOS && (!!vehicle.priceEstimated || !!s.commercial?.priceEstimated);
   const [cat, setCat] = useState(0);
   // Un solo concesionario (o ninguno): el nombre junto al botón que se tocó y
   // directo a WhatsApp. Varios: la lista para elegir, ordenada por distancia.
