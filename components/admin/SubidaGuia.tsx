@@ -16,12 +16,47 @@ import { Button } from '@/components/ui/button';
 import { adminFetch, mensajeDeErrorDeAuth } from '@/lib/admin-fetch';
 import { CLASES, claseDeTipo } from '@/lib/attributes/clase';
 import { TRENES, generarPlantilla, type Tren } from '@/lib/subida/formato';
-import { leerGuia } from '@/lib/subida/leer';
+import { ORIGENES, leerGuia, type Origen } from '@/lib/subida/leer';
 import { MarcaE } from '@/components/ui/Estimado';
 import { RevisionFotos, fotosIniciales, type FotoRevision } from '@/components/admin/RevisionFotos';
 
 const GUARDADO = 'wm_subida_guia';
 const fmt = (v: number | string | boolean) => (typeof v === 'boolean' ? (v ? 'Sí' : 'No') : typeof v === 'number' ? v.toLocaleString('es-CO') : v);
+
+// Trazabilidad: cada letra con su color. E usa el amarillo de los estimados de la ficha.
+const COLOR_ORIGEN: Record<Origen, string> = {
+  O: 'bg-emerald-100 text-emerald-800',
+  C: 'bg-sky-100 text-sky-800',
+  X: 'bg-violet-100 text-violet-800',
+  E: 'bg-[#dbec43]/60 text-[#3d4200]',
+};
+
+function ChipOrigen({ origen }: { origen: Origen | null | undefined }) {
+  if (!origen) return <span className="text-[12px] text-tinta-2/60">—</span>;
+  return (
+    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${COLOR_ORIGEN[origen]}`} title={ORIGENES[origen]}>
+      {origen} <span className="font-normal">{ORIGENES[origen]}</span>
+    </span>
+  );
+}
+
+/** Nota al pie con los enlaces clicables. */
+function TextoNota({ texto }: { texto: string }) {
+  const partes = texto.split(/(https?:\/\/[^\s)\]]+)/g);
+  return (
+    <>
+      {partes.map((p, i) =>
+        /^https?:\/\//.test(p) ? (
+          <a key={i} href={p} target="_blank" rel="noopener noreferrer" className="break-all text-wise underline">
+            {p.replace(/^https?:\/\/(www\.)?/, '').slice(0, 60)}
+          </a>
+        ) : (
+          <span key={i}>{p}</span>
+        )
+      )}
+    </>
+  );
+}
 
 export function SubidaGuia() {
   const [tren, setTren] = useState<Tren>('Gasolina');
@@ -90,7 +125,19 @@ export function SubidaGuia() {
           priceConfidence: id.precioEstimado ? 0.6 : 1,
           // Lo escribió una persona del equipo con la ficha en la mano: confianza plena.
           // Los marcados con "E" son estimados: no salen de la marca (fuente secundaria).
-          facts: lectura.datos.map(d => ({ key: d.key, value: d.valor, confidence: 1, sourceTier: d.estimado ? 2 : 1, estimado: d.estimado })),
+          // Trazabilidad: O (o sin letra) = fuente oficial; C, X y E = fuente secundaria.
+          facts: lectura.datos.map(d => ({
+            key: d.key,
+            value: d.valor,
+            confidence: 1,
+            sourceTier: d.origen && d.origen !== 'O' ? 2 : 1,
+            estimado: d.estimado,
+            origen: d.origen,
+            nota: d.nota,
+          })),
+          notasGenerales: lectura.notasGenerales,
+          priceOrigen: id.precioOrigen ?? null,
+          priceNota: id.precioNota,
           dealerIds,
           fotos: [...fotos.filter(f => f.usar && f.portada), ...fotos.filter(f => f.usar && !f.portada)]
             .filter(f => f.procesada)
@@ -187,8 +234,16 @@ export function SubidaGuia() {
           </p>
           <div className="mt-4 flex flex-wrap gap-2 text-[13px]">
             <span className="rounded-full bg-wise/10 px-3 py-1 text-wise">{lectura.datos.length} datos leídos</span>
-            {lectura.datos.some(d => d.estimado) && (
-              <span className="rounded-full bg-[#dbec43]/40 px-3 py-1 text-[#4a5000]">{lectura.datos.filter(d => d.estimado).length} estimados (E)</span>
+            {(Object.keys(ORIGENES) as Origen[]).map(o => {
+              const n = lectura.datos.filter(d => d.origen === o).length;
+              return n ? (
+                <span key={o} className={`rounded-full px-3 py-1 ${COLOR_ORIGEN[o]}`}>
+                  {n} {ORIGENES[o].toLowerCase()} ({o})
+                </span>
+              ) : null;
+            })}
+            {lectura.datos.some(d => !d.origen) && (
+              <span className="rounded-full bg-tarjeta px-3 py-1 text-tinta-2">{lectura.datos.filter(d => !d.origen).length} sin letra</span>
             )}
             <span className="rounded-full bg-tarjeta px-3 py-1 text-tinta-2">{lectura.vacios.length} vacíos</span>
             {errores.length > 0 && <span className="rounded-full bg-rose-100 px-3 py-1 text-rose-700">{errores.length} por corregir</span>}
@@ -227,27 +282,56 @@ export function SubidaGuia() {
 
           {lectura.datos.length > 0 && (
             <div className="mt-5 overflow-x-auto">
-              <table className="w-full min-w-[520px] text-[13.5px]">
+              <table className="w-full min-w-[860px] text-[13.5px]">
                 <thead>
                   <tr className="border-b border-linea text-left text-[11px] uppercase tracking-wider text-tinta-2">
                     <th className="py-2 pr-3 font-medium">Campo</th>
                     <th className="py-2 pr-3 font-medium">Escribiste</th>
-                    <th className="py-2 font-medium">Se guarda</th>
+                    <th className="py-2 pr-3 font-medium">Se guarda</th>
+                    <th className="py-2 pr-3 font-medium">Origen</th>
+                    <th className="py-2 font-medium">Fuente, razón o cálculo</th>
                   </tr>
                 </thead>
                 <tbody>
                   {lectura.datos.map(d => (
-                    <tr key={d.key} className="border-b border-linea/60">
+                    <tr key={d.key} className="border-b border-linea/60 align-top">
                       <td className="py-1.5 pr-3 text-tinta-2">{d.campo}</td>
                       <td className="py-1.5 pr-3 font-mono text-[12.5px] text-tinta-2">{d.escrito}</td>
-                      <td className={`py-1.5 font-medium ${String(fmt(d.valor)) !== d.escrito ? 'text-wise' : 'text-tinta'}`}>
+                      <td className={`py-1.5 pr-3 font-medium ${String(fmt(d.valor)) !== d.escrito ? 'text-wise' : 'text-tinta'}`}>
                         {fmt(d.valor)}
                         {d.estimado && <MarcaE />}
+                      </td>
+                      <td className="py-1.5 pr-3">
+                        <ChipOrigen origen={d.origen} />
+                      </td>
+                      <td className="max-w-[420px] py-1.5 text-[12.5px] leading-snug text-tinta-2">
+                        {d.nota ? (
+                          <TextoNota texto={d.nota} />
+                        ) : d.origen === 'X' || d.origen === 'E' ? (
+                          <span className="text-amber-700">Falta la nota al pie</span>
+                        ) : null}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          {(lectura.notasGenerales.length > 0 || id?.precioNota) && (
+            <div className="mt-5 rounded-2xl bg-papel p-4">
+              <p className="text-[12px] font-semibold uppercase tracking-wider text-tinta-2">Notas y fuentes de la guía</p>
+              <ul className="mt-2 space-y-1.5 text-[13px] leading-snug text-tinta-2">
+                {id?.precioNota && (
+                  <li>
+                    <span className="font-semibold text-tinta">Precio{id.precioOrigen ? ` (${id.precioOrigen})` : ''}:</span> <TextoNota texto={id.precioNota} />
+                  </li>
+                )}
+                {lectura.notasGenerales.map((n, i) => (
+                  <li key={i}>
+                    <TextoNota texto={n} />
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
           {lectura.vacios.length > 0 && (

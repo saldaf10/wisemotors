@@ -31,6 +31,9 @@ export async function POST(request: NextRequest) {
       fotos: Array.isArray(body?.fotos) ? body.fotos : [],
       dealerIds: Array.isArray(body?.dealerIds) ? body.dealerIds : [],
       sinDato: Array.isArray(body?.sinDato) ? body.sinDato : [],
+      notasGenerales: Array.isArray(body?.notasGenerales) ? body.notasGenerales : [],
+      priceOrigen: typeof body?.priceOrigen === 'string' ? body.priceOrigen : null,
+      priceNota: typeof body?.priceNota === 'string' ? body.priceNota : undefined,
       // La aceptación en la pantalla de revisión ES la verificación humana
       verifiedBy: auth.userId,
     });

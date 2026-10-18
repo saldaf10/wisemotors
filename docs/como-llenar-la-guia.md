@@ -33,6 +33,10 @@ Si la ficha trae varias versiones en columnas, copia solo la columna de esa vers
   paréntesis o dejarlo. No importan las mayúsculas, las tildes ni un error de tipeo pequeño:
   "tambro" se entiende como Tambor.
 - **No cambies los nombres de los campos** ni pongas dos datos en una línea.
+- **Letra de origen al final de cada dato:** `O` oficial, `C` sitio confiable, `X` calculado,
+  `E` estimado (`139 O`, `38.5 X`). Debajo de la lista, una línea `# Notas` y, por cada X o E,
+  `Nombre del campo: de dónde salió o cómo se calculó`. En la subida se ve la letra y la nota
+  de cada dato. Las reglas completas están en `docs/prompt-ia-guia.md`.
 - **Datos estimados: una `E` al final.** Si la marca no publica un dato pero lo sacaste de una
   prueba en video, una revista de carros o lo calculaste, escríbelo con una `E` (o `e`) al
   final: `0–100 km/h (s): 9,1 E`, `Cámaras 360°: Sí E`. En la tabla sale con la E amarilla y

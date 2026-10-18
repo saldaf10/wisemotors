@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowUpRight, Instagram } from 'lucide-react';
 import { Logo } from '@/components/brand/Logo';
+import { AvisoIA } from '@/components/ui/AvisoIA';
 
 // ============================================================================
 // Cierre en showroom: titular en dos tonos, enlaces, líneas de ticks y la
@@ -70,7 +71,9 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="ticks mt-20 text-white" />
+        <AvisoIA claro className="mt-14 max-w-[640px]" />
+
+        <div className="ticks mt-8 text-white" />
 
         <div className="flex flex-wrap items-center justify-between gap-4 py-6">
           <Logo oscuro />

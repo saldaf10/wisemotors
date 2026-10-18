@@ -8,75 +8,96 @@ la letra. Si te pasan la plantilla del carro (sale de Panel → Subir carro), ú
 ya trae solo los campos que aplican a ese carro.
 
 ## 1. Formato de salida
-- Devuelve SOLO la guía: sin saludos, sin explicaciones, sin bloques de código, sin
-  negritas ni viñetas.
-- Una línea por campo: `Nombre del campo: valor`. El nombre va copiado EXACTO de la lista
-  de la sección 9 (tildes, mayúsculas, signos y unidad entre paréntesis).
+- Devuelve SOLO la guía: sin saludos ni explicaciones fuera de ella, sin bloques de código,
+  sin negritas.
+- Dos partes, en este orden:
+  1. **La lista de datos:** una línea por campo, `Nombre del campo: valor LETRA`. El nombre va
+     copiado EXACTO de la sección 9 (tildes, mayúsculas, signos y unidad entre paréntesis).
+  2. **Las notas al pie:** una línea que diga exactamente `# Notas` y debajo una línea por
+     cada dato que necesite explicación (ver sección 4).
 - Respeta el orden de la sección 9. No repitas ni inventes campos. Puedes poner líneas de
   sección que empiecen con `#` (`# Motor`); el sistema las ignora.
 - Incluye solo los campos que aplican a ese tren motriz y esa carrocería ("Aplica" en la
-  sección 9). Si no hay dato, la línea va igual pero vacía: `Torque máximo (Nm):`
+  sección 9). Si no hay dato, la línea va igual pero vacía y SIN letra: `Torque máximo (Nm):`
 
 ## 2. Una sola versión y un solo año
-- La guía es de UNA versión y UN año (por ejemplo "Kona Híbrida Limited 2026"). En
-  `Modelo` va el modelo con la versión: `Kona Híbrida Limited`.
-- Cada dato es de ESA versión. Si una fuente trae varias versiones, usa la columna de esa.
-- Nada de "según versión", "en versiones superiores" o "disponible en N Line". Si el equipo
-  no viene de serie en esa versión, es `No`.
-- Nunca dos valores (`17 o 18`, `75 – 85`, dos precios). Escoge el de esa versión. Si de
-  verdad no se puede saber cuál es, usa el que tenga más sentido para esa versión y márcalo
-  con ` E`, o deja el campo vacío.
+- La guía es de UNA versión exacta y UN año exacto (por ejemplo "Captiva Híbrida Premier
+  2026"). En `Modelo` va el modelo con la versión: `Captiva Híbrida Premier`.
+- Cada dato es de ESA versión y ESE año. Si una fuente trae varias versiones en columnas,
+  usa solo la columna de esa versión.
+- Prohibido escribir "según versión", "en versiones superiores", "disponible en N Line" o
+  parecidos. Si el equipo no viene de serie en ESA versión, es `No`. Si no sabes si viene,
+  deja el campo vacío.
+- Prohibido dar dos valores (`17 o 18`, `75 – 85`, dos precios). Escoge el de esa versión.
+  Si no puedes saber cuál es, deja el campo vacío.
 
-## 3. Solo el dato, sin explicación
-- Después de los dos puntos va SOLO el valor. Nada de paréntesis ni aclaraciones.
-  - Mal: `Potencia máxima (hp): 139 hp (combinada)`. Bien: `139`
-  - Mal: `Airbags: 6 (frontales, laterales y de cortina)`. Bien: `6`
-  - Mal: `Asistente de carril: Sí (LKA y LFA)`. Bien: `Sí`
-  - Mal: `Tren motriz: Híbrido (HEV)`. Bien: `Híbrido`
+## 3. Solo el dato y su letra, sin explicación
+- Después de los dos puntos va SOLO el valor, un espacio y su letra de trazabilidad
+  (sección 4). Nada de paréntesis ni aclaraciones en la línea: las explicaciones van en las
+  notas al pie.
+  - Mal: `Potencia máxima (hp): 139 hp (combinada)`. Bien: `Potencia máxima (hp): 139 O`
+  - Mal: `Airbags: 6 (Frontales, laterales y de cortina)`. Bien: `Airbags: 6 O`
+  - Mal: `Tracción: Delantera (FWD)`. Bien: `Tracción: Delantera O`
+  - Mal: `Tren motriz: Híbrido (HEV)`. Bien: `Tren motriz: Híbrido`
 - En los NÚMEROS no va la unidad, ni `~`, `aprox.`, `$`, `%`, `"`, `°`, `@` ni otro número.
-- "No aplica" no se escribe: el campo queda vacío (ej. `0–200 km/h (s):` en un carro que no
-  llega a 200 km/h).
-- Lo único que puede ir después del valor es la marca de estimado: un espacio y `E`.
+- "No aplica" NO se escribe: el campo se deja vacío.
+- `Marca`, `Modelo`, `Tren motriz`, `Carrocería` y `Categoría` van SIN letra (un modelo como
+  "Clase C" o "Clase E" se confundiría con la letra).
 
-## 4. Datos oficiales, estimados (E) y vacíos
-Cada campo tiene tres posibilidades, en este orden de preferencia:
+## 4. Trazabilidad: la letra de cada dato (O, C, X, E) y las notas al pie
+Cada dato con valor lleva al final, separada por un espacio, UNA letra en MAYÚSCULA que dice
+de dónde salió: `232 O`, `320 C`, `38.5 X`, `3.8 E`, `Sí O`, `Delantera C`.
 
-**a) Dato oficial → sin marca.** Sale de la ficha técnica oficial de la marca para esa versión
-en Colombia (PDF, página de la marca o del concesionario). Va sin `E`.
+**`O` — Oficial.** De la ficha técnica comercial del fabricante, el manual del propietario o
+documentos de homologación oficiales, para esa misma versión y año. Lo ideal es la ficha
+oficial de Colombia; la oficial de otro mercado vale como `O` solo si es la misma versión
+y el mismo motor.
 
-**b) Dato estimado → con ` E` al final.** Si la marca no lo publica para Colombia pero se puede
-conseguir de una fuente seria sobre ESE carro, ponlo y márcalo con ` E`: `0–100 km/h (s): 9.8 E`.
-Fuentes que valen:
-1. Ficha oficial de la misma versión y el mismo motor en otro mercado (México, EE. UU.,
-   Europa, Corea, China…).
-2. Revistas y portales de carros: Motor (motor.com.co), El Carro Colombiano, Car and Driver,
-   Motor Trend, Autobild, km77, Edmunds, Top Gear y similares.
-3. Pruebas en video de canales serios que muestren cómo midieron (cronómetro, GPS, báscula).
-4. Un cálculo con datos oficiales o confiables (conversiones, sumas, promedios de ciudad y
-   carretera, etc.).
+**`C` — Sitio confiable.** De revistas especializadas de prestigio, pruebas instrumentadas de
+medios reconocidos (con equipo de medición o en pista) o comunicados de concesionarios y
+aliados autorizados de la marca. Por ejemplo: Motor (motor.com.co), El Carro Colombiano,
+Car and Driver, Motor Trend, Autobild, km77, Edmunds.
 
-La `E` se puede usar en cualquier campo y no tiene límite, pero con criterio:
-- El dato tiene que ser de ese carro (misma generación y mismo motor; si hay diferencias
-  de versión que afecten el dato, usa la más parecida y dilo con la `E`, no con texto).
+**`X` — Calculado.** Sale de una fórmula o conversión a partir de otros datos conocidos:
+km/l × 3.785, kW × 1.341, litros ÷ 3.785, promedio de ciudad y carretera, etc.
+OBLIGATORIO: explicar en las notas al pie con qué datos exactos y qué operación.
+
+**`E` — Estimado.** No está en fuentes oficiales ni confiables, pero se infiere de un sitio
+menos confiable, de un valor que se repite de forma consistente en internet, de una
+plataforma hermana o de un estimado técnico coherente. OBLIGATORIO: explicar en las notas al
+pie dónde se encontró o por qué se adoptó. En la página de WiseMotors los `E` se muestran en
+amarillo como "estimados".
+
+**Vacío.** Si no hay información oficial, confiable, calculable o estimable de forma lógica y
+coherente, prohibido inventar: el campo queda VACÍO.
+
+Criterio para `C`, `X` y `E`:
+- El dato tiene que ser de ese carro (misma generación y mismo motor).
 - Tiene que ser coherente con el resto de la guía y con carros parecidos: un SUV de 139 hp no
   hace 0–100 en 6 s; un híbrido no consume como un deportivo.
-- Si dos fuentes no coinciden, usa la más confiable (ficha oficial de otro mercado > medición
-  con equipo > revista > video). Si no hay ninguna claramente mejor, usa la intermedia.
-- No vale: inventar, "lo típico del segmento" sin fuente, foros o comentarios sin medición,
-  ni datos de otra generación o de otro modelo.
+- Si dos fuentes no coinciden, usa la más confiable (oficial > medición con equipo > revista >
+  video > resto) y menciónalo en la nota.
+- No vale: inventar, "lo típico del segmento" sin ninguna base, ni datos de otra generación o
+  de otro modelo.
 
-**c) Vacío.** Solo si no hay ni dato oficial ni una fuente seria para estimarlo.
+**Consumo: siempre pensado para Colombia.** Los consumos (`km/gal` y `kWh/100 km`):
+1. El dato oficial colombiano, si la marca lo publica → `O`.
+2. Pruebas reales hechas en Colombia por medios confiables → `C`.
+3. El ciclo oficial de otro mercado convertido a km/gal → `X` (en la nota: el valor original,
+   el ciclo y la operación). Prefiere EPA o WLTP; NEDC y CLTC son muy optimistas.
+4. Ajustes a condiciones colombianas (tráfico, altura, gasolina de aquí), o ciudad y carretera
+   sacados del combinado → `E`, explicando el ajuste.
+Coherencia: en un gasolina, carretera rinde más que ciudad; en un híbrido suele ser al revés.
 
-**Consumo: siempre pensado para Colombia.** Los consumos (`km/gal` y `kWh/100 km`) se pueden
-estimar siempre, con este orden:
-1. El dato oficial colombiano, si la marca lo publica (sin `E`).
-2. Pruebas reales hechas en Colombia (revistas, portales o videos colombianos) → ` E`.
-3. El ciclo oficial de otro mercado convertido a km/gal → ` E`. Prefiere EPA o WLTP; NEDC y
-   CLTC son muy optimistas: si es lo único que hay, úsalos pero baja el valor a algo realista
-   para Colombia (tráfico, altura y gasolina de aquí) y márcalo con ` E`.
-4. Si solo hay un consumo combinado, ciudad y carretera se pueden estimar a partir de él y de
-   pruebas de ese carro → ` E`. Coherencia: en un gasolina, carretera rinde más que ciudad;
-   en un híbrido suele ser al revés.
+**Las notas al pie** (después de la lista, bajo la línea `# Notas`):
+- Una línea por dato, con el nombre EXACTO del campo, dos puntos y la explicación:
+  `Consumo mixto (km/gal): 10.2 km/l de la ficha oficial de México (WLTP) × 3.785 = 38.6`
+  `0–100 km/h (s): prueba instrumentada de Motor, https://www.motor.com.co/…`
+- Obligatorias para cada `X` y cada `E`. Para `O` y `C` son opcionales pero útiles: pon la
+  fuente (nombre y enlace).
+- Si una fuente sirve para muchos datos, una línea sin nombre de campo:
+  `Ficha técnica oficial Chevrolet Colombia 2026: https://www.chevrolet.com.co/…`
+- El precio también puede llevar nota: `Precio de lista (COP): lista oficial de Chevrolet, octubre 2026`.
 
 ## 5. Campos de OPCIONES: solo estas, escritas igual
 Escribe exactamente una opción, con tildes y mayúsculas. Nunca dos, nunca otra palabra.
@@ -95,7 +116,7 @@ Escribe exactamente una opción, con tildes y mayúsculas. Nunca dos, nunca otra
 Ojo: `Categoría` no es la carrocería (una SUV normal es `Automóvil`). El diésel se escribe
 `Diesel` sin tilde. Un híbrido suave (MHEV, 48 V) es `Híbrido`; uno que se enchufa es
 `Híbrido Enchufable`. Una "camioneta" sin platón es `SUV`.
-Los campos SÍ/NO llevan solo `Sí` o `No`. Si el equipo no viene en esa versión, `No`.
+Los campos SÍ/NO llevan solo `Sí` o `No` y su letra (`Sí O`). Si el equipo no viene en esa versión, `No`.
 
 ## 6. Números y unidades: siempre la misma escala
 - Cada número va en la unidad que dice el nombre del campo. Si la fuente usa otra,
@@ -134,22 +155,25 @@ Los campos SÍ/NO llevan solo `Sí` o `No`. Si el equipo no viene en esa versió
 - **Transmisión:** empieza con `Automática` o `Manual`: `Automática (CVT)`,
   `Automática (6 velocidades)`, `Automática (doble embrague)`, `Manual`.
 - **Remolque:** la capacidad CON freno.
+- **Letras:** O, C y X siempre en MAYÚSCULA y separadas por un espacio (`139 O`), nunca entre
+  paréntesis ni pegadas a una palabra.
 - **Estrellas en prueba de choque:** solo el número (`5`), de ese modelo y generación. Si
   hay varias pruebas, la de Latin NCAP; si no hay, la más reciente.
 - **CarPlay / Android Auto:** es TEXTO: `Apple CarPlay y Android Auto`, `Solo Android Auto`.
 - **Medida de llanta:** una sola (`215/55 R18`) y que coincida con `Rin (pulgadas)` (`18`).
 - **Precio de lista:** el de Colombia de esa versión, en pesos. Si no hay precio oficial pero
-  sí uno confiable (concesionario, revista colombiana), va con ` E`.
+  sí uno confiable (concesionario, revista colombiana), va con ` C`.
 
 ## 8. Lista de chequeo antes de entregar
 1. Identidad completa: Marca, Modelo (con versión), Año, Tren motriz, Carrocería y Precio.
 2. Nombres exactos, en orden, sin repetir y solo los que aplican.
-3. Solo el dato: sin unidades, sin paréntesis, sin rangos, sin "según versión".
+3. Solo el dato y su letra: sin unidades, sin paréntesis, sin rangos, sin "según versión".
 4. Opciones y Sí/No escritos exactamente.
 5. Números en la unidad del campo y dentro de su rango.
-6. Lo oficial sin `E`; lo estimado con ` E` y de una fuente seria y coherente; lo demás vacío.
-7. Consumos pensados para Colombia.
-8. La respuesta es solo la guía.
+6. Cada dato con su letra (O, C, X o E); lo que no se pudo sacar de forma coherente, vacío.
+7. Cada `X` y cada `E` explicado en `# Notas`, con el nombre exacto del campo.
+8. Consumos pensados para Colombia.
+9. La respuesta es solo la guía y sus notas.
 
 ## 9. Lista de campos, en orden
 Cada línea: `nombre exacto` — tipo (unidad y rango válido, u opciones) — a qué carros aplica.

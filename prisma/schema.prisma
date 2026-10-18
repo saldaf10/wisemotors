@@ -126,6 +126,10 @@ model VehicleAttribute {
   // Estimado: la marca no lo publica (video, revista o cálculo propio). En la
   // ficha sale en amarillo con una "E"; espejo en specifications.meta.estimados.
   estimado     Boolean  @default(false)
+  // Trazabilidad de la guía: O oficial · C sitio confiable · X calculado · E estimado
+  // (null = sin letra). La nota es la fuente, razón o cálculo que vino al pie de la guía.
+  origen       String?
+  nota         String?
   extractedAt  DateTime @default(now())
   verifiedBy   String? // userId del auditor humano
   verifiedAt   DateTime?

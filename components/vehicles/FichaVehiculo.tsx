@@ -46,6 +46,7 @@ import { BotonCercania, TarjetaConcesionario, tieneUbicacion, type Concesionario
 import { ListaContacto, useContactar, type Motivo } from '@/components/concesionarios/Contacto';
 import { KEYS_RENDIMIENTO, estimadosDe, leer, precioCompleto, rendimiento, specsDe } from '@/lib/vehiculo-datos';
 import { AvisoEstimados, EstimadosProvider, MarcaE } from '@/components/ui/Estimado';
+import { AvisoIA } from '@/components/ui/AvisoIA';
 import { claseDeTipo } from '@/lib/attributes/clase';
 import { fotoDe, pinturaDe } from '@/components/car/CarRender';
 
@@ -448,6 +449,7 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
               <CalendarCheck className="h-5 w-5" /> Agendar prueba de manejo
             </button>
             {contacto?.lugar === 'abajo' && <FormNombre nombre={nombre} setNombre={setNombre} onSubmit={escribir} />}
+            <AvisoIA className="mt-2" />
           </div>
         </div>
       </section>

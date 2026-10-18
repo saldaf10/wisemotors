@@ -18,6 +18,10 @@ export interface AcceptedFact {
   sourceUrl?: string;
   /** Dato estimado (la marca no lo publica): sale en amarillo con una "E". */
   estimado?: boolean;
+  /** Trazabilidad de la guía: O oficial · C sitio confiable · X calculado · E estimado. */
+  origen?: string | null;
+  /** Fuente, razón o cálculo (notas al pie de la guía). */
+  nota?: string;
 }
 
 export interface PublishInput {
@@ -40,6 +44,11 @@ export interface PublishInput {
   sinDato?: string[];
   /** Concesionarios que lo venden (ids de Dealer). Los que no existan se ignoran. */
   dealerIds?: string[];
+  /** Notas de la guía que no son de un campo (fuentes generales). Se guardan, no se muestran. */
+  notasGenerales?: string[];
+  /** Trazabilidad y nota del precio. */
+  priceOrigen?: string | null;
+  priceNota?: string;
   /** userId del revisor humano; null en cargas automáticas de prueba. */
   verifiedBy: string | null;
 }
@@ -62,6 +71,10 @@ function nestByPath(facts: AcceptedFact[]): Record<string, any> {
   }
   return specs;
 }
+
+const origenValido = (o: unknown) => (typeof o === 'string' && ['O', 'C', 'X', 'E'].includes(o) ? o : null);
+/** La primera URL de la nota, como fuente del dato. */
+const primeraUrl = (nota?: string) => nota?.match(/https?:\/\/[^\s)\]]+/)?.[0]?.slice(0, 500) ?? null;
 
 const ALT_ANGULO: Record<string, string> = {
   lado: 'de lado',
@@ -133,6 +146,9 @@ export async function publishDraft(input: PublishInput): Promise<PublishResult> 
   const estimados = clean.filter(f => f.estimado === true).map(f => f.key);
   if (estimados.length) specs.meta = { ...(specs.meta ?? {}), estimados };
 
+  const notasGenerales = (input.notasGenerales ?? []).filter(x => typeof x === 'string' && x.trim()).map(x => x.slice(0, 1000)).slice(0, 40);
+  if (notasGenerales.length) specs.meta = { ...(specs.meta ?? {}), notasSubida: notasGenerales };
+
   const sinDato = (input.sinDato ?? []).filter(x => typeof x === 'string').slice(0, 60);
   if (sinDato.length) specs.meta = { ...(specs.meta ?? {}), sinDato };
 
@@ -173,7 +189,9 @@ export async function publishDraft(input: PublishInput): Promise<PublishResult> 
             valueText: null,
             confidence: input.priceEstimated ? Math.min(0.6, Number(input.priceConfidence) || 0.4) : Math.max(0, Math.min(1, Number(input.priceConfidence) || 0.85)),
             sourceTier: input.priceEstimated ? 3 : 2,
-            sourceUrl: input.priceSourceUrl ? String(input.priceSourceUrl).slice(0, 500) : null,
+            sourceUrl: input.priceSourceUrl ? String(input.priceSourceUrl).slice(0, 500) : primeraUrl(input.priceNota),
+            origen: origenValido(input.priceOrigen),
+            nota: input.priceNota ? String(input.priceNota).slice(0, 2000) : null,
             verifiedBy: input.verifiedBy,
             verifiedAt: input.verifiedBy ? new Date() : null,
           },
@@ -187,8 +205,10 @@ export async function publishDraft(input: PublishInput): Promise<PublishResult> 
               def.dataType === 'text' || def.dataType === 'enum' ? String(f.value) : null,
             confidence: Math.max(0, Math.min(1, Number(f.confidence) || 0.5)),
             sourceTier: [1, 2, 3].includes(Number(f.sourceTier)) ? Number(f.sourceTier) : 3,
-            sourceUrl: f.sourceUrl ? String(f.sourceUrl).slice(0, 500) : null,
+            sourceUrl: f.sourceUrl ? String(f.sourceUrl).slice(0, 500) : primeraUrl(f.nota),
             estimado: f.estimado === true,
+            origen: origenValido(f.origen),
+            nota: f.nota ? String(f.nota).slice(0, 2000) : null,
             verifiedBy: input.verifiedBy,
             verifiedAt: input.verifiedBy ? new Date() : null,
           };

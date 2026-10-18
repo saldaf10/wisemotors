@@ -10,9 +10,13 @@
 //  3. Cada valor se convierte según el campo: número (coma o punto decimal,
 //     miles con punto), Sí/No, una de las opciones (la más parecida) o texto.
 //     Lo que no se entiende NO se guarda: queda como error para corregir.
-//  4. Una "E" al final del valor ("153 E", "153e", "Sí E") lo marca ESTIMADO:
-//     la marca no lo publica (video, revista o cálculo propio). Se guarda igual
-//     y la ficha lo muestra en amarillo.
+//  4. Una letra al final del valor dice de dónde salió (trazabilidad):
+//     O oficial · C sitio confiable · X calculado · E estimado ("153 E", "153e").
+//     Los E salen en amarillo en la ficha. Sin letra = como antes (oficial).
+//  5. Debajo de la lista puede venir una sección de NOTAS ("# Notas",
+//     "Fuentes y cálculos"…) con "Campo: explicación": la fuente, la razón o el
+//     cálculo de cada dato. Se pegan a su dato; lo que no es de un campo queda
+//     como nota general. Un X o un E sin nota sale como aviso.
 // ============================================================================
 
 import { fueraDeRango, rangoDe } from '@/lib/attributes/registry';
@@ -38,7 +42,18 @@ export interface Identidad {
   precio?: number;
   /** El precio vino con "E": no es el de lista oficial. */
   precioEstimado?: boolean;
+  precioOrigen?: Origen;
+  precioNota?: string;
 }
+
+/** De dónde salió un dato: Oficial, sitio Confiable, calculado (X) o Estimado. */
+export type Origen = 'O' | 'C' | 'X' | 'E';
+export const ORIGENES: Record<Origen, string> = {
+  O: 'Oficial',
+  C: 'Sitio confiable',
+  X: 'Calculado',
+  E: 'Estimado',
+};
 
 export interface DatoLeido {
   /** Nombre del campo en la plantilla. */
@@ -50,6 +65,10 @@ export interface DatoLeido {
   linea: number;
   /** Vino marcado con "E": dato estimado, no oficial. */
   estimado: boolean;
+  /** Letra de trazabilidad (null = no vino letra). */
+  origen: Origen | null;
+  /** Fuente, razón o cálculo, de la sección de notas. */
+  nota?: string;
 }
 
 export interface Lectura {
@@ -58,6 +77,8 @@ export interface Lectura {
   avisos: Aviso[];
   /** Campos de la plantilla de este carro que quedaron vacíos. */
   vacios: string[];
+  /** Notas que no son de un campo en particular. */
+  notasGenerales: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -120,9 +141,31 @@ export function leerNumero(texto: string): number | null {
  * estimado, por eso no se aplica a la marca ni al modelo.
  */
 export function separarEstimado(escrito: string): { texto: string; estimado: boolean } {
-  const m = escrito.match(/^(.*?)(?:\s+|(?<=\d))[([]?\s*[eE]\s*[)\]]?$/);
-  if (m && m[1].trim()) return { texto: m[1].trim(), estimado: true };
-  return { texto: escrito, estimado: false };
+  const { texto, origen, soloLetra } = separarOrigen(escrito);
+  if (soloLetra) return { texto: escrito, estimado: false };
+  return { texto, estimado: origen === 'E' };
+}
+
+/**
+ * Separa la letra de trazabilidad del final: "232 O", "38.5 X", "Sí C", "3.8e",
+ * "Turbo (E)" → { texto, origen }. O, C y X van en MAYÚSCULA (una "o" suelta es
+ * la palabra "o"); la E en cualquiera. Va separada por un espacio o pegada a un
+ * número. Una letra sola ("E") no es un dato: { texto: '', origen, soloLetra }.
+ */
+export function separarOrigen(escrito: string): { texto: string; origen: Origen | null; soloLetra?: boolean } {
+  const solo = escrito.trim().match(/^[([]?\s*([OCXEe])\s*[)\]]?$/);
+  if (solo) return { texto: '', origen: solo[1].toUpperCase() as Origen, soloLetra: true };
+  const m = escrito.match(/^(.*?)(?:\s+|(?<=\d))[([]?\s*([OCXEe])\s*[)\]]?$/);
+  if (m && m[1].trim()) return { texto: m[1].trim(), origen: m[2].toUpperCase() as Origen };
+  return { texto: escrito, origen: null };
+}
+
+/** ¿La línea abre la sección de notas? ("# Notas", "Fuentes y cálculos:", "Notas al pie"…) */
+const TITULO_NOTAS = /^(notas?|fuentes?|calculos?|explicacion(es)?|justificacion(es)?|referencias?|trazabilidad|observaciones)\b/;
+function abreNotas(linea: string): boolean {
+  const sinMarca = linea.replace(/^#+\s*/, '').replace(/[*_]/g, '').trim();
+  const [nombre, ...resto] = sinMarca.split(':');
+  return TITULO_NOTAS.test(plano(nombre)) && !resto.join(':').trim() && plano(nombre).split(' ').length <= 6;
 }
 
 const SI = ['si', 's', 'yes', 'y', 'x', 'true', '1', 'tiene', 'con', 'incluye', 'ok', 'sí'];
@@ -153,10 +196,31 @@ export function leerGuia(texto: string): Lectura {
   const lineas: Linea[] = [];
   const vistos = new Set<CampoFormato>();
 
+  // Notas al pie: campo → texto, y las generales.
+  const notas = new Map<CampoFormato, string[]>();
+  const notasGenerales: string[] = [];
+  let enNotas = false;
+
   texto.split(/\r?\n/).forEach((cruda, i) => {
     const n = i + 1;
     const l = cruda.trim();
-    if (!l || l.startsWith('#')) return;
+    if (!l) return;
+    if (abreNotas(l)) {
+      enNotas = true;
+      return;
+    }
+    if (enNotas) {
+      // "- Peso en vacío (kg) (E): calculado con…" · "1. Consumo mixto: …" · texto suelto.
+      const limpia = l.replace(/^#+\s*/, '').replace(/^([-*•]|\d+[.)])\s*/, '').replace(/\*\*/g, '').trim();
+      if (!limpia) return;
+      const dp = limpia.indexOf(':');
+      const campo = dp > 0 ? campoDeLinea(separarOrigen(limpia.slice(0, dp)).texto || limpia.slice(0, dp)) : null;
+      const cuerpo = dp > 0 ? limpia.slice(dp + 1).trim() : limpia;
+      if (campo && cuerpo) notas.set(campo, [...(notas.get(campo) ?? []), cuerpo]);
+      else notasGenerales.push(limpia);
+      return;
+    }
+    if (l.startsWith('#')) return;
     const dosPuntos = l.indexOf(':');
     if (dosPuntos < 0) {
       avisos.push({ linea: n, tipo: 'aviso', texto: `La línea «${l.slice(0, 60)}» no tiene «:», no se leyó.` });
@@ -184,9 +248,12 @@ export function leerGuia(texto: string): Lectura {
 
   // 1. Identidad
   const identidad: Identidad = {};
-  for (const l of lineas.filter(x => x.campo.identidad)) {
+  for (const cruda of lineas.filter(x => x.campo.identidad)) {
+    const id = cruda.campo.identidad as CampoIdentidad;
+    // La letra de trazabilidad no se separa en la marca ni en el modelo ("Clase C", "Clase E").
+    const sep = id === 'marca' || id === 'modelo' ? { texto: cruda.escrito, origen: null } : separarOrigen(cruda.escrito);
+    const l = { ...cruda, escrito: sep.texto };
     if (esVacio(l.escrito)) continue;
-    const id = l.campo.identidad as CampoIdentidad;
     const opciones = OPCIONES_IDENTIDAD[id];
     if (opciones) {
       const op = opcionMasCercana(l.escrito, opciones);
@@ -202,11 +269,14 @@ export function leerGuia(texto: string): Lectura {
       if (a && a >= 1990 && a <= 2035) identidad.anio = Math.round(a);
       else avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${l.escrito}» no es un año válido.` });
     } else if (id === 'precio') {
-      const { texto, estimado } = separarEstimado(l.escrito);
+      const texto = l.escrito;
       const p = leerNumero(texto);
       if (p && p >= 5_000_000 && p <= 5_000_000_000) {
         identidad.precio = p;
-        if (estimado) identidad.precioEstimado = true;
+        if (sep.origen) identidad.precioOrigen = sep.origen;
+        if (sep.origen === 'E') identidad.precioEstimado = true;
+        const nota = notas.get(l.campo);
+        if (nota) identidad.precioNota = nota.join(' · ');
         if (RANGO.test(texto)) avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'aviso', texto: `«${texto}» trae dos precios; se guardó el primero ($${p.toLocaleString('es-CO')}). Cada versión va en su propia guía.` });
       } else avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${l.escrito}» no parece un precio en pesos (ej. 113.000.000).` });
     } else if (id === 'marca') identidad.marca = l.escrito;
@@ -224,7 +294,12 @@ export function leerGuia(texto: string): Lectura {
     const clase = claseDeTipo(carroceria);
     const conValor = new Set<CampoFormato>();
     for (const l of lineas.filter(x => !x.campo.identidad)) {
-      const { texto: escrito, estimado } = separarEstimado(l.escrito);
+      const { texto: escrito, origen, soloLetra } = separarOrigen(l.escrito);
+      const estimado = origen === 'E';
+      if (soloLetra) {
+        avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `Solo trae la letra «${origen}», sin el dato. Escribe el valor o deja el campo vacío.` });
+        continue;
+      }
       if (esVacio(escrito)) continue;
       if (!aplica(l.campo, tren, carroceria)) {
         avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'aviso', texto: `«${l.campo.nombre}» no va en un ${tren.toLowerCase()} ${carroceria.toLowerCase()}; se ignora.` });
@@ -255,10 +330,19 @@ export function leerGuia(texto: string): Lectura {
         valor = escrito.slice(0, 200);
       }
       if (valor === null) continue;
-      datos.push({ campo: l.campo.nombre, key, valor, escrito: l.escrito, linea: l.n, estimado });
+      const nota = notas.get(l.campo)?.join(' · ');
+      if ((origen === 'X' || origen === 'E') && !nota) {
+        avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'aviso', texto: `Es ${origen === 'X' ? 'calculado (X)' : 'estimado (E)'} pero no trae nota al pie que explique ${origen === 'X' ? 'el cálculo' : 'de dónde salió'}.` });
+      }
+      datos.push({ campo: l.campo.nombre, key, valor, escrito: l.escrito, linea: l.n, estimado, origen, nota });
       conValor.add(l.campo);
     }
     for (const c of FORMATO) if (!c.identidad && aplica(c, tren, carroceria) && !conValor.has(c)) vacios.push(c.nombre);
   }
-  return { identidad, datos, avisos, vacios };
+  // Notas de campos que no quedaron con dato (vacíos, retirados o que no aplican): generales.
+  const conDato = new Set(datos.map(d => d.campo));
+  Array.from(notas.entries()).forEach(([c, ns]) => {
+    if (!c.identidad && !conDato.has(c.nombre)) notasGenerales.push(`${c.nombre}: ${ns.join(' · ')}`);
+  });
+  return { identidad, datos, avisos, vacios, notasGenerales };
 }

@@ -243,6 +243,14 @@ cobertura, migración, seeds, motor de cohortes.
   correrlo. "Autonomía oficial (km)" = eléctrico: batería llena (`electric.electricRange`);
   enchufable: tanque + batería (`phev.totalRange`). "Autonomía solo eléctrica (km)" =
   `phev.electricRange` (campo `keys` por tren en CampoFormato).
+- Trazabilidad (18-oct-2026): cada valor de la guía puede terminar en O (oficial), C (sitio
+  confiable), X (calculado) o E (estimado) — O/C/X en mayúscula, E en cualquiera; nunca en
+  marca/modelo. Debajo, `# Notas` con "Campo: fuente/razón/cálculo" (`separarOrigen`,
+  `abreNotas` en leer.ts). Se guarda en `VehicleAttribute.origen` + `nota` (+ `sourceUrl` = 1.ª
+  URL de la nota); notas sin campo → `specifications.meta.notasSubida`. Solo E se ve en la
+  ficha (amarillo). La subida muestra letra y nota por dato y avisa si un X/E no trae nota.
+- Aviso de IA (`components/ui/AvisoIA.tsx`): pie, ficha (junto a contactar), resultados de
+  búsqueda y comparador.
 
 ## Backlog en orden (del plan, secciones 8-9)
 

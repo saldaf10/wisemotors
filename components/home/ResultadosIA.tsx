@@ -18,6 +18,7 @@ import { TarjetaCarro, type VehiculoTarjeta } from '@/components/car/TarjetaCarr
 import { BuscadorIA } from '@/components/home/BuscadorIA';
 import { CalificarIA } from '@/components/ui/CalificarIA';
 import { datosClave, millones, palabraGigante, tresDatos } from '@/lib/vehiculo-datos';
+import { AvisoIA } from '@/components/ui/AvisoIA';
 
 /** Razones comparativas, calculadas con datos reales, frente a los otros del podio. */
 function razonesRelativas(v: any, podio: any[]): string[] {
@@ -92,6 +93,7 @@ export function ResultadosIA({
     <div className="space-y-14">
       <div className="max-w-[640px]">
         <BuscadorIA inicial={consulta} />
+        <AvisoIA className="mt-3" />
       </div>
       {resultados.aviso && <p className="rounded-[20px] bg-[#efe4f7] px-5 py-4 text-[15px]">{resultados.aviso}</p>}
       <Afinador

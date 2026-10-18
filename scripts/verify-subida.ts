@@ -2,7 +2,7 @@
 // Uso: npx tsx scripts/verify-subida.ts  (sin BD ni API)
 
 import { FORMATO, aplica, generarPlantilla } from '../lib/subida/formato';
-import { campoDeLinea, leerGuia, leerNumero, leerSiNo, separarEstimado } from '../lib/subida/leer';
+import { campoDeLinea, leerGuia, leerNumero, leerSiNo, separarEstimado, separarOrigen } from '../lib/subida/leer';
 import { opcionMasCercana } from '../lib/subida/opciones';
 import { plano } from '../lib/subida/texto';
 import { ATTRIBUTE_REGISTRY } from '../lib/attributes/registry';
@@ -142,6 +142,34 @@ check('PHEV: autonomía oficial = total, y la solo eléctrica aparte', phev.dato
 const evR = leerGuia('Marca: BYD\nModelo: Dolphin\nAño: 2026\nTren motriz: Eléctrico\nCarrocería: Hatchback\nPrecio de lista (COP): 120000000\nAutonomía oficial (km): 410\nAutonomía solo eléctrica (km): 410');
 check('eléctrico: autonomía oficial a electric.electricRange; "solo eléctrica" no aplica', evR.datos.some(d => d.key === 'electric.electricRange' && d.valor === 410) && !evR.datos.some(d => d.key === 'phev.electricRange'));
 check('plantilla PHEV trae las dos autonomías; la de gasolina ninguna', generarPlantilla({ tren: 'Híbrido Enchufable', carroceria: 'SUV' }).includes('Autonomía solo eléctrica (km):') && !gasSedan.includes('Autonomía'));
+
+// --- Trazabilidad O / C / X / E y notas al pie ---
+check('letras: "232 O", "320 C", "38.5 X", "3.8e", "Sí (E)"', separarOrigen('232 O').origen === 'O' && separarOrigen('320 C').origen === 'C' && separarOrigen('38.5 X').texto === '38.5' && separarOrigen('3.8e').origen === 'E' && separarOrigen('Sí (E)').origen === 'E');
+check('una "o" minúscula no es letra ("Cuero o tela")', separarOrigen('Cuero o tela').origen === null);
+const traz = leerGuia(`Marca: Mercedes-Benz
+Modelo: Clase C
+Año: 2026 O
+Tren motriz: Gasolina O
+Carrocería: Sedán O
+Precio de lista (COP): 250000000 C
+Potencia máxima (hp): 255 O
+Consumo mixto (km/gal): 45.2 X
+0–100 km/h (s): 6.2 E
+Peso en vacío (kg): 1650 E
+Cámaras 360°: Sí O
+
+# Notas
+- **Consumo mixto (km/gal) (X):** 11.9 km/l WLTP de Alemania × 3.8
+0–100 km/h (s): prueba de Car and Driver https://www.caranddriver.com/x
+Precio de lista (COP): concesionario oficial, octubre 2026
+Ficha oficial Mercedes-Benz Colombia: https://www.mercedes-benz.com.co/x`);
+const dT = (k: string) => traz.datos.find(d => d.key === k);
+check('modelo "Clase C" no pierde la C; año y tren con letra se leen', traz.identidad.modelo === 'Clase C' && traz.identidad.anio === 2026 && traz.identidad.tren === 'Gasolina');
+check('cada dato con su letra', dT('combustion.maxPower')?.origen === 'O' && dT('combustion.combinedConsumption')?.origen === 'X' && dT('performance.acceleration0to100')?.estimado === true && dT('assistance.cameras360')?.valor === true);
+check('las notas se pegan a su dato', /11\.9 km\/l/.test(dT('combustion.combinedConsumption')?.nota ?? '') && /caranddriver/.test(dT('performance.acceleration0to100')?.nota ?? ''));
+check('precio con letra y nota', traz.identidad.precioOrigen === 'C' && /concesionario/.test(traz.identidad.precioNota ?? '') && !traz.identidad.precioEstimado);
+check('nota sin campo → nota general', traz.notasGenerales.some(n => /mercedes-benz\.com\.co/.test(n)));
+check('E sin nota → aviso; las notas no se leen como datos', traz.avisos.some(a => a.campo === 'Peso en vacío (kg)' && /nota/.test(a.texto)) && !traz.avisos.some(a => a.tipo === 'error'));
 
 console.log(fallas ? `\n${fallas} fallas` : '\nTodo verificado ✓');
 process.exit(fallas ? 1 : 0);

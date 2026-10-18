@@ -8,6 +8,7 @@ import { ATTRIBUTE_REGISTRY, attributeAppliesTo, type AttributeDef } from '@/lib
 import { formatPrice } from '@/lib/utils';
 import { estimadosDe } from '@/lib/vehiculo-datos';
 import { MarcaE } from '@/components/ui/Estimado';
+import { AvisoIA } from '@/components/ui/AvisoIA';
 
 // ============================================================================
 // MATRIZ DE COMPARACIÓN
@@ -321,6 +322,7 @@ export function CompareMatrix({ vehicles }: Props) {
               </>
             )}
           </p>
+          <AvisoIA className="px-2" />
         </>
       )}
     </div>
