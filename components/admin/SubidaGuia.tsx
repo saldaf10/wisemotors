@@ -10,7 +10,7 @@
 //      /api/admin/ingest/publish).
 // ============================================================================
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, ClipboardCopy, Loader2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { adminFetch, mensajeDeErrorDeAuth } from '@/lib/admin-fetch';
@@ -58,6 +58,46 @@ function TextoNota({ texto }: { texto: string }) {
   );
 }
 
+/** Qué filas mostrar al tocar un contador. */
+type Filtro = Origen | 'sin' | 'avisos' | 'errores' | 'vacios' | null;
+
+const ALTO_LINEA = 20; // px: igual en la numeración y en el texto para que coincidan.
+
+/** Caja para pegar la guía, con las filas numeradas a la izquierda. */
+function GuiaNumerada({ texto, onCambio, areaRef }: { texto: string; onCambio: (t: string) => void; areaRef: React.RefObject<HTMLTextAreaElement> }) {
+  const numerosRef = useRef<HTMLDivElement>(null);
+  const filas = Math.max(1, texto.split('\n').length);
+  return (
+    <div className="relative mt-3 h-72 overflow-hidden rounded-2xl border border-linea bg-papel focus-within:border-wise">
+      <div
+        ref={numerosRef}
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 left-0 w-12 select-none overflow-hidden border-r border-linea bg-tarjeta/60 py-4 pr-2 text-right font-mono text-[11.5px] text-tinta-2/70"
+      >
+        {Array.from({ length: filas }, (_, i) => (
+          <div key={i} style={{ height: ALTO_LINEA, lineHeight: `${ALTO_LINEA}px` }}>
+            {i + 1}
+          </div>
+        ))}
+      </div>
+      <textarea
+        id="guia"
+        ref={areaRef}
+        value={texto}
+        wrap="off"
+        spellCheck={false}
+        onChange={e => onCambio(e.target.value)}
+        onScroll={e => {
+          if (numerosRef.current) numerosRef.current.scrollTop = e.currentTarget.scrollTop;
+        }}
+        placeholder={'Marca: Chevrolet\nModelo: Tracker RS\n…'}
+        style={{ lineHeight: `${ALTO_LINEA}px` }}
+        className="h-full w-full resize-none bg-transparent py-4 pl-[60px] pr-4 font-mono text-[12.5px] text-tinta focus:outline-none"
+      />
+    </div>
+  );
+}
+
 export function SubidaGuia() {
   const [tren, setTren] = useState<Tren>('Gasolina');
   const [carroceria, setCarroceria] = useState('SUV');
@@ -88,6 +128,34 @@ export function SubidaGuia() {
 
   const plantilla = useMemo(() => generarPlantilla({ tren, carroceria }), [tren, carroceria]);
   const lectura = useMemo(() => (texto.trim() ? leerGuia(texto) : null), [texto]);
+  const [filtro, setFiltro] = useState<Filtro>(null);
+  const areaRef = useRef<HTMLTextAreaElement>(null);
+  const tablaRef = useRef<HTMLDivElement>(null);
+  const erroresRef = useRef<HTMLUListElement>(null);
+  const avisosRef = useRef<HTMLUListElement>(null);
+  const vaciosRef = useRef<HTMLDetailsElement>(null);
+
+  /** Lleva a la fila N del texto pegado y la selecciona. */
+  function irALinea(n: number) {
+    const area = areaRef.current;
+    if (!area || n < 1) return;
+    const lineas = area.value.split('\n');
+    const inicio = lineas.slice(0, n - 1).reduce((t, l) => t + l.length + 1, 0);
+    area.focus();
+    area.setSelectionRange(inicio, inicio + (lineas[n - 1]?.length ?? 0));
+    area.scrollTop = Math.max(0, (n - 4) * ALTO_LINEA);
+    area.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  /** Tocar un contador: filtra la tabla (o abre la lista) y lleva hasta ahí. */
+  function verFiltro(f: Filtro) {
+    const nuevo = filtro === f ? null : f;
+    setFiltro(nuevo);
+    if (!nuevo) return;
+    const destino = nuevo === 'errores' ? erroresRef.current : nuevo === 'avisos' ? avisosRef.current : nuevo === 'vacios' ? vaciosRef.current : tablaRef.current;
+    if (nuevo === 'vacios' && vaciosRef.current) vaciosRef.current.open = true;
+    requestAnimationFrame(() => destino?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
   const errores = lectura?.avisos.filter(a => a.tipo === 'error') ?? [];
   const avisos = lectura?.avisos.filter(a => a.tipo === 'aviso') ?? [];
   const id = lectura?.identidad;
@@ -215,13 +283,7 @@ export function SubidaGuia() {
       <section className="rounded-[28px] border border-linea bg-blanco p-6">
         <h2 className="text-lg font-bold text-tinta">2. Pega la guía llena</h2>
         <p className="mt-1 text-sm text-tinta-2">Se lee al instante, sin IA. Lo que no se entienda sale en rojo y no se guarda.</p>
-        <textarea
-          id="guia"
-          value={texto}
-          onChange={e => setTexto(e.target.value)}
-          placeholder={'Marca: Chevrolet\nModelo: Tracker RS\n…'}
-          className="mt-3 h-72 w-full rounded-2xl border border-linea bg-papel p-4 font-mono text-[12.5px] text-tinta focus:border-wise focus:outline-none"
-        />
+        <GuiaNumerada texto={texto} onCambio={setTexto} areaRef={areaRef} />
       </section>
 
       {lectura && (
@@ -233,30 +295,54 @@ export function SubidaGuia() {
             {[id?.tren, id?.carroceria, id?.categoria, id?.precio ? `$${id.precio.toLocaleString('es-CO')}${id.precioEstimado ? ' (estimado)' : ''}` : null].filter(Boolean).join(' · ') || 'Faltan los datos de identidad'}
           </p>
           <div className="mt-4 flex flex-wrap gap-2 text-[13px]">
-            <span className="rounded-full bg-wise/10 px-3 py-1 text-wise">{lectura.datos.length} datos leídos</span>
+            <button type="button" onClick={() => setFiltro(null)} className={`rounded-full bg-wise/10 px-3 py-1 text-wise ${filtro === null ? 'ring-2 ring-wise/40' : ''}`}>
+              {lectura.datos.length} datos leídos
+            </button>
             {(Object.keys(ORIGENES) as Origen[]).map(o => {
               const n = lectura.datos.filter(d => d.origen === o).length;
               return n ? (
-                <span key={o} className={`rounded-full px-3 py-1 ${COLOR_ORIGEN[o]}`}>
+                <button key={o} type="button" onClick={() => verFiltro(o)} aria-pressed={filtro === o} className={`rounded-full px-3 py-1 transition hover:brightness-95 ${COLOR_ORIGEN[o]} ${filtro === o ? 'ring-2 ring-tinta/30' : ''}`}>
                   {n} {ORIGENES[o].toLowerCase()} ({o})
-                </span>
+                </button>
               ) : null;
             })}
             {lectura.datos.some(d => !d.origen) && (
-              <span className="rounded-full bg-tarjeta px-3 py-1 text-tinta-2">{lectura.datos.filter(d => !d.origen).length} sin letra</span>
+              <button type="button" onClick={() => verFiltro('sin')} aria-pressed={filtro === 'sin'} className={`rounded-full bg-tarjeta px-3 py-1 text-tinta-2 hover:brightness-95 ${filtro === 'sin' ? 'ring-2 ring-tinta/30' : ''}`}>
+                {lectura.datos.filter(d => !d.origen).length} sin letra
+              </button>
             )}
-            <span className="rounded-full bg-tarjeta px-3 py-1 text-tinta-2">{lectura.vacios.length} vacíos</span>
-            {errores.length > 0 && <span className="rounded-full bg-rose-100 px-3 py-1 text-rose-700">{errores.length} por corregir</span>}
+            {lectura.vacios.length > 0 && (
+              <button type="button" onClick={() => verFiltro('vacios')} className="rounded-full bg-tarjeta px-3 py-1 text-tinta-2 hover:brightness-95">
+                {lectura.vacios.length} vacíos
+              </button>
+            )}
+            {avisos.length > 0 && (
+              <button type="button" onClick={() => verFiltro('avisos')} className="rounded-full bg-amber-100 px-3 py-1 text-amber-800 hover:brightness-95">
+                {avisos.length} avisos
+              </button>
+            )}
+            {errores.length > 0 && (
+              <button type="button" onClick={() => verFiltro('errores')} className="rounded-full bg-rose-100 px-3 py-1 text-rose-700 hover:brightness-95">
+                {errores.length} por corregir
+              </button>
+            )}
           </div>
 
           {errores.length > 0 && (
-            <ul className="mt-4 space-y-1.5">
+            <ul ref={erroresRef} className="mt-4 scroll-mt-28 space-y-1.5">
               {errores.map((a, i) => (
                 <li key={i} className="flex gap-2 text-[13.5px] text-rose-700">
                   <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>
                     {a.campo ? <span className="font-semibold">{a.campo}</span> : null}
-                    {a.linea ? <span className="text-rose-500/70"> (línea {a.linea})</span> : null}
+                    {a.linea ? (
+                      <>
+                        {' '}
+                        <button type="button" onClick={() => irALinea(a.linea)} className="text-rose-500/80 underline decoration-dotted hover:text-rose-700">
+                          (fila {a.linea})
+                        </button>
+                      </>
+                    ) : null}
                     {a.campo || a.linea ? <span className="text-rose-500/70"> · </span> : null}
                     {a.texto}
                   </span>
@@ -265,13 +351,20 @@ export function SubidaGuia() {
             </ul>
           )}
           {avisos.length > 0 && (
-            <ul className="mt-3 space-y-1.5">
+            <ul ref={avisosRef} className="mt-3 scroll-mt-28 space-y-1.5">
               {avisos.map((a, i) => (
                 <li key={i} className="flex gap-2 text-[13px] text-amber-700">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>
                     {a.campo ? <span className="font-semibold">{a.campo}</span> : null}
-                    {a.linea ? <span className="opacity-70"> (línea {a.linea})</span> : null}
+                    {a.linea ? (
+                      <>
+                        {' '}
+                        <button type="button" onClick={() => irALinea(a.linea)} className="underline decoration-dotted opacity-80 hover:opacity-100">
+                          (fila {a.linea})
+                        </button>
+                      </>
+                    ) : null}
                     {a.campo || a.linea ? <span className="opacity-70"> · </span> : null}
                     {a.texto}
                   </span>
@@ -281,10 +374,23 @@ export function SubidaGuia() {
           )}
 
           {lectura.datos.length > 0 && (
-            <div className="mt-5 overflow-x-auto">
+            <div ref={tablaRef} className="mt-5 scroll-mt-28 overflow-x-auto">
+              {filtro && filtro !== 'errores' && filtro !== 'avisos' && filtro !== 'vacios' && (
+                <div className="mb-3 flex items-center justify-between gap-3 rounded-xl bg-papel px-4 py-2 text-[13px] text-tinta-2">
+                  <span>
+                    Mostrando solo los datos{' '}
+                    <span className="font-semibold text-tinta">{filtro === 'sin' ? 'sin letra' : `${ORIGENES[filtro].toLowerCase()} (${filtro})`}</span>. Toca una fila
+                    para ir a esa línea del texto.
+                  </span>
+                  <button type="button" onClick={() => setFiltro(null)} className="font-medium text-wise hover:underline">
+                    Ver todos
+                  </button>
+                </div>
+              )}
               <table className="w-full min-w-[860px] text-[13.5px]">
                 <thead>
                   <tr className="border-b border-linea text-left text-[11px] uppercase tracking-wider text-tinta-2">
+                    <th className="py-2 pr-3 font-medium">Fila</th>
                     <th className="py-2 pr-3 font-medium">Campo</th>
                     <th className="py-2 pr-3 font-medium">Escribiste</th>
                     <th className="py-2 pr-3 font-medium">Se guarda</th>
@@ -293,8 +399,11 @@ export function SubidaGuia() {
                   </tr>
                 </thead>
                 <tbody>
-                  {lectura.datos.map(d => (
-                    <tr key={d.key} className="border-b border-linea/60 align-top">
+                  {lectura.datos
+                    .filter(d => !filtro || filtro === 'errores' || filtro === 'avisos' || filtro === 'vacios' || (filtro === 'sin' ? !d.origen : d.origen === filtro))
+                    .map(d => (
+                    <tr key={d.key} onClick={() => irALinea(d.linea)} title="Ir a esta línea del texto" className="cursor-pointer border-b border-linea/60 align-top hover:bg-papel">
+                      <td className="py-1.5 pr-3 font-mono text-[12px] text-tinta-2/70">{d.linea}</td>
                       <td className="py-1.5 pr-3 text-tinta-2">{d.campo}</td>
                       <td className="py-1.5 pr-3 font-mono text-[12.5px] text-tinta-2">{d.escrito}</td>
                       <td className={`py-1.5 pr-3 font-medium ${String(fmt(d.valor)) !== d.escrito ? 'text-wise' : 'text-tinta'}`}>
@@ -335,7 +444,7 @@ export function SubidaGuia() {
             </div>
           )}
           {lectura.vacios.length > 0 && (
-            <details className="mt-4 text-[13px] text-tinta-2">
+            <details ref={vaciosRef} className="mt-4 scroll-mt-28 text-[13px] text-tinta-2">
               <summary className="cursor-pointer select-none">Ver los {lectura.vacios.length} campos vacíos</summary>
               <p className="mt-2 leading-relaxed">{lectura.vacios.join(' · ')}</p>
             </details>
