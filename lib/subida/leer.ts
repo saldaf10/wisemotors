@@ -169,7 +169,8 @@ export function separarOrigen(escrito: string): { texto: string; origen: Origen 
 /** ¿La línea abre la sección de notas? ("# Notas", "Fuentes y cálculos:", "Notas al pie"…) */
 // Un título corto (sin valor) que hable de notas, fuentes, cálculos o estimaciones:
 // "# Notas", "Detalles de Cálculos (X)", "Notas sobre Estimaciones (E)", "Fuentes:".
-const TITULO_NOTAS = /\b(notas?|fuentes?|calculos?|calculados?|estimacion(es)?|estimados?|explicacion(es)?|justificacion(es)?|referencias?|trazabilidad|observaciones|detalles?)\b/;
+// También en inglés: algunas IA escriben "# Notes", "Sources", "Calculations".
+const TITULO_NOTAS = /\b(notas?|fuentes?|calculos?|calculados?|estimacion(es)?|estimados?|explicacion(es)?|justificacion(es)?|referencias?|trazabilidad|observaciones|detalles?|notes?|sources?|references?|calculations?|estimates?|footnotes?)\b/;
 function abreNotas(linea: string): boolean {
   const sinMarca = linea.replace(/^#+\s*/, '').replace(/[*_]/g, '').trim();
   const [nombre, ...resto] = sinMarca.split(':');
@@ -213,6 +214,16 @@ function camposDeNota(nombre: string): CampoFormato[] {
   return out;
 }
 
+/** "Dual", "bizona", "dos" → 2: números escritos con palabras (zonas de clima, filas…). */
+function numeroEnPalabras(texto: string): number | null {
+  const v = plano(texto);
+  if (/^(uno|una|mono|monozona|sencillo|simple|single)\b/.test(v)) return 1;
+  if (/^(dos|dual|doble|bizona|bi zona|dual zone)\b/.test(v)) return 2;
+  if (/^(tres|tri|trizona|tri zona|triple)\b/.test(v)) return 3;
+  if (/^(cuatro|cuadruple|cuatrizona|quad)\b/.test(v)) return 4;
+  return null;
+}
+
 const SI = ['si', 's', 'yes', 'y', 'x', 'true', '1', 'tiene', 'con', 'incluye', 'ok', 'sí'];
 const NO = ['no', 'n', 'false', '0', 'sin', 'no tiene', 'no trae', 'no incluye'];
 
@@ -251,7 +262,10 @@ export function leerGuia(texto: string): Lectura {
     const n = i + 1;
     const l = cruda.trim();
     if (!l) return;
-    if (abreNotas(l)) {
+    // Un título "#" que no es una sección de la plantilla, cuando ya hubo datos, también abre las
+    // notas (sea cual sea la palabra: "# Notes", "# Anexo"…).
+    const tituloRaro = /^#/.test(l) && !SECCIONES.has(plano(l.replace(/^#+\s*/, ''))) && lineas.length > 0 && !l.includes(':');
+    if (abreNotas(l) || tituloRaro) {
       enNotas = true;
       return;
     }
@@ -296,7 +310,10 @@ export function leerGuia(texto: string): Lectura {
     }
     if (vistos.has(campo)) {
       // Repetido con una explicación (no un dato): es una nota que vino sin título.
-      const explicacion = /calcul|estim|fuente|seg[uú]n|oficial|prueba|homolog|https?:/i.test(escrito) || leerNumero(escrito) === null || escrito.length > 40;
+      // Un dato repetido "de verdad" es solo un número o una palabra (con su letra). Si trae
+      // más (una fórmula "378.5 ÷ 4.4 = 86", una fuente, una explicación) es una nota.
+      const soloDato = /^[\d.,]+\s*[A-Za-z]?$/.test(escrito) || /^\S+(\s+[OCXEe])?$/.test(escrito);
+      const explicacion = !soloDato || /calcul|estim|fuente|seg[uú]n|oficial|prueba|homolog|https?:/i.test(escrito);
       if (!campo.identidad && explicacion) {
         notas.set(campo, [...(notas.get(campo) ?? []), sinLatex(escrito)]);
         return;
@@ -375,7 +392,7 @@ export function leerGuia(texto: string): Lectura {
         valor = leerSiNo(escrito);
         if (valor === null) avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${escrito}» no es Sí o No.` });
       } else if (d.dataType === 'numeric') {
-        valor = leerNumero(escrito);
+        valor = leerNumero(escrito) ?? numeroEnPalabras(escrito);
         // Muchas fichas dan el DIÁMETRO de giro (≈10–12 m), no el radio: se guarda la mitad.
         if (key === 'dimensions.turningRadius' && valor !== null && valor > 8 && valor <= 16) {
           avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'aviso', texto: `${valor} m parece el diámetro de giro; se guardó el radio (${valor / 2} m).` });

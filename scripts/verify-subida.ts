@@ -201,5 +201,27 @@ check('Polo: "Consumo ciudad (…) y carretera (…)" va a los dos', /pruebas/.t
 check('Polo: diámetro de giro 10.6 → radio 5.3', dP('dimensions.turningRadius')?.valor === 5.3);
 check('Polo: sin errores ni avisos de "---" o repetidos', !polo.avisos.some(a => a.tipo === 'error' || /repetido|no tiene/.test(a.texto)));
 
+// --- "# Notes" en inglés y notas que repiten el nombre del campo (Kona, 25-oct-2026) ---
+const kona = leerGuia(`Marca: Hyundai
+Modelo: Kona Híbrida N Line
+Año: 2026 O
+Tren motriz: Híbrido
+Carrocería: SUV
+Precio de lista (COP): 148990000 O
+Consumo ciudad (km/gal): 86.0 X
+Tanque de combustible (gal): 10.0 X
+Zonas de climatizador: Dual O
+
+# Notes
+
+Consumo ciudad (km/gal): 378.5 ÷ 4.4 l/100 km WLTP = 86.0
+Tanque de combustible (gal): 38 L ÷ 3.785 = 10.0`);
+const dK = (k: string) => kona.datos.find(d => d.key === k);
+check('Kona: "# Notes" abre las notas y cada fórmula va a su dato', /4\.4/.test(dK('hybrid.cityConsumption')?.nota ?? '') && /38 L/.test(dK('hybrid.fuelTankCapacity')?.nota ?? ''));
+check('Kona: sin avisos de repetido ni de "X sin nota"', !kona.avisos.some(a => /repetido|sin nota|no trae nota/.test(a.texto)));
+check('Kona: "Dual" en zonas de clima = 2', dK('comfort.climateZones')?.valor === 2 || kona.datos.some(d => d.campo === 'Zonas de climatizador' && d.valor === 2));
+const repetidoReal = leerGuia('Marca: X\nModelo: Y\nAño: 2026\nTren motriz: Gasolina\nCarrocería: Sedán\nPrecio de lista (COP): 90000000\nAirbags: 6 O\nAirbags: 8 O');
+check('un dato repetido de verdad sigue avisando', repetidoReal.avisos.some(a => /repetido/.test(a.texto)));
+
 console.log(fallas ? `\n${fallas} fallas` : '\nTodo verificado ✓');
 process.exit(fallas ? 1 : 0);
