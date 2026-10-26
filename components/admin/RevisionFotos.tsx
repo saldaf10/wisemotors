@@ -58,12 +58,17 @@ export function fotosIniciales(fotos: Omit<FotoRevision, 'usar' | 'portada'>[] |
   return lista;
 }
 
-/** Reduce la foto a 2400 px en JPEG antes de subirla (el límite de Vercel es ~4,5 MB). */
+/**
+ * Deja la foto lista para subir: máximo 2400 px y en JPEG (el límite de Vercel es ~4,5 MB).
+ * Cualquier formato que el navegador sepa abrir (WebP, AVIF, HEIC en Safari…) se pasa a
+ * JPEG; si no la puede abrir, se avisa en vez de mandarla para que falle en el servidor.
+ */
 async function reducir(f: File): Promise<File> {
   const bitmap = await createImageBitmap(f).catch(() => null);
-  if (!bitmap) return f;
+  if (!bitmap) throw new Error('Este formato de imagen no se puede abrir aquí. Guárdala como JPG o PNG y súbela de nuevo.');
   const escala = Math.min(1, 2400 / Math.max(bitmap.width, bitmap.height));
-  if (escala === 1 && f.size < 3.5 * 1024 * 1024) return f;
+  const yaSirve = f.type === 'image/jpeg' || f.type === 'image/png' || f.type === 'image/webp';
+  if (yaSirve && escala === 1 && f.size < 3.5 * 1024 * 1024) return f;
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(bitmap.width * escala);
   canvas.height = Math.round(bitmap.height * escala);
@@ -89,7 +94,7 @@ function ElegirArchivo({ onArchivo, children, className }: { onArchivo: (f: File
       {children}
       <input
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/*,.jpg,.jpeg,.png,.webp,.avif,.heic,.heif"
         className="sr-only"
         onChange={e => {
           const f = e.target.files?.[0];
