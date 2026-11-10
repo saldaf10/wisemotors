@@ -469,9 +469,20 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
         <section className="mx-auto mt-24 max-w-[1440px] px-5 md:px-8">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <h2 className="t-titulo text-[32px] md:text-[44px]">
-              Si te gusta este, <span className="text-tinta-2/50">mira también.</span>
+              Si te gusta este, <span className="text-tinta-2/50">mira y</span>{' '}
+              {/* Compara este carro con los 3 similares a la vez (sin favoritos ni cuenta). */}
+              <Link
+                href={`/compare?ids=${[vehicle.id, ...similares.slice(0, 3).map(v => v.id)].join(',')}`}
+                className="inline-flex items-center gap-2 rounded-full bg-wise px-5 py-1 align-middle text-[0.8em] text-white transition-colors hover:bg-wise-dark"
+                title={`Comparar el ${vehicle.model} con los ${Math.min(3, similares.length)} similares`}
+              >
+                compara <ArrowUpRight className="h-[0.8em] w-[0.8em]" />
+              </Link>{' '}
+              <span className="text-tinta-2/50">similares.</span>
             </h2>
-            <p className="max-w-[40ch] text-[15px] text-tinta-2">Los más parecidos en precio, tamaño y tipo de carro. Ponlos frente a frente.</p>
+            <p className="max-w-[40ch] text-[15px] text-tinta-2">
+              Los más parecidos en precio, tamaño y tipo de carro. Toca «compara» para ponerlos todos frente a frente con el {vehicle.model}.
+            </p>
           </div>
           <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {similares.slice(0, 3).map((v, i) => (
@@ -481,8 +492,8 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
                   <Link href={`/vehicles/${v.id}`} className="pastilla h-11 justify-center">
                     Ver ficha <ArrowUpRight className="h-4 w-4" />
                   </Link>
-                  <Link href={`/compare?ids=${vehicle.id},${v.id}`} className="pastilla pastilla--wise h-11 justify-center">
-                    Comparar con este
+                  <Link href={`/compare?ids=${vehicle.id},${v.id}`} className="pastilla pastilla--wise h-11 justify-center whitespace-nowrap px-3 text-[14px]">
+                    Comparar cara a cara
                   </Link>
                 </div>
               </div>
