@@ -39,6 +39,7 @@ import {
 import { CarRender } from '@/components/car/CarRender';
 import { Fila } from '@/components/compare/FrenteAFrente';
 import { CompareMatrix } from '@/components/compare/CompareMatrix';
+import { PruebaDeRuta } from '@/components/compare/PruebaDeRuta';
 import { useEnVista } from '@/components/ui/useEnVista';
 import { CalificarIA } from '@/components/ui/CalificarIA';
 import { adminFetch } from '@/lib/admin-fetch';
@@ -280,6 +281,9 @@ export function Comparador({ vehiculos }: { vehiculos: Vehiculo[] }) {
           </div>
         )}
       </div>
+
+      {/* Lo último: pasar de comparar a probarlo. */}
+      <PruebaDeRuta vehiculos={vehiculos} />
     </div>
   );
 }

@@ -80,6 +80,7 @@ export function ListaContacto({
   setNombre,
   onCerrar,
   ubicacion,
+  fuente = 'ficha',
 }: {
   abierta: boolean;
   motivo: Motivo;
@@ -90,9 +91,11 @@ export function ListaContacto({
   onCerrar: () => void;
   /** La misma ubicación de la ficha: si la pide aquí, la ficha también la ve. */
   ubicacion: { yo: Coordenadas | null; estado: string; pedir: () => void };
+  /** De dónde sale el lead (para los informes): ficha, comparador… */
+  fuente?: string;
 }) {
   const { yo, estado, pedir } = ubicacion;
-  const contactar = useContactar('ficha');
+  const contactar = useContactar(fuente);
   const [escritos, setEscritos] = useState<Set<string>>(new Set());
   const nombreRef = useRef<HTMLInputElement>(null);
   const lista = porCercania(concesionarios, yo);

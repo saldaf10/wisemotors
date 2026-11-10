@@ -4,13 +4,9 @@ import { urlImagen } from '@/lib/data/imagen';
 import { prisma } from '@/lib/prisma';
 import { cache } from 'react';
 
-/** Celular colombiano en formato wa.me (57 + 10 dígitos que empiezan por 3), o null si es fijo / no se entiende. */
-export function whatsappDe(telefono?: string | null): string | null {
-  const d = (telefono ?? '').replace(/\D/g, '');
-  if (/^3\d{9}$/.test(d)) return `57${d}`;
-  if (/^573\d{9}$/.test(d)) return d;
-  return null;
-}
+import { whatsappDe } from '@/lib/whatsapp';
+// Vive en lib/whatsapp (sin base de datos) para poder usarlo también en el navegador.
+export { whatsappDe };
 
 // Cachear la obtención de un vehículo para evitar dupicados en generateMetadata y page
 export const getVehicle = cache(async (id: string) => {
