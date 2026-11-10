@@ -19,6 +19,7 @@ import { BuscadorIA } from '@/components/home/BuscadorIA';
 import { CalificarIA } from '@/components/ui/CalificarIA';
 import { datosClave, millones, palabraGigante, tresDatos } from '@/lib/vehiculo-datos';
 import { AvisoIA } from '@/components/ui/AvisoIA';
+import { BotonFavorito } from '@/components/car/BotonFavorito';
 
 /** Razones comparativas, calculadas con datos reales, frente a los otros del podio. */
 function razonesRelativas(v: any, podio: any[]): string[] {
@@ -117,6 +118,7 @@ export function ResultadosIA({
               {palabraGigante(primero.model, primero.brand)}
             </p>
             <span className="t-meta absolute left-6 top-6 rounded-full bg-tinta px-3 py-1.5 text-white">Tu mejor opción</span>
+            <BotonFavorito id={primero.id} className="absolute right-6 top-6 z-10" />
             <CarRender car={primero} prioridad className="carro-entra relative aspect-[480/190] w-full max-w-[620px]" />
           </div>
           <div className="flex flex-col p-8 md:p-10">
@@ -168,7 +170,7 @@ export function ResultadosIA({
             ) : null}
 
             <Link href={`/vehicles/${primero.id}`} className="pastilla pastilla--wise mt-auto h-12 self-start px-6 max-lg:mt-8">
-              Ver ficha completa <ArrowUpRight className="h-4 w-4" />
+              Ir al panel dinámico <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
@@ -180,14 +182,15 @@ export function ResultadosIA({
             <Link
               key={v.id}
               href={`/vehicles/${v.id}`}
-              className="group grid grid-cols-[1fr_1.1fr] items-center gap-4 overflow-hidden rounded-[28px] bg-blanco p-5 transition-shadow duration-500 hover:shadow-[0_30px_60px_-36px_rgba(14,12,17,0.5)]"
+              className="group relative grid grid-cols-[1fr_1.1fr] items-center gap-4 overflow-hidden rounded-[28px] bg-blanco p-5 transition-shadow duration-500 hover:shadow-[0_30px_60px_-36px_rgba(14,12,17,0.5)]"
             >
+              <BotonFavorito id={v.id} className="absolute right-4 top-4 z-10 !h-9 !w-9" />
               <div className="estudio flex aspect-[4/3] items-center justify-center rounded-[20px] p-3">
                 <CarRender car={v} className="aspect-[480/180] w-full transition-transform duration-700 group-hover:translate-x-1 group-hover:scale-105" />
               </div>
               <div className="min-w-0">
                 <p className="cifra text-[12px] text-tinta-2">#{i + 2}</p>
-                <p className="truncate text-[22px] font-semibold tracking-[-0.03em]">
+                <p className="truncate pr-10 text-[22px] font-semibold tracking-[-0.03em]">
                   {v.brand} {v.model}
                 </p>
                 <p className="cifra mt-1 text-[16px]">{millones(v.price)}</p>

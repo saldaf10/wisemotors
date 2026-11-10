@@ -330,7 +330,7 @@ export function PodiumResults({
                   }}
                   className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-wise px-6 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-wise-dark"
                 >
-                  Ver la ficha completa
+                  Ir al panel dinámico
                   <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={2.25} />
                 </button>
               </div>
