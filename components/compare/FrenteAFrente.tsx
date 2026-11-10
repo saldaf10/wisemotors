@@ -159,7 +159,7 @@ export function FrenteAFrente({ vehiculos }: { vehiculos: Vehiculo[] }) {
               )}
             </p>
             <Link href={`/vehicles/${v.id}`} className={`mt-5 inline-flex items-center gap-1.5 text-[14px] ${i === 0 && gana.length ? 'text-white' : 'text-tinta'} hover:underline`}>
-              Ver ficha <ArrowUpRight className="h-4 w-4" />
+              Ir al panel dinámico <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
         ))}

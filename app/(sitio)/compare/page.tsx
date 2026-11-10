@@ -13,7 +13,7 @@ import { millones } from '@/lib/vehiculo-datos';
 // ============================================================================
 // Comparador. La selección es una tira de favoritos que se prenden y apagan;
 // la comparación arranca de una con los primeros marcados.
-// Con ?ids=a,b (desde "Comparar con este" en la ficha) compara esos carros
+// Con ?ids=a,b (desde "Comparar cara a cara" o «compara» en la ficha) compara esos carros
 // directamente: no hace falta cuenta ni favoritos.
 // ============================================================================
 
@@ -34,17 +34,71 @@ function Vacio({ titulo, texto, children }: { titulo: string; texto: string; chi
   );
 }
 
-/** Comparación directa de los carros de la URL. */
+/** Tira para prender y apagar carros de la comparación (máx. MAX a la vez). */
+function TiraSeleccion({ carros, seleccion, alternar }: { carros: any[]; seleccion: string[]; alternar: (id: string) => void }) {
+  return (
+    <div className="mt-8 flex snap-x gap-3 overflow-x-auto pb-2">
+      {carros.map(v => {
+        const on = seleccion.includes(v.id);
+        const lleno = !on && seleccion.length >= MAX;
+        return (
+          <button
+            key={v.id}
+            onClick={() => alternar(v.id)}
+            disabled={lleno}
+            aria-pressed={on}
+            className={`group relative w-[220px] shrink-0 snap-start rounded-[24px] border p-4 text-left transition-all duration-300 ${
+              on ? 'border-tinta bg-blanco' : 'border-transparent bg-tarjeta hover:bg-blanco'
+            } ${lleno ? 'cursor-not-allowed opacity-40' : ''}`}
+          >
+            <span
+              className={`absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full transition-colors ${
+                on ? 'bg-wise text-white' : 'border border-linea bg-blanco'
+              }`}
+            >
+              {on && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+            </span>
+            <CarRender car={v as any} className="aspect-[480/180] w-full" />
+            <p className="mt-3 truncate text-[15px] font-semibold tracking-[-0.02em]">
+              {v.brand} {v.model}
+            </p>
+            <p className="cifra text-[13px] text-tinta-2">{millones(v.price)}</p>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function MarcaDos() {
+  return (
+    <div className="mt-10 rounded-[28px] bg-tarjeta p-10 text-center">
+      <p className="text-[22px] font-semibold tracking-[-0.03em]">Marca al menos dos.</p>
+      <p className="mt-1 text-tinta-2">Con uno solo no hay nada que poner frente a frente.</p>
+    </div>
+  );
+}
+
+/** Comparación directa de los carros de la URL (sin favoritos): se pueden prender y apagar. */
 function CompararIds({ lista }: { lista: string }) {
   const [datos, setDatos] = useState<any[] | null>(null);
+  const [seleccion, setSeleccion] = useState<string[]>([]);
 
   // La dependencia es el texto de la URL: un arreglo nuevo en cada render volvería a pedir todo.
   useEffect(() => {
     const ids = lista.split(',');
     Promise.all(ids.map(id => fetch(`/api/vehicles/${id}`).then(r => (r.ok ? r.json() : null))))
-      .then(vs => setDatos(vs.filter(Boolean)))
+      .then(vs => {
+        const ok = vs.filter(Boolean);
+        setDatos(ok);
+        setSeleccion(ok.map((v: any) => v.id));
+      })
       .catch(() => setDatos([]));
   }, [lista]);
+
+  const alternar = (id: string) =>
+    setSeleccion(prev => (prev.includes(id) ? prev.filter(x => x !== id) : prev.length < MAX ? [...prev, id] : prev));
+  const elegidos = useMemo(() => (datos ?? []).filter(v => seleccion.includes(v.id)), [datos, seleccion]);
 
   if (datos === null) {
     return (
@@ -65,18 +119,19 @@ function CompararIds({ lista }: { lista: string }) {
   return (
     <div className="mx-auto max-w-[1440px] px-5 pb-10 pt-10 md:px-8 md:pt-14">
       <div className="flex flex-wrap items-end justify-between gap-6 border-b border-linea pb-8">
-        <h1 className="t-titulo text-[48px] md:text-[80px]">Frente a frente</h1>
-        <div className="flex flex-wrap gap-2">
-          {datos.map(v => (
-            <Link key={v.id} href={`/vehicles/${v.id}`} className="pastilla h-11 px-4">
-              {v.brand} {v.model} <ArrowUpRight className="h-4 w-4" />
-            </Link>
-          ))}
+        <h1 className="t-titulo text-[48px] md:text-[80px]">
+          Frente a frente <span className="t-ligero text-tinta-2/50">({elegidos.length})</span>
+        </h1>
+        <p className="max-w-[40ch] text-[15px] text-tinta-2">Toca un carro para sacarlo o volverlo a meter en la comparación. Mínimo 2.</p>
+      </div>
+      <TiraSeleccion carros={datos} seleccion={seleccion} alternar={alternar} />
+      {elegidos.length < 2 ? (
+        <MarcaDos />
+      ) : (
+        <div className="mt-10">
+          <Comparador vehiculos={elegidos} />
         </div>
-      </div>
-      <div className="mt-10">
-        <Comparador vehiculos={datos} />
-      </div>
+      )}
     </div>
   );
 }
@@ -155,42 +210,10 @@ function CompararFavoritos() {
       </div>
 
       {/* Selección */}
-      <div className="mt-8 flex snap-x gap-3 overflow-x-auto pb-2">
-        {favorites.map(v => {
-          const on = seleccion.includes(v.id);
-          const lleno = !on && seleccion.length >= MAX;
-          return (
-            <button
-              key={v.id}
-              onClick={() => alternar(v.id)}
-              disabled={lleno}
-              aria-pressed={on}
-              className={`group relative w-[220px] shrink-0 snap-start rounded-[24px] border p-4 text-left transition-all duration-300 ${
-                on ? 'border-tinta bg-blanco' : 'border-transparent bg-tarjeta hover:bg-blanco'
-              } ${lleno ? 'cursor-not-allowed opacity-40' : ''}`}
-            >
-              <span
-                className={`absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full transition-colors ${
-                  on ? 'bg-wise text-white' : 'border border-linea bg-blanco'
-                }`}
-              >
-                {on && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
-              </span>
-              <CarRender car={v as any} className="aspect-[480/180] w-full" />
-              <p className="mt-3 truncate text-[15px] font-semibold tracking-[-0.02em]">
-                {v.brand} {v.model}
-              </p>
-              <p className="cifra text-[13px] text-tinta-2">{millones(v.price)}</p>
-            </button>
-          );
-        })}
-      </div>
+      <TiraSeleccion carros={favorites} seleccion={seleccion} alternar={alternar} />
 
       {datos.length < 2 ? (
-        <div className="mt-10 rounded-[28px] bg-tarjeta p-10 text-center">
-          <p className="text-[22px] font-semibold tracking-[-0.03em]">Marca al menos dos.</p>
-          <p className="mt-1 text-tinta-2">Con uno solo no hay nada que poner frente a frente.</p>
-        </div>
+        <MarcaDos />
       ) : (
         <div className="mt-10">
           <Comparador vehiculos={datos as any} />

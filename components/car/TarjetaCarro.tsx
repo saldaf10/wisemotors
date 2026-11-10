@@ -135,11 +135,11 @@ export function TarjetaCarro({
           onClick={alternarFavorito}
           aria-label={fav ? 'Quitar de favoritos' : 'Guardar en favoritos'}
           aria-pressed={fav}
-          className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors ${
+          className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border transition-colors ${
             fav ? 'border-wise bg-wise text-white' : 'border-linea bg-blanco text-tinta hover:border-tinta'
           }`}
         >
-          <Heart className="h-4 w-4" fill={fav ? 'currentColor' : 'none'} />
+          <Heart className="h-[21px] w-[21px]" fill={fav ? 'currentColor' : 'none'} />
         </button>
       </div>
     </Link>

@@ -184,13 +184,13 @@ export function ResultadosIA({
               href={`/vehicles/${v.id}`}
               className="group relative grid grid-cols-[1fr_1.1fr] items-center gap-4 overflow-hidden rounded-[28px] bg-blanco p-5 transition-shadow duration-500 hover:shadow-[0_30px_60px_-36px_rgba(14,12,17,0.5)]"
             >
-              <BotonFavorito id={v.id} className="absolute right-4 top-4 z-10 !h-9 !w-9" />
+              <BotonFavorito id={v.id} className="absolute right-4 top-4 z-10 !h-12 !w-12" />
               <div className="estudio flex aspect-[4/3] items-center justify-center rounded-[20px] p-3">
                 <CarRender car={v} className="aspect-[480/180] w-full transition-transform duration-700 group-hover:translate-x-1 group-hover:scale-105" />
               </div>
               <div className="min-w-0">
                 <p className="cifra text-[12px] text-tinta-2">#{i + 2}</p>
-                <p className="truncate pr-10 text-[22px] font-semibold tracking-[-0.03em]">
+                <p className="truncate pr-12 text-[22px] font-semibold tracking-[-0.03em]">
                   {v.brand} {v.model}
                 </p>
                 <p className="cifra mt-1 text-[16px]">{millones(v.price)}</p>

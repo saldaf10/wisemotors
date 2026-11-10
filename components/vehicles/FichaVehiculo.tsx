@@ -282,12 +282,12 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
               <button
                 onClick={favorito}
                 aria-pressed={fav}
-                className={`inline-flex h-12 w-12 items-center justify-center rounded-full border transition-colors ${
+                className={`inline-flex h-16 w-16 items-center justify-center rounded-full border transition-colors ${
                   fav ? 'border-wise bg-wise text-white' : 'border-linea bg-blanco hover:border-tinta'
                 }`}
                 aria-label={fav ? 'Quitar de favoritos' : 'Guardar en favoritos'}
               >
-                <Heart className="h-5 w-5" fill={fav ? 'currentColor' : 'none'} />
+                <Heart className="h-[27px] w-[27px]" fill={fav ? 'currentColor' : 'none'} />
               </button>
               <Link href="/compare" className="pastilla h-12 px-5">
                 Comparar
@@ -488,9 +488,9 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
             {similares.slice(0, 3).map((v, i) => (
               <div key={v.id} className="flex flex-col gap-3">
                 <TarjetaCarro vehiculo={v} indice={i} />
-                <div className="grid grid-cols-2 gap-2">
-                  <Link href={`/vehicles/${v.id}`} className="pastilla h-11 justify-center">
-                    Ver ficha <ArrowUpRight className="h-4 w-4" />
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <Link href={`/vehicles/${v.id}`} className="pastilla h-11 justify-center whitespace-nowrap px-3 text-[14px]">
+                    Ir al panel dinámico <ArrowUpRight className="h-4 w-4" />
                   </Link>
                   <Link href={`/compare?ids=${vehicle.id},${v.id}`} className="pastilla pastilla--wise h-11 justify-center whitespace-nowrap px-3 text-[14px]">
                     Comparar cara a cara

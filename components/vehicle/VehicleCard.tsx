@@ -203,7 +203,7 @@ export const VehicleCard = React.memo(function VehicleCard({
           data-latido={latido}
         >
           <Heart
-            className={`like-heart w-4 h-4 ${isFav ? 'fill-wise text-wise' : 'text-gray-400'}`}
+            className={`like-heart w-[21px] h-[21px] ${isFav ? 'fill-wise text-wise' : 'text-gray-400'}`}
           />
           {/* Onda que sale del corazón al marcarlo: solo transform y opacity */}
           <span className="like-onda" aria-hidden="true" />

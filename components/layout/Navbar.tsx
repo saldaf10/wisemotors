@@ -85,7 +85,18 @@ export function Navbar() {
     { href: '/concesionarios', texto: 'Concesionarios' },
   ];
 
-  const activo = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
+  // La comparación directa (/compare?ids=…, desde la ficha) no es la de favoritos, y la ficha
+  // de un carro no es el catálogo: en esos dos casos no se resalta ninguna pestaña.
+  const [compararDirecto, setCompararDirecto] = useState(false);
+  useEffect(() => {
+    setCompararDirecto(pathname === '/compare' && new URLSearchParams(window.location.search).has('ids'));
+  }, [pathname]);
+  const activo = (href: string) => {
+    if (href === '/') return pathname === '/';
+    if (href === '/vehicles') return pathname === '/vehicles';
+    if (href === '/compare') return pathname === '/compare' && !compararDirecto;
+    return pathname.startsWith(href);
+  };
   const indiceActivo = enlaces.findIndex(e => activo(e.href));
   const destino = hover ?? (indiceActivo >= 0 ? indiceActivo : null);
 

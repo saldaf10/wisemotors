@@ -31,11 +31,11 @@ export function BotonFavorito({ id, className = '' }: { id: string; className?: 
       aria-label={fav ? 'Quitar de favoritos' : 'Me gusta: guardar en favoritos'}
       aria-pressed={fav}
       title={fav ? 'Quitar de favoritos' : 'Me gusta'}
-      className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors ${
+      className={`inline-flex h-[53px] w-[53px] shrink-0 items-center justify-center rounded-full border transition-colors ${
         fav ? 'border-wise bg-wise text-white' : 'border-linea bg-blanco text-tinta hover:border-tinta'
       } ${className}`}
     >
-      <Heart className="h-4 w-4" fill={fav ? 'currentColor' : 'none'} />
+      <Heart className="h-[21px] w-[21px]" fill={fav ? 'currentColor' : 'none'} />
     </button>
   );
 }
