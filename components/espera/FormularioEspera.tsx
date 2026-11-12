@@ -66,9 +66,11 @@ export function FormularioEspera({ ciudades }: { ciudades: string[] }) {
         body: JSON.stringify({ codigo: valor }),
       }).catch(() => null);
       if (r?.ok) {
-        // Primera vez con el código: al entrar arranca el recorrido guiado.
+        // Con el código, lo primero es crear la cuenta (para guardar me gusta y comparar);
+        // al terminar vuelve al inicio y arranca el recorrido guiado. Quien ya tiene cuenta
+        // toca "Ingresar" en esa misma página.
         iniciarRecorrido();
-        window.location.reload();
+        window.location.href = '/register?next=%2F';
         return;
       }
       setEnviando(false);

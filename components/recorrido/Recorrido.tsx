@@ -279,7 +279,8 @@ export function Recorrido() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paso, aqui]);
 
-  if (!actual || !lugar) return null;
+  // Mientras crea la cuenta o inicia sesión, el recorrido espera (arranca al volver al inicio).
+  if (!actual || !lugar || lugar.path === '/register' || lugar.path === '/login') return null;
 
   const avanzar = () => {
     const n = (paso ?? 0) + 1;
