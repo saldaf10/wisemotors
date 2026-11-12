@@ -98,7 +98,7 @@ export function HeroShowroom({ consulta }: { consulta: string }) {
             <span className="block">Cuéntanos cómo vives.</span>
             <span className="block text-white/45">Te decimos qué carro.</span>
           </h1>
-          <div className="mt-7">
+          <div className="mt-7" data-recorrido="buscador">
             <BuscadorIA inicial={consulta} oscuro />
           </div>
         </div>

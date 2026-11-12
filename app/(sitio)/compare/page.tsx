@@ -37,7 +37,7 @@ function Vacio({ titulo, texto, children }: { titulo: string; texto: string; chi
 /** Tira para prender y apagar carros de la comparación (máx. MAX a la vez). */
 function TiraSeleccion({ carros, seleccion, alternar }: { carros: any[]; seleccion: string[]; alternar: (id: string) => void }) {
   return (
-    <div className="mt-8 flex snap-x gap-3 overflow-x-auto pb-2">
+    <div className="mt-8 flex snap-x gap-3 overflow-x-auto pb-2" data-recorrido="seleccion">
       {carros.map(v => {
         const on = seleccion.includes(v.id);
         const lleno = !on && seleccion.length >= MAX;

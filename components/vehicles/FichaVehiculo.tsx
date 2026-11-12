@@ -322,7 +322,7 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
           </p>
 
           <div className="relative grid gap-6 lg:grid-cols-[180px_1fr_300px] lg:items-center">
-            <nav className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible" aria-label="Categorías">
+            <nav className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible" aria-label="Categorías" data-recorrido="categorias">
               {cats.map((c, i) => (
                 <button
                   key={c.id}
@@ -466,7 +466,7 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
 
       {/* ── Similares: los 3 más parecidos en tipo, precio y características ── */}
       {similares.length > 0 && (
-        <section className="mx-auto mt-24 max-w-[1440px] px-5 md:px-8">
+        <section className="mx-auto mt-24 max-w-[1440px] px-5 md:px-8" data-recorrido="similares">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <h2 className="t-titulo text-[32px] md:text-[44px]">
               Si te gusta este, <span className="text-tinta-2/50">mira y</span>{' '}

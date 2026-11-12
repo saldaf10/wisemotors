@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowUpRight, Instagram } from 'lucide-react';
 import { Logo } from '@/components/brand/Logo';
 import { AvisoIA } from '@/components/ui/AvisoIA';
+import { RepetirRecorrido } from '@/components/recorrido/Recorrido';
 
 // ============================================================================
 // Cierre en showroom: titular en dos tonos, enlaces, líneas de ticks y la
@@ -72,6 +73,7 @@ export function Footer() {
         </div>
 
         <AvisoIA claro className="mt-14 max-w-[640px]" />
+        <RepetirRecorrido className="mt-3 text-[12.5px] text-white/55 underline-offset-4 hover:text-white hover:underline" />
 
         <div className="ticks mt-8 text-white" />
 

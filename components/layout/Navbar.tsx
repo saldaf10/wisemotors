@@ -171,6 +171,7 @@ export function Navbar() {
                   }}
                   onMouseEnter={() => setHover(i)}
                   aria-current={on ? 'page' : undefined}
+                  data-recorrido={`nav-${e.href}`}
                   className="pestana"
                   data-on={on}
                 >
@@ -234,6 +235,7 @@ export function Navbar() {
             onClick={() => setAbierto(true)}
             className={`vidrio pointer-events-auto ml-auto flex h-[52px] w-[52px] items-center justify-center lg:hidden ${oscuro ? 'vidrio--oscuro' : ''}`}
             aria-label="Abrir menú"
+            data-recorrido="menu"
             aria-expanded={abierto}
           >
             <Menu className="h-5 w-5" />

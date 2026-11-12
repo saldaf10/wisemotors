@@ -164,7 +164,7 @@ export function Afinador({
   };
 
   return (
-    <div className="rounded-[28px] bg-blanco p-6 md:p-8">
+    <div className="rounded-[28px] bg-blanco p-6 md:p-8" data-recorrido="afinador">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <p className="text-[15px] text-tinta-2">
           {siguiente

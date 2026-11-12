@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from 'react';
 import { ArrowRight, Check, Copy, Loader2, Share2 } from 'lucide-react';
+import { iniciarRecorrido } from '@/components/recorrido/Recorrido';
 
 const CORREO_DATOS = 'hola@wisemotors.co';
 const GUARDADO = 'wm_espera';
@@ -65,6 +66,8 @@ export function FormularioEspera({ ciudades }: { ciudades: string[] }) {
         body: JSON.stringify({ codigo: valor }),
       }).catch(() => null);
       if (r?.ok) {
+        // Primera vez con el código: al entrar arranca el recorrido guiado.
+        iniciarRecorrido();
         window.location.reload();
         return;
       }

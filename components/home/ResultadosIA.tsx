@@ -108,7 +108,7 @@ export function ResultadosIA({
         <p className="rounded-[20px] bg-tarjeta px-5 py-4 text-[15px]">Con esas respuestas no queda ninguno. Quita una de arriba.</p>
       )}
       {primero && (
-        <div className="grid overflow-hidden rounded-[36px] bg-blanco lg:grid-cols-[1.25fr_1fr]">
+        <div className="grid overflow-hidden rounded-[36px] bg-blanco lg:grid-cols-[1.25fr_1fr]" data-recorrido="resultados">
           <div className="estudio relative flex min-h-[320px] items-center justify-center overflow-hidden p-8">
             <p
               aria-hidden
@@ -237,7 +237,7 @@ export function ResultadosIA({
 
       {resto.length > 0 && (
         <div>
-          <h3 className="t-titulo text-[32px] md:text-[44px]">
+          <h3 className="t-titulo text-[32px] md:text-[44px]" data-recorrido={podio.length ? undefined : 'resultados'}>
             {podio.length ? 'Otras opciones' : 'Los que cumplen'} <span className="t-ligero text-tinta-2/50">({resto.length})</span>
           </h3>
           <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">

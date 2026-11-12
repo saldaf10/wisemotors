@@ -78,7 +78,7 @@ export function PruebaDeRuta({ vehiculos }: { vehiculos: Carro[] }) {
   };
 
   return (
-    <section className="pt-10">
+    <section className="pt-10" data-recorrido="prueba-ruta">
       <h2 className="t-titulo text-[32px] md:text-[44px]">
         ¿Ya sabes cuál? <span className="text-tinta-2/50">Pruébalo.</span>
       </h2>
