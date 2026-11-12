@@ -92,22 +92,23 @@ export function TarjetaCarro({
       data-destacada={destacada}
     >
       {compacta ? (
-        <div className="relative z-10 flex items-start justify-between gap-2">
+        <div className="relative z-10 flex items-start justify-between gap-2 xl:hidden">
           <div className="min-w-0">
-            <h3 className="line-clamp-2 min-h-[2lh] text-[13px] xl:min-h-0 font-semibold leading-tight tracking-[-0.02em] text-tinta md:text-[17px] xl:text-[22px]">
+            <h3 className="line-clamp-2 min-h-[2lh] text-[13px] font-semibold leading-tight tracking-[-0.02em] text-tinta md:text-[17px]">
               {vehiculo.brand} {vehiculo.model}
             </h3>
-            <p className="mt-0.5 hidden text-[12px] text-tinta-2 md:block xl:text-[13px]">
+            <p className="mt-0.5 hidden text-[12px] text-tinta-2 md:block">
               {vehiculo.year} · {vehiculo.fuelType}
             </p>
-            <p className="cifra mt-1 whitespace-nowrap text-[12px] font-semibold text-tinta md:text-[15px] xl:text-[16px]">{millones(vehiculo.price)}</p>
+            <p className="cifra mt-1 whitespace-nowrap text-[12px] font-semibold text-tinta md:text-[15px]">{millones(vehiculo.price)}</p>
           </div>
           <span className="flecha h-9 w-9 shrink-0 max-md:!hidden">
             <ArrowUpRight className="h-4 w-4" />
           </span>
         </div>
-      ) : (
-      <div className="relative z-10 flex items-start justify-between gap-3">
+      ) : null}
+      {/* Cabecera completa; en la compacta solo aparece en pantallas anchas. */}
+      <div className={`relative z-10 flex items-start justify-between gap-3 ${compacta ? 'max-xl:!hidden' : ''}`}>
         <div className="min-w-0">
           <h3 className="truncate text-[20px] font-semibold tracking-[-0.03em] text-tinta md:text-[22px]">
             {vehiculo.brand} {vehiculo.model}
@@ -123,12 +124,11 @@ export function TarjetaCarro({
           </span>
         </div>
       </div>
-      )}
 
-      <div className={`relative flex items-center justify-center overflow-hidden ${compacta ? 'my-2 aspect-[4/3] md:my-3 md:aspect-[16/9] xl:my-4 xl:aspect-[16/7.5]' : destacada ? 'my-4 aspect-[16/7]' : 'my-4 aspect-[16/7.5]'}`}>
+      <div className={`relative flex items-center justify-center overflow-hidden ${compacta ? `my-2 aspect-[4/3] md:my-3 md:aspect-[16/9] xl:my-4 ${destacada ? 'xl:aspect-[16/7]' : 'xl:aspect-[16/7.5]'}` : destacada ? 'my-4 aspect-[16/7]' : 'my-4 aspect-[16/7.5]'}`}>
         <span
           aria-hidden
-          className={`marca-agua absolute inset-x-0 top-1/2 -translate-y-1/2 text-center ${compacta ? 'hidden text-[clamp(56px,7vw,120px)] md:block' : 'text-[clamp(72px,11vw,150px)]'}`}
+          className={`marca-agua absolute inset-x-0 top-1/2 -translate-y-1/2 text-center ${compacta ? 'hidden text-[clamp(56px,7vw,120px)] md:block xl:text-[clamp(72px,11vw,150px)]' : 'text-[clamp(72px,11vw,150px)]'}`}
         >
           {palabraGigante(vehiculo.model, vehiculo.brand)}
         </span>

@@ -325,6 +325,9 @@ cobertura, migración, seeds, motor de cohortes.
   Tailwind y pisan utilidades como `h-9`/`px-2`/`hidden`; para cambiarlas hay que usar `!`.
 - Comparar en celular (12-nov-2026): Radiografía de a dos tarjetas, "Pregunta por pregunta"
   con 3-4 carros en cuadrícula 2×2 (desde md, una fila por carro), prueba de ruta de a dos.
+- Catálogo en celular: de a dos con `TarjetaCarro compacta`; desde `xl` la compacta muestra la
+  cabecera completa, así que en escritorio se ve igual. Series (`lib/palette.ts`): el 4.º color
+  es amarillo (`#eab308`), antes magenta, que en el radar se confundía con el rojo.
 - Ficha (7-oct-2026): hay `chassis.frontBrakes` (Frenos delanteros) y se retiró `chassis.suspensionSetup` (Suspensión general) del registro. `lib/db/partir-suspension.ts` pasa ese texto viejo a Suspensión delantera/trasera (solo llena vacíos, hereda fuente/confianza) y corre solo en cada deploy de producción desde `preparar-bd.ts`; `scripts/partir-suspension.ts` lo muestra a mano (simulación por defecto, `--write` aplica).
 - Git: push directo a `main` (sin ramas ni PRs), decisión del usuario.
 - Prueba local sin tocar producción: Postgres en Docker (`wise-pg`, puerto 55432) + la
