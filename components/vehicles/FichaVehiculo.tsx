@@ -98,7 +98,15 @@ function vistasDe(vehicle: any): Vista[] {
 }
 
 /** Las versiones del mismo carro (lib/versiones): todo lo del toggle va en amarillo. */
-function Versiones({ versiones, actual }: { versiones: { id: string; etiqueta: string; price: number }[]; actual: string }) {
+function Versiones({
+  versiones,
+  actual,
+  esFavorito,
+}: {
+  versiones: { id: string; etiqueta: string; price: number }[];
+  actual: string;
+  esFavorito: (id: string) => boolean;
+}) {
   if (versiones.length < 2) return null;
   const precioActual = versiones.find(v => v.id === actual)?.price ?? 0;
   return (
@@ -119,7 +127,11 @@ function Versiones({ versiones, actual }: { versiones: { id: string; etiqueta: s
                 esta ? 'border-version bg-version text-tinta shadow-[0_10px_24px_-14px_rgba(234,179,8,0.9)]' : 'border-version/40 bg-version/10 text-tinta hover:bg-version/25'
               }`}
             >
-              <span className="block text-[15px] font-semibold leading-tight">{v.etiqueta}</span>
+              <span className="flex items-center gap-1.5 text-[15px] font-semibold leading-tight">
+                {v.etiqueta}
+                {/* El "me gusta" es de cada versión: así se ve cuál quedó guardada. */}
+                {esFavorito(v.id) && <Heart className="h-3.5 w-3.5" fill="currentColor" strokeWidth={0} aria-label="te gusta" />}
+              </span>
               <span className="cifra mt-0.5 block text-[12px] text-tinta/70">
                 {esta ? `${millones(v.price)} · la que ves` : `${millones(v.price)} · ${dif === 0 ? 'mismo precio' : `${dif > 0 ? '+' : '−'}${millones(Math.abs(dif))}`}`}
               </span>
@@ -223,7 +235,7 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
             <p className="t-ligero mt-2 text-[28px] text-tinta-2 md:text-[40px]">
               {vehicle.model} · {vehicle.year}
             </p>
-            <Versiones versiones={vehicle.versiones ?? []} actual={vehicle.id} />
+            <Versiones versiones={vehicle.versiones ?? []} actual={vehicle.id} esFavorito={isFavorite} />
           </div>
           <div className="sube flex w-full flex-col items-start gap-4 md:w-auto md:items-end" style={{ '--d': '120ms' } as React.CSSProperties}>
             <div className="md:text-right">

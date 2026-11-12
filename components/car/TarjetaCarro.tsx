@@ -14,7 +14,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, Heart, Layers } from 'lucide-react';
 import { CarRender, type CarLike } from '@/components/car/CarRender';
 import { useFavorites } from '@/hooks/useFavorites';
@@ -41,11 +41,14 @@ export function ToggleVersiones({
   activa,
   onCambio,
   chica = false,
+  favorita,
 }: {
   versiones: { id: string; model: string; familia?: string | null }[];
   activa: number;
   onCambio: (i: number) => void;
   chica?: boolean;
+  /** Las versiones con "me gusta" llevan un corazón: el like es de UNA versión, no del carro. */
+  favorita?: (id: string) => boolean;
 }) {
   const parar = (e: React.SyntheticEvent) => {
     e.preventDefault();
@@ -72,11 +75,13 @@ export function ToggleVersiones({
             parar(e);
             onCambio(i);
           }}
-          className={`whitespace-nowrap rounded-full font-semibold transition-colors ${chica ? 'px-2 py-0.5 text-[10px] md:px-2.5 md:py-1 md:text-[12px]' : 'px-3 py-1 text-[12px]'} ${
+          aria-label={favorita?.(v.id) ? `${etiquetaVersion(v)} (te gusta)` : undefined}
+          className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full font-semibold transition-colors ${chica ? 'px-2 py-0.5 text-[10px] md:px-2.5 md:py-1 md:text-[12px]' : 'px-3 py-1 text-[12px]'} ${
             i === activa ? 'bg-version text-tinta shadow-sm' : 'text-version-oscuro hover:bg-version/30'
           }`}
         >
           {etiquetaVersion(v)}
+          {favorita?.(v.id) && <Heart className={chica ? 'h-2.5 w-2.5' : 'h-3 w-3'} fill="currentColor" strokeWidth={0} />}
         </button>
       ))}
     </div>
@@ -113,6 +118,15 @@ export function TarjetaCarro({
   const { user } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
   const fav = isFavorite(vehiculo.id);
+  // Si ya le gustó una versión, la tarjeta abre en esa (los favoritos llegan después de pintar),
+  // salvo que la persona ya haya movido el toggle.
+  const tocado = useRef(false);
+  const versionFavorita = variasVersiones ? versiones.findIndex(v => isFavorite(v.id)) : -1;
+  useEffect(() => {
+    if (tocado.current || versionFavorita < 0 || !versiones) return;
+    if (!isFavorite(versiones[Math.min(activa, versiones.length - 1)].id)) setActiva(versionFavorita);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [versionFavorita]);
   const datos = tresDatos(vehiculo);
   // Lista de datos (y corazón sobre la foto) solo en la detallada, mientras no haya ancho para la fila.
   const lista = compacta && detallada && datos.length > 0;
@@ -214,7 +228,16 @@ export function TarjetaCarro({
 
       {variasVersiones && (
         <div className={`relative z-10 ${compacta ? 'mt-1.5 md:mt-2' : 'mt-3'}`}>
-          <ToggleVersiones versiones={versiones!} activa={Math.min(activa, versiones!.length - 1)} onCambio={setActiva} chica={compacta} />
+          <ToggleVersiones
+            versiones={versiones!}
+            activa={Math.min(activa, versiones!.length - 1)}
+            onCambio={i => {
+              tocado.current = true;
+              setActiva(i);
+            }}
+            chica={compacta}
+            favorita={isFavorite}
+          />
         </div>
       )}
 

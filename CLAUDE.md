@@ -348,6 +348,9 @@ cobertura, migración, seeds, motor de cohortes.
   Afinador (así una respuesta que saca una versión deja la otra) y muestra cada carro una vez,
   con `OtrasVersiones` (amarillo: "Te recomendamos la versión X" + comparar). Ficha y
   resultados: botón "Comparar las N versiones" (`/compare?ids=`).
+  Likes: son de UNA versión (la activa del toggle). La tarjeta abre en la versión que ya le
+  gusta (salvo que la persona mueva el toggle) y el toggle y el selector de la ficha marcan
+  con corazón las versiones guardadas. A Comparar llegan las versiones que tengan like.
 - Ficha (7-oct-2026): hay `chassis.frontBrakes` (Frenos delanteros) y se retiró `chassis.suspensionSetup` (Suspensión general) del registro. `lib/db/partir-suspension.ts` pasa ese texto viejo a Suspensión delantera/trasera (solo llena vacíos, hereda fuente/confianza) y corre solo en cada deploy de producción desde `preparar-bd.ts`; `scripts/partir-suspension.ts` lo muestra a mano (simulación por defecto, `--write` aplica).
 - Git: push directo a `main` (sin ramas ni PRs), decisión del usuario.
 - Prueba local sin tocar producción: Postgres en Docker (`wise-pg`, puerto 55432) + la
