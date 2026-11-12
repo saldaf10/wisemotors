@@ -48,7 +48,7 @@ export function Velocimetro({
   const angulo = inicio + barrido * (visto ? t : 0);
 
   return (
-    <div ref={ref} className="relative mx-auto w-full max-w-[380px]">
+    <div ref={ref} className="relative mx-auto w-full max-w-[250px] md:max-w-[380px]">
       <svg viewBox="0 0 280 250" className="w-full overflow-visible">
         <defs>
           <linearGradient id="vel-grad" x1="0" x2="1">
@@ -82,13 +82,13 @@ export function Velocimetro({
         <circle cx={C.x} cy={C.y} r="8" fill="#0e0c11" stroke="#fff" strokeWidth="2.5" />
       </svg>
       <div className="pointer-events-none absolute inset-x-0 top-[74%] text-center">
-        <p className="text-[48px] font-light leading-none tracking-[-0.05em] text-white">
+        <p className="text-[38px] font-light leading-none tracking-[-0.05em] text-white md:text-[48px]">
           {fmt(valor)}
           <span className="ml-1 text-[18px] text-white/55">{unidad}</span>
         </p>
       </div>
       {(minTexto || maxTexto) && (
-        <div className="mt-2 flex justify-between text-[11px] text-white/45">
+        <div className="mt-2 flex justify-between gap-2 text-[10px] leading-tight text-white/45 md:text-[11px]">
           <span>{minTexto}</span>
           <span className="text-right">{maxTexto}</span>
         </div>
@@ -138,7 +138,7 @@ export function Carrera({ carriles }: { carriles: { nombre: string; segundos: nu
   return (
     <div ref={ref}>
       <div className="flex items-end justify-between">
-        <p className="cifra text-[44px] font-light leading-none tracking-[-0.04em]">
+        <p className="cifra text-[34px] font-light leading-none tracking-[-0.04em] md:text-[44px]">
           {fmt(reloj, 1)}
           <span className="ml-1 text-[16px] text-tinta-2">s</span>
         </p>
@@ -146,7 +146,7 @@ export function Carrera({ carriles }: { carriles: { nombre: string; segundos: nu
           <RotateCcw className="h-3.5 w-3.5" /> Otra vez
         </button>
       </div>
-      <div className="mt-5 space-y-3">
+      <div className="mt-3 space-y-2 md:mt-5 md:space-y-3">
         {carriles.map(c => {
           const llego = reloj >= c.segundos;
           return (
@@ -235,11 +235,11 @@ export function Parqueadero({ largo, ancho, nombre }: { largo: number; ancho: nu
           : { t: 'Entra holgado', d: `Le sobran ${cm(sobraLargo)} cm de largo y ${cm(porLado)} cm a cada lado para abrir las puertas.` };
 
   return (
-    <div ref={ref} className="grid items-center gap-6 md:grid-cols-[1fr_1.3fr]">
+    <div ref={ref} className="grid items-center gap-4 md:grid-cols-[1fr_1.3fr] md:gap-6">
       <div>
-        <p className="text-[28px] font-medium leading-tight tracking-[-0.03em]">{veredicto.t}</p>
-        <p className="mt-2 text-[15px] leading-snug text-tinta-2">{veredicto.d}</p>
-        <div className="mt-5 flex flex-wrap gap-2 text-[12px]">
+        <p className="text-[20px] font-medium leading-tight tracking-[-0.03em] md:text-[28px]">{veredicto.t}</p>
+        <p className="mt-2 text-[13px] leading-snug text-tinta-2 md:text-[15px]">{veredicto.d}</p>
+        <div className="mt-3 flex md:mt-5 flex-wrap gap-2 text-[12px]">
           <span className="rounded-full bg-blanco px-3 py-1.5">
             {nombre}: <span className="cifra font-semibold">{fmt(largo / 1000, 2)} × {fmt(ancho / 1000, 2)} m</span>
           </span>
@@ -250,7 +250,7 @@ export function Parqueadero({ largo, ancho, nombre }: { largo: number; ancho: nu
         <p className="mt-4 text-[11px] text-tinta-2">Cupo típico de edificios y centros comerciales. Varía según el edificio. Ancho sin espejos.</p>
       </div>
 
-      <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto max-h-[380px] w-full overflow-hidden rounded-[18px]" role="img" aria-label={`${nombre} dentro de un cupo de parqueadero promedio`}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto max-h-[220px] w-full overflow-hidden rounded-[18px] md:max-h-[380px]" role="img" aria-label={`${nombre} dentro de un cupo de parqueadero promedio`}>
         <rect width={W} height={H} fill="#3a3740" />
         {/* pared y topellantas */}
         <rect width={W} height={90} fill="#2a2830" />
@@ -376,8 +376,8 @@ export function Ruta({ km, electrico }: { km: number; electrico: boolean }) {
 export function Nivel({ etiqueta, valor, unidad, electrico }: { etiqueta: string; valor: string; unidad: string; electrico: boolean }) {
   const [ref, visto] = useEnVista<HTMLDivElement>(0.4);
   return (
-    <div ref={ref} className="flex items-end gap-5">
-      <div className="relative h-[132px] w-[62px] overflow-hidden rounded-[18px] border-2 border-tinta/15 bg-tarjeta">
+    <div ref={ref} className="flex flex-col items-start gap-3 md:flex-row md:items-end md:gap-5">
+      <div className="relative h-[76px] w-[40px] md:h-[132px] md:w-[62px] overflow-hidden rounded-[18px] border-2 border-tinta/15 bg-tarjeta">
         {electrico && <span className="absolute -top-0 left-1/2 h-2 w-6 -translate-x-1/2 rounded-b bg-tinta/15" />}
         <div
           className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-wise to-[#b45af0]"
@@ -395,10 +395,10 @@ export function Nivel({ etiqueta, valor, unidad, electrico }: { etiqueta: string
         </div>
       </div>
       <div>
-        <p className="text-[13px] text-tinta-2">{etiqueta}</p>
-        <p className="text-[40px] font-light leading-none tracking-[-0.05em]">
+        <p className="text-[12px] text-tinta-2 md:text-[13px]">{etiqueta}</p>
+        <p className="text-[30px] font-light leading-none tracking-[-0.05em] md:text-[40px]">
           {valor}
-          <span className="ml-1 text-[15px] text-tinta-2">{unidad}</span>
+          <span className="ml-1 text-[13px] text-tinta-2 md:text-[15px]">{unidad}</span>
         </p>
       </div>
     </div>
@@ -409,12 +409,12 @@ export function Nivel({ etiqueta, valor, unidad, electrico }: { etiqueta: string
 export function BarrasPar({ filas, max }: { filas: { etiqueta: string; valor: number; texto: string }[]; max: number }) {
   const [ref, visto] = useEnVista<HTMLDivElement>(0.4);
   return (
-    <div ref={ref} className="space-y-4">
+    <div ref={ref} className="space-y-3 md:space-y-4">
       {filas.map((f, i) => (
         <div key={f.etiqueta}>
-          <div className="flex items-baseline justify-between">
-            <span className="text-[13px] text-tinta-2">{f.etiqueta}</span>
-            <span className="cifra text-[15px] font-semibold">{f.texto}</span>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-2">
+            <span className="text-[12px] text-tinta-2 md:text-[13px]">{f.etiqueta}</span>
+            <span className="cifra text-[13px] font-semibold md:text-[15px]">{f.texto}</span>
           </div>
           <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-tarjeta">
             <div
@@ -434,11 +434,11 @@ export function Maletas({ litros }: { litros: number }) {
   const n = Math.max(1, Math.min(24, Math.round(litros / 40)));
   return (
     <div ref={ref}>
-      <div className="flex flex-wrap gap-1.5">
+      <div className="flex flex-wrap gap-1 md:gap-1.5">
         {Array.from({ length: n }).map((_, i) => (
           <span
             key={i}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-wise/10 text-wise"
+            className="flex h-7 w-7 items-center justify-center rounded-lg bg-wise/10 text-wise md:h-9 md:w-9 md:rounded-xl"
             style={{
               opacity: visto ? 1 : 0,
               transform: visto ? 'none' : 'translateY(10px) scale(0.6)',
@@ -449,7 +449,7 @@ export function Maletas({ litros }: { litros: number }) {
           </span>
         ))}
       </div>
-      <p className="mt-4 text-[14px] text-tinta-2">
+      <p className="mt-3 text-[13px] text-tinta-2 md:mt-4 md:text-[14px]">
         ≈ {n} {n === 1 ? 'maleta' : 'maletas'} de cabina ({fmt(litros)} L)
       </p>
     </div>
@@ -460,14 +460,14 @@ export function Maletas({ litros }: { litros: number }) {
 export function Personas({ n }: { n: number }) {
   const [ref, visto] = useEnVista<HTMLDivElement>(0.4);
   return (
-    <div ref={ref} className="flex gap-1">
+    <div ref={ref} className="flex flex-wrap gap-1">
       {Array.from({ length: Math.min(9, n) }).map((_, i) => (
         <span
           key={i}
-          className="flex h-11 w-9 items-end justify-center rounded-t-full bg-white/15"
+          className="flex h-8 w-6 items-end justify-center rounded-t-full bg-white/15 md:h-11 md:w-9"
           style={{ opacity: visto ? 1 : 0, transition: `opacity 400ms ease ${i * 90}ms` }}
         >
-          <User className="mb-1.5 h-5 w-5 text-white" />
+          <User className="mb-1 h-4 w-4 text-white md:mb-1.5 md:h-5 md:w-5" />
         </span>
       ))}
     </div>
@@ -484,7 +484,7 @@ export function Estrellas({ n }: { n: number }) {
         return (
           <Star
             key={i}
-            className={`h-10 w-10 ${llena ? 'text-wise-lila' : 'text-white/15'}`}
+            className={`h-7 w-7 md:h-10 md:w-10 ${llena ? 'text-wise-lila' : 'text-white/15'}`}
             fill="currentColor"
             strokeWidth={0}
             style={{
@@ -506,8 +506,8 @@ export function Anillo({ pct, etiqueta }: { pct: number; etiqueta: string }) {
   const R = 34;
   const L = 2 * Math.PI * R;
   return (
-    <div ref={ref} className="flex items-center gap-3">
-      <svg viewBox="0 0 80 80" className="h-[72px] w-[72px] -rotate-90">
+    <div ref={ref} className="flex items-center gap-2 md:gap-3">
+      <svg viewBox="0 0 80 80" className="h-[48px] w-[48px] shrink-0 -rotate-90 md:h-[72px] md:w-[72px]">
         <circle cx="40" cy="40" r={R} fill="none" stroke="rgba(136,28,183,0.12)" strokeWidth="8" />
         <circle
           cx="40"
@@ -523,7 +523,7 @@ export function Anillo({ pct, etiqueta }: { pct: number; etiqueta: string }) {
         />
       </svg>
       <div>
-        <p className="cifra text-[22px] font-semibold leading-none">{fmt(pct)}%</p>
+        <p className="cifra text-[18px] font-semibold leading-none md:text-[22px]">{fmt(pct)}%</p>
         <p className="mt-1 text-[12px] text-tinta-2">{etiqueta}</p>
       </div>
     </div>
@@ -550,9 +550,9 @@ export function TiraCategoria({ tira, indice }: { tira: Tira; indice: number }) 
   const mejores = tira.otros.filter(o => (tira.menorEsMejor ? tira.propio < o.valor : tira.propio > o.valor)).length;
 
   return (
-    <div ref={ref} className="grid items-center gap-3 border-t border-linea py-5 md:grid-cols-[180px_1fr_220px] md:gap-8">
-      <p className="text-[15px] font-semibold tracking-[-0.02em]">{tira.etiqueta}</p>
-      <div className="relative h-10">
+    <div ref={ref} className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 border-t border-linea py-3 md:grid-cols-[180px_1fr_220px] md:gap-8 md:py-5">
+      <p className="text-[14px] font-semibold leading-tight tracking-[-0.02em] md:text-[15px]">{tira.etiqueta}</p>
+      <div className="relative order-last col-span-2 mb-3 h-8 md:order-none md:col-span-1 md:mb-0 md:h-10">
         <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-linea" />
         <span className="cifra absolute left-0 top-full text-[10px] text-tinta-2">{f(min)}</span>
         <span className="cifra absolute right-0 top-full text-[10px] text-tinta-2">{f(max)}</span>
@@ -576,7 +576,7 @@ export function TiraCategoria({ tira, indice }: { tira: Tira; indice: number }) 
           <span className="relative h-5 w-5 rounded-full border-[3px] border-white bg-wise shadow-[0_4px_12px_rgba(136,28,183,0.5)]" />
         </span>
       </div>
-      <p className="text-[14px] text-tinta-2 md:text-right">
+      <p className="text-right text-[12px] leading-snug text-tinta-2 md:text-[14px]">
         <span className="cifra font-semibold text-tinta">
           {f(tira.propio)} {tira.unidad}
         </span>

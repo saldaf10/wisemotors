@@ -55,7 +55,8 @@ const fmt = (n: number, dec = 0) => new Intl.NumberFormat('es-CO', { maximumFrac
 
 type Tono = 'blanco' | 'tinta' | 'wise' | 'lila' | 'estudio';
 
-export function Bloque({ tono = 'blanco', className = '', children }: { tono?: Tono; className?: string; children: React.ReactNode }) {
+/** En celular la grilla es de 2 columnas: el bloque ocupa ambas, salvo los `mitad`, que van de a dos por fila. */
+export function Bloque({ tono = 'blanco', mitad = false, className = '', children }: { tono?: Tono; mitad?: boolean; className?: string; children: React.ReactNode }) {
   const [ref, visto] = useEnVista<HTMLDivElement>(0.15);
   const fondo = {
     blanco: 'bg-blanco text-tinta',
@@ -68,7 +69,7 @@ export function Bloque({ tono = 'blanco', className = '', children }: { tono?: T
     <div
       ref={ref}
       data-shown={visto}
-      className={`reveal relative overflow-hidden rounded-[30px] p-6 md:p-8 ${fondo} ${className}`}
+      className={`reveal relative overflow-hidden rounded-[24px] p-4 md:rounded-[30px] md:p-8 ${mitad ? '' : 'col-span-2'} ${fondo} ${className}`}
     >
       {children}
     </div>
@@ -78,24 +79,24 @@ export function Bloque({ tono = 'blanco', className = '', children }: { tono?: T
 export function Titulito({ icono: Icono, children, claro = false }: { icono: LucideIcon; children: React.ReactNode; claro?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
-      <span className={`flex h-9 w-9 items-center justify-center rounded-full ${claro ? 'bg-white/10 text-white' : 'bg-wise/10 text-wise'}`}>
+      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full md:h-9 md:w-9 ${claro ? 'bg-white/10 text-white' : 'bg-wise/10 text-wise'}`}>
         <Icono className="h-4 w-4" />
       </span>
-      <p className={`text-[15px] font-semibold tracking-[-0.02em] ${claro ? 'text-white' : ''}`}>{children}</p>
+      <p className={`text-[14px] font-semibold leading-tight tracking-[-0.02em] md:text-[15px] ${claro ? 'text-white' : ''}`}>{children}</p>
     </div>
   );
 }
 
 export function Cabecera({ id, icono: Icono, titulo, bajada }: { id: string; icono: LucideIcon; titulo: string; bajada: string }) {
   return (
-    <div id={id} className="scroll-mt-40 flex flex-wrap items-end justify-between gap-4 pb-8 pt-20">
-      <div className="flex items-center gap-4">
-        <span className="flex h-14 w-14 items-center justify-center rounded-[18px] bg-tinta text-white shadow-[0_14px_30px_-14px_rgba(14,12,17,0.7)]">
-          <Icono className="h-6 w-6" />
+    <div id={id} className="scroll-mt-40 flex flex-wrap items-end justify-between gap-3 pb-4 pt-12 md:gap-4 md:pb-8 md:pt-20">
+      <div className="flex items-center gap-3 md:gap-4">
+        <span className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-tinta text-white shadow-[0_14px_30px_-14px_rgba(14,12,17,0.7)] md:h-14 md:w-14 md:rounded-[18px]">
+          <Icono className="h-5 w-5 md:h-6 md:w-6" />
         </span>
-        <h2 className="t-titulo text-[40px] md:text-[64px]">{titulo}</h2>
+        <h2 className="t-titulo text-[30px] md:text-[64px]">{titulo}</h2>
       </div>
-      <p className="max-w-[44ch] text-[15px] leading-relaxed text-tinta-2">{bajada}</p>
+      <p className="max-w-[44ch] text-[13px] leading-snug text-tinta-2 md:text-[15px] md:leading-relaxed">{bajada}</p>
     </div>
   );
 }
@@ -331,14 +332,14 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             titulo="Desempeño"
             bajada="La potencia es la fuerza para subir lomas y adelantar. El torque es el empujón al arrancar. El 0 a 100 dice qué tan rápido responde cuando pisas a fondo."
           />
-          <div className="grid gap-4 md:grid-cols-12">
+          <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-12">
             {potencia !== null && (
-              <Bloque tono="tinta" className="md:col-span-7 md:row-span-2">
+              <Bloque tono="tinta" className="lg:col-span-7 lg:row-span-2">
                 <Titulito icono={Gauge} claro>
                   Potencia
                   <SiEstimado k={K.potencia} />
                 </Titulito>
-                <div className="mt-6">
+                <div className="mt-3 md:mt-6">
                   <Velocimetro
                     valor={potencia}
                     min={potencias.length ? Math.min(...potencias) : 0}
@@ -349,7 +350,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                   />
                 </div>
                 {fPot && (
-                  <p className="mt-6 text-[20px] font-medium leading-snug tracking-[-0.02em] md:text-[24px]">
+                  <p className="mt-4 text-[16px] font-medium leading-snug tracking-[-0.02em] md:mt-6 md:text-[24px]">
                     Más fuerza que {fPot.mejores} de {fPot.total} {grupo}.
                     <span className="text-white/45"> Los caballos (hp) son la fuerza para subir y adelantar.</span>
                   </p>
@@ -361,7 +362,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             )}
 
             {carriles.length > 0 && (
-              <Bloque className="md:col-span-5">
+              <Bloque className="lg:col-span-5">
                 <Titulito icono={Timer}>
                   De 0 a 100 km/h, en tiempo real
                   <SiEstimado k="performance.acceleration0to100" />
@@ -376,26 +377,26 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             )}
 
             {torque !== null && (
-              <Bloque tono="lila" className="md:col-span-3">
+              <Bloque tono="lila" mitad={vmax !== null || motor !== null || potPeso !== null || !!caja} className="lg:col-span-3">
                 <Titulito icono={Zap}>Torque</Titulito>
-                <p className="mt-6 text-[48px] font-light leading-none tracking-[-0.05em]">
+                <p className="mt-4 text-[36px] font-light leading-none tracking-[-0.05em] md:mt-6 md:text-[48px]">
                   <Estimado k={K.torque}>
                     {fmt(torque)}
                     <span className="ml-1 text-[16px] text-tinta-2">Nm</span>
                   </Estimado>
                 </p>
-                <p className="mt-3 text-[13px] leading-snug text-tinta-2">El empujón al arrancar en una loma. Más es mejor.</p>
+                <p className="mt-3 text-[12px] leading-snug text-tinta-2 md:text-[13px]">El empujón al arrancar en una loma. Más es mejor.</p>
               </Bloque>
             )}
 
             {(vmax !== null || motor !== null || potPeso !== null || caja) && (
-              <Bloque tono="estudio" className="md:col-span-2">
+              <Bloque tono="estudio" mitad={torque !== null} className="lg:col-span-2">
                 <Titulito icono={Cpu}>Motor</Titulito>
-                <dl className="mt-5 space-y-3 text-[13px]">
+                <dl className="mt-4 space-y-2 text-[12px] md:mt-5 md:space-y-3 md:text-[13px]">
                   {motor !== null && (
                     <div>
                       <dt className="text-tinta-2">Cilindraje</dt>
-                      <dd className="cifra text-[18px] font-semibold">
+                      <dd className="cifra text-[15px] font-semibold md:text-[18px]">
                         <Estimado k={K.motor}>
                           {fmt(motor)} cc{turbo ? ' turbo' : ''}
                         </Estimado>
@@ -405,7 +406,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                   {potPeso !== null && (
                     <div>
                       <dt className="text-tinta-2">Potencia por tonelada</dt>
-                      <dd className="cifra text-[18px] font-semibold">
+                      <dd className="cifra text-[15px] font-semibold md:text-[18px]">
                         {/* Calculada con la potencia y el peso: es estimada si alguno lo es. */}
                         <Estimado k={['performance.powerToWeight', ...K.potencia, ...K.peso]}>{fmt(potPeso)} hp/t</Estimado>
                       </dd>
@@ -414,7 +415,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                   {vmax !== null && (
                     <div>
                       <dt className="text-tinta-2">Vel. máxima</dt>
-                      <dd className="cifra text-[18px] font-semibold">
+                      <dd className="cifra text-[15px] font-semibold md:text-[18px]">
                         <Estimado k="performance.maxSpeed">{fmt(vmax)} km/h</Estimado>
                       </dd>
                     </div>
@@ -424,8 +425,8 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             )}
 
             {(caja || config) && (
-              <Bloque className="md:col-span-12 md:py-6">
-                <div className="flex flex-wrap items-center gap-x-10 gap-y-3 text-[14px]">
+              <Bloque className="lg:col-span-12 md:py-6">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] md:gap-x-10 md:gap-y-3 md:text-[14px]">
                   {config && (
                     <p>
                       <span className="text-tinta-2">Motor: </span>
@@ -474,7 +475,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                 : 'Los km por galón dicen cuánto recorres con un galón: más es mejor para el bolsillo. En trancón se gasta más que en carretera.'
             }
           />
-          <div className="grid gap-4 md:grid-cols-12">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-12 md:gap-4">
             {alcance !== null && (
               <Bloque tono="tinta" className="md:col-span-8">
                 <Titulito icono={Map} claro>
@@ -488,12 +489,12 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             )}
 
             {(galones !== null || bateria !== null) && (
-              <Bloque className="md:col-span-4">
+              <Bloque mitad={!electrico && ciudad !== null && carretera !== null} className="md:col-span-4">
                 <Titulito icono={electrico ? BatteryCharging : Fuel}>
                   {electrico ? 'La batería' : 'El tanque'}
                   <SiEstimado k={electrico ? K.bateria : K.tanque} />
                 </Titulito>
-                <div className="mt-6">
+                <div className="mt-4 md:mt-6">
                   {electrico && bateria !== null ? (
                     <Nivel etiqueta="Capacidad" valor={fmt(bateria, 1)} unidad="kWh" electrico />
                   ) : galones !== null ? (
@@ -501,8 +502,8 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                   ) : null}
                 </div>
                 {!electrico && rinde !== null && (
-                  <p className="mt-5 border-t border-linea pt-4 text-[14px]">
-                    <span className="cifra text-[22px] font-semibold">
+                  <p className="mt-4 border-t border-linea pt-3 text-[12px] md:mt-5 md:pt-4 md:text-[14px]">
+                    <span className="cifra text-[18px] font-semibold md:text-[22px]">
                       <Estimado k={KEYS_RENDIMIENTO}>{fmt(rinde)}</Estimado>
                     </span>{' '}
                     <span className="text-tinta-2">km por galón en promedio</span>
@@ -512,12 +513,12 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             )}
 
             {!electrico && ciudad !== null && carretera !== null && (
-              <Bloque tono="lila" className={trucos.length ? 'md:col-span-5' : 'md:col-span-12'}>
+              <Bloque tono="lila" mitad={galones !== null || bateria !== null} className={trucos.length ? 'md:col-span-5' : 'md:col-span-12'}>
                 <Titulito icono={Fuel}>
                   Ciudad o carretera
                   <SiEstimado k={[...K.ciudad, ...K.carretera]} />
                 </Titulito>
-                <div className="mt-6">
+                <div className="mt-4 md:mt-6">
                   <BarrasPar
                     max={Math.max(ciudad, carretera)}
                     filas={[
@@ -535,11 +536,11 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             {!electrico && trucos.length > 0 && (
               <Bloque tono="estudio" className={ciudad !== null && carretera !== null ? 'md:col-span-7' : 'md:col-span-12'}>
                 <Titulito icono={Sparkles}>Lo que le ayuda a gastar menos</Titulito>
-                <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+                <ul className="mt-4 grid grid-cols-2 gap-2 md:mt-6 md:gap-3">
                   {trucos.map(x => (
-                    <li key={x.t} className="rounded-[20px] bg-blanco/85 p-4">
-                      <p className="text-[16px] font-semibold tracking-[-0.02em]">{x.t}</p>
-                      <p className="mt-1 text-[13px] leading-snug text-tinta-2">{x.d}</p>
+                    <li key={x.t} className="rounded-[16px] bg-blanco/85 p-3 md:rounded-[20px] md:p-4">
+                      <p className="text-[14px] font-semibold leading-tight tracking-[-0.02em] md:text-[16px]">{x.t}</p>
+                      <p className="mt-1 text-[12px] leading-snug text-tinta-2 md:text-[13px]">{x.d}</p>
                     </li>
                   ))}
                 </ul>
@@ -568,11 +569,11 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             {electrico && (cargaAC !== null || cargaDC !== null) && (
               <Bloque className="md:col-span-7">
                 <Titulito icono={Zap}>Cuánto tarda en cargar</Titulito>
-                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <div className="mt-4 grid grid-cols-2 gap-2 md:mt-6 md:gap-4">
                   {cargaDC !== null && (
-                    <div className="rounded-[22px] bg-wise p-5 text-white">
-                      <p className="text-[13px] text-white/70">Cargador rápido (estación)</p>
-                      <p className="mt-2 text-[44px] font-light leading-none tracking-[-0.05em]">
+                    <div className="rounded-[18px] bg-wise p-3 text-white md:rounded-[22px] md:p-5">
+                      <p className="text-[12px] leading-snug text-white/70 md:text-[13px]">Cargador rápido (estación)</p>
+                      <p className="mt-2 text-[30px] font-light leading-none tracking-[-0.05em] md:text-[44px]">
                         <Estimado k={K.cargaDC}>
                           {fmt(cargaDC)}
                           <span className="ml-1 text-[16px] text-white/70">min</span>
@@ -582,9 +583,9 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                     </div>
                   )}
                   {cargaAC !== null && (
-                    <div className="rounded-[22px] bg-tarjeta p-5">
-                      <p className="text-[13px] text-tinta-2">En la casa (toma normal o wallbox)</p>
-                      <p className="mt-2 text-[44px] font-light leading-none tracking-[-0.05em]">
+                    <div className="rounded-[18px] bg-tarjeta p-3 md:rounded-[22px] md:p-5">
+                      <p className="text-[12px] leading-snug text-tinta-2 md:text-[13px]">En la casa (toma normal o wallbox)</p>
+                      <p className="mt-2 text-[30px] font-light leading-none tracking-[-0.05em] md:text-[44px]">
                         <Estimado k={K.cargaAC}>
                           {fmt(cargaAC, 1)}
                           <span className="ml-1 text-[16px] text-tinta-2">horas</span>
@@ -624,18 +625,18 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                 : 'Cuánto carga, cuánto hala, cuánto ocupa por fuera y si pasa los reductores sin raspar.'
             }
           />
-          <div className="grid gap-4 md:grid-cols-12">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-12 md:gap-4">
             {/* Vehículos de trabajo: lo primero que se mira, arriba. */}
             {datosTrabajo.length > 0 && (
               <Bloque tono="tinta" className="md:col-span-12">
                 <Titulito icono={Package} claro>
                   Para trabajar
                 </Titulito>
-                <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-6 md:grid-cols-5">
+                <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 md:mt-6 md:grid-cols-5 md:gap-x-6 md:gap-y-6">
                   {datosTrabajo.map(d => (
                     <div key={d.etiqueta}>
                       <dt className="text-[13px] text-white/60">{d.etiqueta}</dt>
-                      <dd className="cifra mt-1 text-[28px] font-light leading-none tracking-[-0.04em] md:text-[34px]">
+                      <dd className="cifra mt-1 text-[24px] font-light leading-none tracking-[-0.04em] md:text-[34px]">
                         <Estimado k={d.k}>{d.valor}</Estimado>
                       </dd>
                       <dd className="mt-2 text-[12px] leading-snug text-white/50">{d.ayuda}</dd>
@@ -672,11 +673,11 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
               </Bloque>
             )}
             {pasajeros !== null && (
-              <Bloque tono="wise" className="md:col-span-3">
+              <Bloque tono="wise" mitad={altura !== null || (remolque !== null && datosTrabajo.length === 0)} className="md:col-span-3">
                 <Titulito icono={Armchair} claro>
                   Pasajeros
                 </Titulito>
-                <p className="mt-5 text-[56px] font-light leading-none tracking-[-0.05em]">
+                <p className="mt-4 text-[40px] font-light leading-none tracking-[-0.05em] md:mt-5 md:text-[56px]">
                   <Estimado k="interior.passengerCapacity">{fmt(pasajeros)}</Estimado>
                 </p>
                 <div className="mt-4">
@@ -685,11 +686,11 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
               </Bloque>
             )}
             {(altura !== null || (remolque !== null && datosTrabajo.length === 0)) && (
-              <Bloque tono="lila" className="md:col-span-2">
+              <Bloque tono="lila" mitad={pasajeros !== null} className="md:col-span-2">
                 {altura !== null && (
                   <>
                     <p className="text-[13px] text-tinta-2">Altura al piso</p>
-                    <p className="mt-2 text-[34px] font-light leading-none tracking-[-0.05em]">
+                    <p className="mt-2 text-[30px] font-light leading-none tracking-[-0.05em] md:text-[34px]">
                       <Estimado k="chassis.groundClearance">
                         {fmt(altura / 10, 1)}
                         <span className="ml-1 text-[14px] text-tinta-2">cm</span>
@@ -727,53 +728,53 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
       {secciones.some(x => x.id === 'seguridad') && (
         <section>
           <Cabecera id="seguridad" icono={Shield} titulo="Seguridad" bajada="Las estrellas salen de pruebas de choque reales. Los airbags son cojines que se inflan en un golpe. Las ayudas electrónicas frenan o corrigen antes de que alcances a reaccionar." />
-          <div className="grid gap-4 md:grid-cols-12">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-12 md:gap-4">
             {ncap !== null && (
               <Bloque tono="tinta" className={adultos !== null || ninos !== null ? 'md:col-span-5' : 'md:col-span-7'}>
                 <Titulito icono={ShieldCheck} claro>
                   Pruebas de choque
                   <SiEstimado k="safety.ncapRating" />
                 </Titulito>
-                <div className="mt-8">
+                <div className="mt-4 md:mt-8">
                   <Estrellas n={ncap} />
                 </div>
-                <p className="mt-6 text-[22px] font-medium leading-snug tracking-[-0.02em]">
+                <p className="mt-4 text-[16px] font-medium leading-snug tracking-[-0.02em] md:mt-6 md:text-[22px]">
                   {fmt(ncap)} de 5 estrellas.
                   <span className="text-white/45"> Salen de chocar el carro de verdad en laboratorio.</span>
                 </p>
               </Bloque>
             )}
             {(adultos !== null || ninos !== null) && (
-              <Bloque className="md:col-span-3">
+              <Bloque mitad={airbags !== null} className="md:col-span-3">
                 <Titulito icono={Shield}>Protección</Titulito>
-                <div className="mt-6 space-y-4">
+                <div className="mt-4 space-y-3 md:mt-6 md:space-y-4">
                   {adultos !== null && <Anillo pct={adultos} etiqueta="adultos" />}
                   {ninos !== null && <Anillo pct={ninos} etiqueta="niños" />}
                 </div>
               </Bloque>
             )}
             {airbags !== null && (
-              <Bloque tono="lila" className={adultos !== null || ninos !== null ? 'md:col-span-4' : 'md:col-span-5'}>
+              <Bloque tono="lila" mitad={adultos !== null || ninos !== null} className={adultos !== null || ninos !== null ? 'md:col-span-4' : 'md:col-span-5'}>
                 <Titulito icono={Shield}>Airbags</Titulito>
-                <p className="mt-5 text-[64px] font-light leading-none tracking-[-0.05em]">
+                <p className="mt-4 text-[44px] font-light leading-none tracking-[-0.05em] md:mt-5 md:text-[64px]">
                   <Estimado k="safety.airbags">{fmt(airbags)}</Estimado>
                 </p>
-                <div className="mt-4 flex gap-1.5">
+                <div className="mt-3 flex flex-wrap gap-1 md:mt-4 md:gap-1.5">
                   {Array.from({ length: Math.min(12, airbags) }).map((_, i) => (
-                    <span key={i} className="h-3 w-3 rounded-full bg-wise" style={{ opacity: 0.45 + (i / airbags) * 0.55 }} />
+                    <span key={i} className="h-2.5 w-2.5 rounded-full bg-wise md:h-3 md:w-3" style={{ opacity: 0.45 + (i / airbags) * 0.55 }} />
                   ))}
                 </div>
-                <p className="mt-3 text-[13px] text-tinta-2">Cojines que se inflan en un golpe.</p>
+                <p className="mt-3 text-[12px] leading-snug text-tinta-2 md:text-[13px]">Cojines que se inflan en un golpe.</p>
               </Bloque>
             )}
             {ayudas.length > 0 && (
               <Bloque className="md:col-span-12">
                 <Titulito icono={Radar}>Te ayuda a no chocar</Titulito>
-                <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <ul className="mt-4 grid grid-cols-2 gap-2 md:mt-6 md:gap-3 lg:grid-cols-4">
                   {ayudas.map((a, i) => (
                     <li
                       key={a.key}
-                      className="flex items-center gap-3 rounded-[18px] border border-linea px-4 py-3.5 text-[14px]"
+                      className="flex items-center gap-2 rounded-[14px] border border-linea px-3 py-2.5 text-[12px] leading-snug md:gap-3 md:rounded-[18px] md:px-4 md:py-3.5 md:text-[14px]"
                       style={{ animationDelay: `${i * 40}ms` }}
                     >
                       <a.icono className="h-4 w-4 shrink-0 text-wise" />
@@ -791,9 +792,9 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
       {secciones.some(x => x.id === 'tecnologia') && (
         <section>
           <Cabecera id="tecnologia" icono={Sparkles} titulo="Tecnología y confort" bajada="Lo que usas todos los días: conectar el celular, ver hacia atrás al parquear, el aire, las luces." />
-          <div className="grid gap-4 md:grid-cols-12">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-12 md:gap-4">
             {fotoInterior && (
-              <div className={`relative min-h-[240px] overflow-hidden rounded-[30px] md:col-span-5 ${typeof celular === 'string' && celular ? 'md:row-span-2' : ''}`}>
+              <div className={`relative col-span-2 min-h-[200px] overflow-hidden rounded-[24px] md:col-span-5 md:min-h-[240px] md:rounded-[30px] ${typeof celular === 'string' && celular ? 'md:row-span-2' : ''}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={fotoInterior} alt={`Interior del ${vehicle.brand} ${vehicle.model}`} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
                 <span className="t-meta absolute left-4 top-4 rounded-full bg-tinta/80 px-3 py-1.5 text-white backdrop-blur">Así se ve por dentro</span>
@@ -804,32 +805,32 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                 <Titulito icono={Smartphone} claro>
                   Tu celular en la pantalla
                 </Titulito>
-                <p className="mt-6 text-[26px] font-medium leading-tight tracking-[-0.03em]">
+                <p className="mt-4 text-[20px] font-medium leading-tight tracking-[-0.03em] md:mt-6 md:text-[26px]">
                   <Estimado k="technology.smartphoneIntegration">{celular}</Estimado>
                 </p>
                 <p className="mt-3 text-[13px] text-white/60">Mapas, música y WhatsApp en la pantalla del carro.</p>
               </Bloque>
             )}
             <Bloque className={fotoInterior ? 'md:col-span-7' : typeof celular === 'string' && celular ? 'md:col-span-8' : 'md:col-span-12'}>
-              <div className={`grid grid-cols-2 gap-3 ${fotoInterior ? '' : 'sm:grid-cols-3'}`}>
+              <div className={`grid grid-cols-2 gap-2 md:gap-3 ${fotoInterior ? '' : 'sm:grid-cols-3'}`}>
                 {equipo
                   .filter(e => e.key !== 'technology.smartphoneIntegration')
                   .map(e => (
-                    <div key={e.key} className="group flex items-center gap-3 rounded-[18px] bg-papel px-4 py-4 transition-colors hover:bg-wise hover:text-white">
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blanco text-wise transition-colors group-hover:bg-white/15 group-hover:text-white">
+                    <div key={e.key} className="group flex items-center gap-2 rounded-[14px] bg-papel px-2.5 py-2.5 transition-colors hover:bg-wise hover:text-white md:gap-3 md:rounded-[18px] md:px-4 md:py-4">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blanco text-wise md:h-10 md:w-10 transition-colors group-hover:bg-white/15 group-hover:text-white">
                         <e.icono className="h-4 w-4" />
                       </span>
-                      <span className="text-[14px] leading-snug">
+                      <span className="text-[12px] leading-snug md:text-[14px]">
                         <Estimado k={e.key}>{e.texto}</Estimado>
                       </span>
                     </div>
                   ))}
                 {luces && (
-                  <div className="group flex items-center gap-3 rounded-[18px] bg-papel px-4 py-4 transition-colors hover:bg-wise hover:text-white">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blanco text-wise transition-colors group-hover:bg-white/15 group-hover:text-white">
+                  <div className="group flex items-center gap-2 rounded-[14px] bg-papel px-2.5 py-2.5 transition-colors hover:bg-wise hover:text-white md:gap-3 md:rounded-[18px] md:px-4 md:py-4">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blanco text-wise md:h-10 md:w-10 transition-colors group-hover:bg-white/15 group-hover:text-white">
                       <Lightbulb className="h-4 w-4" />
                     </span>
-                    <span className="text-[14px] leading-snug">
+                    <span className="text-[12px] leading-snug md:text-[14px]">
                       <Estimado k="lighting.headlightType">Luces {luces}</Estimado>
                     </span>
                   </div>
@@ -838,18 +839,18 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             </Bloque>
             {garantiaAnos !== null && (
               <Bloque tono="tinta" className="md:col-span-12">
-                <div className="flex flex-wrap items-center justify-between gap-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 md:gap-6">
                   <div>
                     <p className="text-[13px] text-white/55">Garantía de fábrica</p>
-                    <p className="mt-1 text-[34px] font-light tracking-[-0.04em]">
+                    <p className="mt-1 text-[24px] font-light tracking-[-0.04em] md:text-[34px]">
                       <Estimado k={['commercial.warrantyYears', 'commercial.warrantyKm']}>
                         {fmt(garantiaAnos)} años{garantiaKm !== null && <span className="text-white/50"> o {fmt(garantiaKm)} km</span>}
                       </Estimado>
                     </p>
                   </div>
-                  <div className="flex flex-1 gap-1.5 md:max-w-[520px]">
+                  <div className="flex w-full gap-1 md:w-auto md:max-w-[520px] md:flex-1 md:gap-1.5">
                     {Array.from({ length: Math.min(10, Math.round(garantiaAnos)) }).map((_, i) => (
-                      <span key={i} className="h-10 flex-1 rounded-lg bg-gradient-to-t from-wise to-wise-lila" style={{ opacity: 0.5 + (i / garantiaAnos) * 0.5 }} />
+                      <span key={i} className="h-3 flex-1 rounded-full md:h-10 md:rounded-lg bg-gradient-to-t from-wise to-wise-lila" style={{ opacity: 0.5 + (i / garantiaAnos) * 0.5 }} />
                     ))}
                   </div>
                 </div>

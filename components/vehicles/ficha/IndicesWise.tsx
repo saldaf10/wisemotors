@@ -41,7 +41,7 @@ function Altura({ a }: { a: ResultadoAltura }) {
             role="radio"
             aria-checked={x.nombre === ciudad}
             onClick={() => setCiudad(x.nombre)}
-            className={`rounded-full px-3 py-1.5 text-[13px] transition-colors ${
+            className={`rounded-full px-2.5 py-1 text-[12px] transition-colors md:px-3 md:py-1.5 md:text-[13px] ${
               x.nombre === ciudad ? 'bg-white text-tinta' : 'bg-white/10 text-white/70 hover:bg-white/20'
             }`}
           >
@@ -49,9 +49,9 @@ function Altura({ a }: { a: ResultadoAltura }) {
           </button>
         ))}
       </div>
-      <p className="mt-7 text-[13px] text-white/55">En {c.nombre}, a {fmt(c.altitud)} m, le quedan</p>
+      <p className="mt-5 text-[13px] text-white/55 md:mt-7">En {c.nombre}, a {fmt(c.altitud)} m, le quedan</p>
       <p className="mt-1 flex items-baseline gap-2">
-        <span className="cifra text-[72px] font-light leading-none tracking-[-0.05em] md:text-[96px]">{fmt(c.potencia)}</span>
+        <span className="cifra text-[56px] font-light leading-none tracking-[-0.05em] md:text-[96px]">{fmt(c.potencia)}</span>
         <span className="text-[18px] text-white/55">de {fmt(a.potenciaNominal)} hp</span>
       </p>
       <div className="mt-5 h-2.5 rounded-full bg-white/15" aria-hidden>
@@ -60,7 +60,7 @@ function Altura({ a }: { a: ResultadoAltura }) {
       <p className="mt-2 text-[13px] text-white/55">
         {c.perdidaPct === 0 ? 'No pierde nada.' : `Pierde ${a.aproximado ? 'hasta ' : ''}${c.perdidaPct} % de su fuerza.`}
       </p>
-      <p className="mt-6 max-w-[52ch] text-[15px] leading-relaxed text-white/80">{a.explicacion}</p>
+      <p className="mt-4 max-w-[52ch] text-[13px] leading-snug text-white/80 md:mt-6 md:text-[15px] md:leading-relaxed">{a.explicacion}</p>
     </>
   );
 }
@@ -68,10 +68,10 @@ function Altura({ a }: { a: ResultadoAltura }) {
 function Palmas({ p }: { p: ResultadoPalmas }) {
   return (
     <>
-      <p className="mt-6 text-[32px] font-semibold leading-none tracking-[-0.03em]">{p.veredicto}</p>
-      <p className="mt-2 cifra text-[15px] text-tinta-2">{p.hpPorTonelada} hp por tonelada, cargado y en la cima</p>
+      <p className="mt-4 text-[22px] font-semibold leading-none tracking-[-0.03em] md:mt-6 md:text-[32px]">{p.veredicto}</p>
+      <p className="mt-2 cifra text-[12px] leading-snug text-tinta-2 md:text-[15px]">{p.hpPorTonelada} hp por tonelada, cargado y en la cima</p>
       <Medidor puntaje={p.puntaje} />
-      <p className="mt-5 text-[14px] leading-relaxed text-tinta-2">{p.explicacion}</p>
+      <p className="mt-4 text-[12px] leading-snug text-tinta-2 md:mt-5 md:text-[14px] md:leading-relaxed">{p.explicacion}</p>
     </>
   );
 }
@@ -79,19 +79,19 @@ function Palmas({ p }: { p: ResultadoPalmas }) {
 function Hueco({ h }: { h: ResultadoHueco }) {
   return (
     <>
-      <p className="mt-6 text-[32px] font-semibold leading-none tracking-[-0.03em]">{h.veredicto}</p>
-      <dl className="mt-4 flex gap-8 text-[13px]">
+      <p className="mt-4 text-[22px] font-semibold leading-none tracking-[-0.03em] md:mt-6 md:text-[32px]">{h.veredicto}</p>
+      <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[12px] md:mt-4 md:gap-8 md:text-[13px]">
         <div>
           <dt className="text-tinta-2">Altura al piso</dt>
-          <dd className="cifra text-[20px] font-semibold">{h.despejeMm} mm</dd>
+          <dd className="cifra text-[15px] font-semibold md:text-[20px]">{h.despejeMm} mm</dd>
         </div>
         <div>
           <dt className="text-tinta-2">Llanta</dt>
-          <dd className="cifra text-[20px] font-semibold">{h.llanta}</dd>
+          <dd className="cifra text-[15px] font-semibold md:text-[20px]">{h.llanta}</dd>
         </div>
       </dl>
       <Medidor puntaje={h.puntaje} />
-      <p className="mt-5 text-[14px] leading-relaxed text-tinta-2">{h.explicacion}</p>
+      <p className="mt-4 text-[12px] leading-snug text-tinta-2 md:mt-5 md:text-[14px] md:leading-relaxed">{h.explicacion}</p>
     </>
   );
 }
@@ -109,31 +109,31 @@ function CRT({ c }: { c: ResultadoCRT }) {
   const orden = [...c.componentes].sort((a, b) => b.valor - a.valor);
   return (
     <>
-      <div className="mt-6 flex flex-wrap items-baseline gap-x-6 gap-y-2">
-        <p className="cifra text-[56px] font-light leading-none tracking-[-0.05em] md:text-[72px]">{mill(c.total)}</p>
-        <p className="text-[15px] text-tinta-2">
+      <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-1 md:mt-6 md:gap-y-2">
+        <p className="cifra text-[40px] font-light leading-none tracking-[-0.05em] md:text-[72px]">{mill(c.total)}</p>
+        <p className="text-[13px] text-tinta-2 md:text-[15px]">
           en {c.anios} años · unos <span className="cifra font-semibold text-tinta">{mill(c.porMes)}</span> al mes
         </p>
       </div>
-      <div className="mt-6 flex h-4 overflow-hidden rounded-full" role="img" aria-label="Reparto del costo">
+      <div className="mt-4 flex h-3 overflow-hidden rounded-full md:mt-6 md:h-4" role="img" aria-label="Reparto del costo">
         {orden.map(x => (
           <div key={x.clave} style={{ width: `${(x.valor / c.total) * 100}%`, background: COLORES[x.clave] }} title={x.nombre} />
         ))}
       </div>
-      <ul className="mt-6 grid gap-x-8 gap-y-4 md:grid-cols-2">
+      <ul className="mt-4 grid grid-cols-2 gap-x-3 gap-y-3 md:mt-6 md:gap-x-8 md:gap-y-4">
         {orden.map(x => (
-          <li key={x.clave} className="flex gap-3">
+          <li key={x.clave} className="flex gap-2 md:gap-3">
             <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: COLORES[x.clave] }} />
             <div>
-              <p className="text-[14px]">
+              <p className="text-[12px] leading-snug md:text-[14px]">
                 <span className="font-semibold">{x.nombre}</span> <span className="cifra">{mill(x.valor)}</span>
               </p>
-              <p className="mt-0.5 text-[13px] leading-snug text-tinta-2">{x.detalle}</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-tinta-2 md:text-[13px]">{x.detalle}</p>
             </div>
           </li>
         ))}
       </ul>
-      <p className="mt-6 text-[12px] leading-snug text-tinta-2/80">
+      <p className="mt-4 text-[11px] leading-snug text-tinta-2/80 md:mt-6 md:text-[12px]">
         Medellín, 12.000 km al año. Galón, kWh, SOAT e impuesto con las tarifas vigentes de 2026; seguro, desvalorización y
         mantenimiento son estimaciones de mercado. No incluye financiación ni parqueadero.
       </p>
@@ -151,7 +151,7 @@ export function SeccionIndices({ indices }: { indices: IndicesVehiculo }) {
         titulo="Hecho para Colombia"
         bajada="Lo que ninguna ficha te dice: cuánta fuerza le queda en tu ciudad, si sube a Las Palmas, si aguanta un hueco y cuánto te cuesta de verdad."
       />
-      <div className="grid gap-4 md:grid-cols-12">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-12 md:gap-4">
         {altura.disponible && (
           <Bloque tono="tinta" className={
               !palmas.disponible && !hueco.disponible ? 'md:col-span-12' : palmas.disponible && hueco.disponible ? 'md:col-span-7 md:row-span-2' : 'md:col-span-7'
@@ -163,13 +163,13 @@ export function SeccionIndices({ indices }: { indices: IndicesVehiculo }) {
           </Bloque>
         )}
         {palmas.disponible && (
-          <Bloque tono="lila" className={altura.disponible ? 'md:col-span-5' : hueco.disponible ? 'md:col-span-6' : 'md:col-span-12'}>
+          <Bloque tono="lila" mitad={hueco.disponible} className={altura.disponible ? 'md:col-span-5' : hueco.disponible ? 'md:col-span-6' : 'md:col-span-12'}>
             <Titulito icono={Mountain}>Índice Palmas</Titulito>
             <Palmas p={palmas} />
           </Bloque>
         )}
         {hueco.disponible && (
-          <Bloque className={altura.disponible ? 'md:col-span-5' : palmas.disponible ? 'md:col-span-6' : 'md:col-span-12'}>
+          <Bloque mitad={palmas.disponible} className={altura.disponible ? 'md:col-span-5' : palmas.disponible ? 'md:col-span-6' : 'md:col-span-12'}>
             <Titulito icono={Waves}>Índice Hueco</Titulito>
             <Hueco h={hueco} />
           </Bloque>

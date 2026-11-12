@@ -317,6 +317,12 @@ cobertura, migración, seeds, motor de cohortes.
   vista de la portada sale de su `alt`) + 4 datos clave. Sin fotos, el dibujo. La única
   navegación de categorías es `NavSecciones`. La foto `interior` acompaña el equipo en
   Tecnología. Similares: botón "Comparar los N a la vez" (`/compare?ids=`).
+- Ficha en celular (12-nov-2026): las grillas de sección son de 2 columnas; `Bloque` ocupa
+  las dos salvo con `mitad` (torque+motor, tanque+ciudad/carretera, pasajeros+altura,
+  protección+airbags, Palmas+Hueco: cada par con la misma condición para que nunca quede uno
+  solo a media fila). Desempeño usa esa grilla hasta `lg`. Similares: siempre 3 en una fila
+  con `TarjetaCarro compacta`. Ojo: `.pastilla` y `.flecha` están fuera de las capas de
+  Tailwind y pisan utilidades como `h-9`/`px-2`/`hidden`; para cambiarlas hay que usar `!`.
 - Ficha (7-oct-2026): hay `chassis.frontBrakes` (Frenos delanteros) y se retiró `chassis.suspensionSetup` (Suspensión general) del registro. `lib/db/partir-suspension.ts` pasa ese texto viejo a Suspensión delantera/trasera (solo llena vacíos, hereda fuente/confianza) y corre solo en cada deploy de producción desde `preparar-bd.ts`; `scripts/partir-suspension.ts` lo muestra a mano (simulación por defecto, `--write` aplica).
 - Git: push directo a `main` (sin ramas ni PRs), decisión del usuario.
 - Prueba local sin tocar producción: Postgres en Docker (`wise-pg`, puerto 55432) + la

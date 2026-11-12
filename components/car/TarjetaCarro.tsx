@@ -33,10 +33,13 @@ export function TarjetaCarro({
   vehiculo,
   indice = 0,
   destacada = false,
+  compacta = false,
 }: {
   vehiculo: VehiculoTarjeta;
   indice?: number;
   destacada?: boolean;
+  /** Para ir de a tres por fila hasta en celular: nombre arriba, un solo dato y todo más chico. */
+  compacta?: boolean;
 }) {
   const ref = useRef<HTMLAnchorElement>(null);
   const frame = useRef(0);
@@ -85,9 +88,25 @@ export function TarjetaCarro({
       href={`/vehicles/${vehiculo.id}`}
       onMouseMove={mover}
       onMouseLeave={salir}
-      className="tarjeta-carro group block p-5 md:p-6"
+      className={`tarjeta-carro group block ${compacta ? 'max-md:!rounded-[18px] p-2.5 md:p-4 xl:p-6' : 'p-5 md:p-6'}`}
       data-destacada={destacada}
     >
+      {compacta ? (
+        <div className="relative z-10 flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="line-clamp-2 min-h-[2lh] text-[13px] xl:min-h-0 font-semibold leading-tight tracking-[-0.02em] text-tinta md:text-[17px] xl:text-[22px]">
+              {vehiculo.brand} {vehiculo.model}
+            </h3>
+            <p className="mt-0.5 hidden text-[12px] text-tinta-2 md:block xl:text-[13px]">
+              {vehiculo.year} · {vehiculo.fuelType}
+            </p>
+            <p className="cifra mt-1 whitespace-nowrap text-[12px] font-semibold text-tinta md:text-[15px] xl:text-[16px]">{millones(vehiculo.price)}</p>
+          </div>
+          <span className="flecha h-9 w-9 shrink-0 max-md:!hidden">
+            <ArrowUpRight className="h-4 w-4" />
+          </span>
+        </div>
+      ) : (
       <div className="relative z-10 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="truncate text-[20px] font-semibold tracking-[-0.03em] text-tinta md:text-[22px]">
@@ -104,21 +123,32 @@ export function TarjetaCarro({
           </span>
         </div>
       </div>
+      )}
 
-      <div className={`relative my-4 flex items-center justify-center overflow-hidden ${destacada ? "aspect-[16/7]" : "aspect-[16/7.5]"}`}>
+      <div className={`relative flex items-center justify-center overflow-hidden ${compacta ? 'my-2 aspect-[4/3] md:my-3 md:aspect-[16/9] xl:my-4 xl:aspect-[16/7.5]' : destacada ? 'my-4 aspect-[16/7]' : 'my-4 aspect-[16/7.5]'}`}>
         <span
           aria-hidden
-          className="marca-agua absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[clamp(72px,11vw,150px)]"
+          className={`marca-agua absolute inset-x-0 top-1/2 -translate-y-1/2 text-center ${compacta ? 'hidden text-[clamp(56px,7vw,120px)] md:block' : 'text-[clamp(72px,11vw,150px)]'}`}
         >
           {palabraGigante(vehiculo.model, vehiculo.brand)}
         </span>
         <CarRender car={vehiculo} ajustado className="carro relative h-full w-[92%]" />
       </div>
 
-      <div className="relative z-10 flex items-end justify-between gap-3">
+      <div className={`relative z-10 flex items-end justify-between ${compacta ? 'gap-1.5 md:gap-3' : 'gap-3'}`}>
         {datos.length > 0 ? (
-          <div className="fila-datos flex-1">
-            {datos.map(d => (
+          <div className="fila-datos min-w-0 flex-1">
+            {datos.map((d, i) =>
+              compacta ? (
+                // Compacta: un dato en celular, los tres cuando hay ancho.
+                <div key={d.clave} className={`px-1.5 text-left first:pl-0 last:pr-0 lg:px-3 lg:text-center ${i > 0 ? 'hidden lg:block' : ''}`}>
+                  <p className="cifra text-[13px] font-semibold leading-tight text-tinta md:text-[15px] xl:text-[17px]">
+                    {d.valor}
+                    {d.unidad && <span className="ml-0.5 text-[10px] font-normal text-tinta-2 md:text-[12px]">{d.unidad}</span>}
+                  </p>
+                  <p className="mt-0.5 truncate text-[10px] text-tinta-2 md:text-[12px]">{d.etiqueta}</p>
+                </div>
+              ) : (
               <div key={d.clave} className="px-3 text-center first:pl-0 last:pr-0">
                 <p className="cifra text-[17px] font-semibold text-tinta">
                   {d.valor}
@@ -126,20 +156,21 @@ export function TarjetaCarro({
                 </p>
                 <p className="mt-0.5 text-[12px] text-tinta-2">{d.etiqueta}</p>
               </div>
-            ))}
+              ),
+            )}
           </div>
         ) : (
-          <p className="text-[13px] text-tinta-2">Ficha técnica en camino</p>
+          <p className={`${compacta ? 'text-[10px] md:text-[13px]' : 'text-[13px]'} text-tinta-2`}>Ficha técnica en camino</p>
         )}
         <button
           onClick={alternarFavorito}
           aria-label={fav ? 'Quitar de favoritos' : 'Guardar en favoritos'}
           aria-pressed={fav}
-          className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full border transition-colors ${
+          className={`inline-flex shrink-0 items-center justify-center rounded-full border transition-colors ${compacta ? 'h-8 w-8 md:h-10 md:w-10 xl:h-12 xl:w-12' : 'h-12 w-12'} ${
             fav ? 'border-wise bg-wise text-white' : 'border-linea bg-blanco text-tinta hover:border-tinta'
           }`}
         >
-          <Heart className="h-[21px] w-[21px]" fill={fav ? 'currentColor' : 'none'} />
+          <Heart className={compacta ? 'h-4 w-4 md:h-[18px] md:w-[18px] xl:h-[21px] xl:w-[21px]' : 'h-[21px] w-[21px]'} fill={fav ? 'currentColor' : 'none'} />
         </button>
       </div>
     </Link>

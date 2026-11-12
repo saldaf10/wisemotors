@@ -266,7 +266,7 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
             <div className="relative mt-5 flex flex-wrap justify-center gap-2" role="tablist" aria-label="Vistas del carro">
               {vistas.map((f, i) => (
                 <button
-                  key={f.url}
+                  key={`${f.vista}-${i}`}
                   type="button"
                   role="tab"
                   aria-selected={i === vista}
@@ -376,13 +376,13 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
 
       {/* ── Similares: los 3 más parecidos en tipo, precio y características ── */}
       {similares.length > 0 && (
-        <section className="mx-auto mt-24 max-w-[1440px] px-5 md:px-8" data-recorrido="similares">
+        <section className="mx-auto mt-14 max-w-[1440px] px-5 md:mt-24 md:px-8" data-recorrido="similares">
           <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-5">
             <div>
-              <h2 className="t-titulo text-[32px] md:text-[44px]">
+              <h2 className="t-titulo text-[26px] md:text-[44px]">
                 Si te gusta este, <span className="text-tinta-2/50">mira y compara similares.</span>
               </h2>
-              <p className="mt-2 max-w-[52ch] text-[15px] text-tinta-2">Los más parecidos en precio, tamaño y tipo de carro.</p>
+              <p className="mt-2 max-w-[52ch] text-[13px] text-tinta-2 md:text-[15px]">Los más parecidos en precio, tamaño y tipo de carro.</p>
             </div>
             {/* Este carro y sus similares, todos en una sola comparación (por ids: sin favoritos). */}
             {similares.length >= 2 && (
@@ -399,16 +399,20 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
               </div>
             )}
           </div>
-          <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {/* Siempre los tres en la misma fila, también en celular (tarjeta compacta). */}
+          <div className="mt-6 grid grid-cols-3 gap-2 md:mt-8 md:gap-4 xl:gap-5">
             {similares.slice(0, 3).map((v, i) => (
-              <div key={v.id} className="flex flex-col gap-3">
-                <TarjetaCarro vehiculo={v} indice={i} />
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <Link href={`/vehicles/${v.id}`} className="pastilla h-11 justify-center whitespace-nowrap px-3 text-[14px]">
-                    Ir al panel dinámico <ArrowUpRight className="h-4 w-4" />
+              <div key={v.id} className="flex min-w-0 flex-col gap-2 md:gap-3">
+                <TarjetaCarro vehiculo={v} indice={i} compacta />
+                <div className="grid gap-1.5 md:gap-2 xl:grid-cols-2">
+                  <Link href={`/vehicles/${v.id}`} className="pastilla !h-9 justify-center !gap-1 !px-1.5 text-center !text-[11px] leading-tight md:!h-11 md:!gap-2 md:!px-3 md:!text-[14px]">
+                    <span className="md:hidden">Panel dinámico</span>
+                    <span className="hidden whitespace-nowrap md:inline">Ir al panel dinámico</span>
+                    <ArrowUpRight className="hidden h-4 w-4 md:block" />
                   </Link>
-                  <Link href={`/compare?ids=${vehicle.id},${v.id}`} className="pastilla pastilla--wise h-11 justify-center whitespace-nowrap px-3 text-[14px]">
-                    Comparar cara a cara
+                  <Link href={`/compare?ids=${vehicle.id},${v.id}`} className="pastilla pastilla--wise !h-9 justify-center !gap-1 !px-1.5 text-center !text-[11px] leading-tight md:!h-11 md:!gap-2 md:!px-3 md:!text-[14px]">
+                    <span className="md:hidden">Cara a cara</span>
+                    <span className="hidden whitespace-nowrap md:inline">Comparar cara a cara</span>
                   </Link>
                 </div>
               </div>
