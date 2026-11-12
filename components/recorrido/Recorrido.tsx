@@ -7,12 +7,13 @@
 //
 // Cada paso dice en qué página va (`donde`), qué resaltar (`objetivo`: un
 // selector [data-recorrido=…]) y, si la acción de la persona lo cumple, cuándo
-// avanza solo (`avanzaCuando`: buscar, entrar a un carro, comparar…). Si no,
-// avanza con el botón. El paso vive en localStorage para seguir entre páginas.
-// El resaltado no bloquea nada: la persona usa la página mientras lo lee.
+// avanza solo (`avanzaCuando`: buscar, entrar a un carro, comparar…); igual
+// siempre hay un botón para seguir. El paso vive en localStorage para seguir
+// entre páginas. Es un mensaje emergente en la esquina con un brillo suave en
+// lo que menciona: no oscurece, no desplaza ni persigue nada.
 // ============================================================================
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { X } from 'lucide-react';
 
@@ -33,8 +34,6 @@ interface Paso {
   avanzaCuando?: (l: Lugar) => boolean;
   /** Botón para avanzar (si no avanza solo). */
   boton?: string;
-  /** Oscurece la página alrededor (solo la bienvenida). */
-  centrado?: boolean;
 }
 
 const enInicio = (l: Lugar) => l.path === '/';
@@ -53,7 +52,6 @@ const PASOS: Paso[] = [
     donde: enInicio,
     pista: 'Ve al inicio para empezar.',
     boton: 'Empezar',
-    centrado: true,
   },
   {
     titulo: 'Cuéntale a la IA qué buscas',
@@ -81,20 +79,18 @@ const PASOS: Paso[] = [
     avanzaCuando: enFicha,
   },
   {
-    titulo: 'Explora el carro',
-    texto: 'Recorre la ficha o salta a la categoría que más te importe: desempeño, espacio, seguridad, consumo o tecnología.',
+    titulo: 'Explora el carro a tu ritmo',
+    texto: 'Baja por la ficha o salta a la categoría que más te importe: desempeño, espacio, seguridad, consumo o tecnología. Cuando quieras, toca Siguiente.',
     donde: enFicha,
     pista: 'Entra al panel dinámico de un carro.',
-    objetivo: ['[data-recorrido="categorias"]'],
     boton: 'Siguiente',
     avanzaCuando: enComparacionDirecta,
   },
   {
     titulo: 'Compáralo antes de probarlo',
-    texto: 'Antes de programar la prueba de ruta, ponlo cara a cara con uno parecido, o toca «compara» para verlo junto a los 3 similares.',
+    texto: 'Antes de programar la prueba de ruta, baja hasta «Si te gusta este»: ponlo cara a cara con uno parecido, o toca «compara» para verlo junto a los 3 similares.',
     donde: enFicha,
     pista: 'Entra a un carro y baja hasta «Si te gusta este».',
-    objetivo: ['[data-recorrido="similares"]'],
     avanzaCuando: enComparacionDirecta,
   },
   {
@@ -197,10 +193,6 @@ export function Recorrido() {
   const pathname = usePathname();
   const [paso, setPaso] = useState<number | null>(null);
   const [lugar, setLugar] = useState<Lugar | null>(null);
-  const [caja, setCaja] = useState<DOMRect | null>(null);
-  const tarjeta = useRef<HTMLDivElement>(null);
-  const [altoTarjeta, setAltoTarjeta] = useState(180);
-  const desplazado = useRef<string>('');
   const ultimaUrl = useRef('');
 
   // Paso guardado + dónde está la persona (cambia de página, o la URL con ?q=).
@@ -241,43 +233,25 @@ export function Recorrido() {
   const actual = paso !== null ? PASOS[paso] : null;
   const aqui = !!(actual && lugar && actual.donde(lugar));
 
-  // Sigue al elemento resaltado (aparece tarde, se mueve con el scroll).
+  // Brillo suave sobre el elemento del que habla el paso: una clase en el propio elemento
+  // (se mueve con él), sin oscurecer la página ni desplazarla. Si aparece tarde, se busca otra vez.
   useEffect(() => {
-    if (!actual || !aqui || !actual.objetivo) {
-      setCaja(null);
-      return;
-    }
-    let vivo = true;
-    const medir = () => {
-      if (!vivo) return;
+    if (!actual || !aqui || !actual.objetivo) return;
+    let marcado: HTMLElement | null = null;
+    const marcar = () => {
       const el = buscarObjetivo(actual.objetivo);
-      if (el) {
-        const clave = `${paso}-${lugar?.path}`;
-        if (desplazado.current !== clave) {
-          desplazado.current = clave;
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        setCaja(el.getBoundingClientRect());
-      } else setCaja(null);
+      if (el === marcado) return;
+      marcado?.classList.remove('recorrido-brillo');
+      marcado = el;
+      el?.classList.add('recorrido-brillo');
     };
-    medir();
-    const t = setInterval(medir, 300);
-    window.addEventListener('scroll', medir, { passive: true });
-    window.addEventListener('resize', medir);
+    marcar();
+    const t = setInterval(marcar, 700);
     return () => {
-      vivo = false;
       clearInterval(t);
-      window.removeEventListener('scroll', medir);
-      window.removeEventListener('resize', medir);
+      marcado?.classList.remove('recorrido-brillo');
     };
   }, [actual, aqui, paso, lugar?.path]);
-
-  // La altura de la tarjeta (para ponerla encima o debajo): solo cuando cambia el paso.
-  useLayoutEffect(() => {
-    const h = tarjeta.current?.offsetHeight;
-    if (h && Math.abs(h - altoTarjeta) > 2) setAltoTarjeta(h);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paso, aqui]);
 
   // Mientras crea la cuenta o inicia sesión, el recorrido espera (arranca al volver al inicio).
   if (!actual || !lugar || lugar.path === '/register' || lugar.path === '/login') return null;
@@ -312,67 +286,32 @@ export function Recorrido() {
     );
   }
 
-  // Dónde va la tarjeta: debajo del elemento si cabe; si no, encima; en celular, abajo.
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 1200;
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 800;
-  const movil = vw < 640;
-  const ancho = Math.min(380, vw - 32);
-  let estilo: React.CSSProperties;
-  if (actual.centrado || !caja || movil) {
-    estilo = movil || !caja ? { left: 16, right: 16, bottom: 16, margin: '0 auto', maxWidth: 440 } : {};
-    if (actual.centrado && !movil) estilo = { left: '50%', top: '50%', transform: 'translate(-50%, -50%)', width: 440 };
-  } else {
-    const abajo = caja.bottom + 16 + altoTarjeta < vh;
-    const top = abajo ? caja.bottom + 16 : Math.max(16, caja.top - 16 - altoTarjeta);
-    const left = Math.min(Math.max(16, caja.left + caja.width / 2 - ancho / 2), vw - ancho - 16);
-    estilo = { top, left, width: ancho };
-  }
-
+  // Un mensaje emergente en la esquina: la persona sigue usando la página con libertad.
   return (
-    <>
-      {actual.centrado && <div className="fixed inset-0 z-[90] bg-tinta/55 backdrop-blur-[2px]" aria-hidden />}
-      {caja && !actual.centrado && (
-        <div
-          aria-hidden
-          className="pointer-events-none fixed z-[90] rounded-[22px] ring-2 ring-wise transition-all duration-300"
-          style={{
-            top: caja.top - 8,
-            left: caja.left - 8,
-            width: caja.width + 16,
-            height: caja.height + 16,
-            boxShadow: '0 0 0 9999px rgba(14,12,17,0.45), 0 0 30px rgba(136,28,183,0.55)',
-          }}
-        />
-      )}
-      <div
-        ref={tarjeta}
-        role="dialog"
-        aria-label={actual.titulo}
-        className="sube fixed z-[95] rounded-[24px] bg-blanco p-5 shadow-[0_30px_80px_-20px_rgba(14,12,17,0.6)]"
-        style={estilo}
-      >
-        <div className="flex items-start justify-between gap-3">
-          <p className="t-meta text-wise">{numero}</p>
-          <button onClick={saltar} aria-label="Salir del recorrido" className="-m-1 rounded-full p-1 text-tinta-2 hover:text-tinta">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <p className="mt-2 text-[20px] font-semibold leading-tight tracking-[-0.03em]">{actual.titulo}</p>
-        <p className="mt-2 text-[14.5px] leading-relaxed text-tinta-2">{actual.texto}</p>
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <button onClick={saltar} className="text-[13px] text-tinta-2 hover:text-tinta">
-            Saltar recorrido
-          </button>
-          {actual.boton ? (
-            <button onClick={avanzar} className="pastilla pastilla--wise h-10 px-5 text-[14px]">
-              {actual.boton}
-            </button>
-          ) : (
-            <span className="text-[12.5px] text-tinta-2">Hazlo y seguimos</span>
-          )}
-        </div>
+    <div
+      key={paso}
+      role="dialog"
+      aria-label={actual.titulo}
+      className="sube fixed bottom-4 left-4 right-4 z-[95] mx-auto max-w-[400px] rounded-[24px] bg-blanco p-5 shadow-[0_24px_60px_-20px_rgba(14,12,17,0.55)] ring-1 ring-black/5 sm:left-auto sm:right-6 sm:mx-0 sm:w-[380px]"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <p className="t-meta text-wise">{numero}</p>
+        <button onClick={saltar} aria-label="Salir del recorrido" className="-m-1 rounded-full p-1 text-tinta-2 hover:text-tinta">
+          <X className="h-4 w-4" />
+        </button>
       </div>
-    </>
+      <p className="mt-2 text-[19px] font-semibold leading-tight tracking-[-0.03em]">{actual.titulo}</p>
+      <p className="mt-2 text-[14.5px] leading-relaxed text-tinta-2">{actual.texto}</p>
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <button onClick={saltar} className="text-[13px] text-tinta-2 hover:text-tinta">
+          Saltar recorrido
+        </button>
+        {/* Siempre se puede seguir: si la persona hace la acción, avanza solo. */}
+        <button onClick={avanzar} className="pastilla pastilla--wise h-10 px-5 text-[14px]">
+          {actual.boton ?? 'Siguiente'}
+        </button>
+      </div>
+    </div>
   );
 }
 

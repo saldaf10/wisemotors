@@ -712,3 +712,16 @@
   vertical-align: super;
   box-shadow: 0 0 12px rgba(219, 236, 67, 0.45);
 }
+
+/* Recorrido guiado: brillo suave sobre lo que menciona el paso (components/recorrido). */
+.recorrido-brillo {
+  /* Sin tocar la forma del elemento: el brillo sigue sus propias esquinas. */
+  animation: recorrido-brillo 2.4s ease-in-out infinite;
+}
+@keyframes recorrido-brillo {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(136, 28, 183, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(136, 28, 183, 0.35), 0 0 28px rgba(136, 28, 183, 0.35); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .recorrido-brillo { animation: none; box-shadow: 0 0 0 3px rgba(136, 28, 183, 0.35); }
+}
