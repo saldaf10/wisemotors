@@ -55,6 +55,8 @@ export function createCompactPayload(candidates: ScoredCandidate[]): any[] {
     return {
       id: c.id,
       carro: `${c.brand} ${c.model} ${c.year}`,
+      // Versiones del mismo carro: la IA escoge la que encaja y no las pone seguidas.
+      ...(c.familia?.trim() ? { version_de: `${c.brand} ${c.familia.trim()}` } : {}),
       tipo: c.type,
       combustible: c.fuelType,
       precio: millones(c.price) + (s.commercial?.priceEstimated ? ' (estimado)' : ''),

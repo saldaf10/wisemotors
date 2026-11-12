@@ -68,6 +68,8 @@ export interface VehicleCandidate {
   tags: string[];
   /** Ficha cruda: la IA recibe de aquí los datos reales para explicar. */
   specifications?: unknown;
+  /** Versiones del mismo carro (lib/versiones): misma marca y familia. */
+  familia?: string | null;
 }
 
 /** Contexto del mercado colombiano que no está en la ficha del carro. */

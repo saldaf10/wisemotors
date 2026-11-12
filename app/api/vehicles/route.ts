@@ -145,6 +145,8 @@ export async function GET(request: NextRequest) {
           id: true,
           brand: true,
           model: true,
+          // Versiones del mismo carro (lib/versiones): el buscador y las tarjetas las agrupan.
+          familia: true,
           year: true,
           price: true,
           fuelType: true,

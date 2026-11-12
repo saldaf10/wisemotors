@@ -95,6 +95,7 @@ function candidato(v: Vehiculo, contexto: Awaited<ReturnType<typeof getMarketSta
     features: computeVehicleFeatures(v, contexto),
     tags: generateVehicleTags(v),
     specifications: v.specifications,
+    familia: v.familia,
   };
 }
 
@@ -209,11 +210,13 @@ async function procesar(intent: CategorizedIntent): Promise<ProcessedResults> {
   };
 }
 
-function plano(c: { id: string; brand: string; model: string; year: number; price: number; fuelType: string; type: string; imageUrl: string | null }) {
+function plano(c: { id: string; brand: string; model: string; familia?: string | null; year: number; price: number; fuelType: string; type: string; imageUrl: string | null }) {
   return {
     id: c.id,
     brand: c.brand,
     model: c.model,
+    // El cliente agrupa las versiones del mismo carro: muestra la mejor y ofrece las otras.
+    familia: c.familia ?? null,
     year: c.year,
     price: c.price,
     fuelType: c.fuelType,

@@ -343,6 +343,11 @@ cobertura, migración, seeds, motor de cohortes.
   `familiaEntre(modeloBase, modeloNuevo)` y se la pone también a la base). En producción los
   modelos traen la versión en el nombre ("Seagull EV GL"): las familias se asignan a mano en el
   editor (no adivinar por la primera palabra: "Yuan Plus" y "Yuan Up" son carros distintos).
+  Buscador: cada versión se ordena por separado (la IA ve `version_de` y la regla 9 del rerank:
+  la versión que encaja arriba, las otras nunca seguidas); `ResultadosIA` agrupa DESPUÉS del
+  Afinador (así una respuesta que saca una versión deja la otra) y muestra cada carro una vez,
+  con `OtrasVersiones` (amarillo: "Te recomendamos la versión X" + comparar). Ficha y
+  resultados: botón "Comparar las N versiones" (`/compare?ids=`).
 - Ficha (7-oct-2026): hay `chassis.frontBrakes` (Frenos delanteros) y se retiró `chassis.suspensionSetup` (Suspensión general) del registro. `lib/db/partir-suspension.ts` pasa ese texto viejo a Suspensión delantera/trasera (solo llena vacíos, hereda fuente/confianza) y corre solo en cada deploy de producción desde `preparar-bd.ts`; `scripts/partir-suspension.ts` lo muestra a mano (simulación por defecto, `--write` aplica).
 - Git: push directo a `main` (sin ramas ni PRs), decisión del usuario.
 - Prueba local sin tocar producción: Postgres en Docker (`wise-pg`, puerto 55432) + la

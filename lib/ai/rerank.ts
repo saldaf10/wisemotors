@@ -20,6 +20,7 @@ export interface FinalRecommendation {
     fuelType: string;
     type: string;
     imageUrl: string | null;
+    familia?: string | null;
     /** Aptitudes normalizadas (0-1) ya calculadas: la ficha del podio las dibuja. */
     features: VehicleFeatures;
   };
@@ -73,6 +74,7 @@ REGLAS DURAS:
 6. "match" (0-100) = qué tan bien encaja con LO QUE PIDIÓ. Si no cumple algo que pidió explícitamente, que baje de 60.
 7. Razones distintas para cada carro, 2 o 3, de máximo 14 palabras cada una. Contexto local cuando aplique, cada cosa con su dato: lomas y Las Palmas → potencia, torque o 0 a 100; huecos y reductores → altura al piso; trancón y parqueo → largo; finca → altura y platón.
 8. Eléctrico: no gasta gasolina; su dato es la autonomía en km, no km/gal. No compares km/gal con autonomía.
+9. Versiones: los carros con el mismo "version_de" son versiones del MISMO carro (cambian equipo, motor o precio). Pon arriba la versión que mejor encaje con lo que pidió (presupuesto, equipo, motor) y las otras versiones de ese carro más abajo, nunca seguidas. En las razones de la versión elegida puedes decir por qué esa y no la otra, con el dato ("trae cámara de reversa y la GL no", "$8 M menos que la GS").
 
 PREGUNTAS PARA AFINAR: el comprador verá preguntas de un toque para reducir la lista. Ordena de la más útil a la menos las que tengan sentido para ESTA búsqueda: "presupuesto" (rango de precio), "combustible" (gasolina, híbrido, eléctrico), "carroceria" (SUV, sedán, hatchback…), "caja" (automática o manual), "traccion" (si necesita tracción en las 4 ruedas: solo útil si habla de finca, trocha, lodo, montaña o destapado), "prioridad" (qué le importa más: comodidad, economía, seguridad, espacio o desempeño). Omite lo que ya dijo (si pidió "eléctrico", no preguntes combustible; si dio una cifra de precio, no preguntes presupuesto; \"barato\" o \"económico\" sin cifra NO es presupuesto: pregúntalo).`;
 
@@ -142,6 +144,7 @@ function processLLMRerank(
         fuelType: candidate.fuelType,
         type: candidate.type,
         imageUrl: candidate.imageUrl,
+        familia: candidate.familia,
         features: candidate.features
       }
     });
@@ -179,6 +182,7 @@ function ensureMinimum(recs: FinalRecommendation[], candidates: ScoredCandidate[
         fuelType: c.fuelType,
         type: c.type,
         imageUrl: c.imageUrl,
+        familia: c.familia,
         features: c.features,
       }
     });
@@ -206,6 +210,7 @@ function createFallbackRecommendations(candidates: ScoredCandidate[]): FinalReco
       fuelType: candidate.fuelType,
       type: candidate.type,
       imageUrl: candidate.imageUrl,
+      familia: candidate.familia,
       features: candidate.features
     }
   }));

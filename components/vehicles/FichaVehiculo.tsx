@@ -127,6 +127,12 @@ function Versiones({ versiones, actual }: { versiones: { id: string; etiqueta: s
           );
         })}
       </nav>
+      <Link
+        href={`/compare?ids=${versiones.map(v => v.id).join(',')}`}
+        className="pastilla mt-3 h-10 !border-version !bg-version px-4 text-[14px] font-semibold !text-tinta hover:!bg-version/80"
+      >
+        <Scale className="h-4 w-4" /> Comparar {versiones.length === 2 ? 'las 2 versiones' : `las ${versiones.length} versiones`}
+      </Link>
     </div>
   );
 }

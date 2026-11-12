@@ -7,11 +7,17 @@
 // y las razones en palabras de persona. El #2 y #3 en compacto; el resto en
 // tarjetas del catálogo. Los resultados de la IA no traen fotos ni ficha, así
 // que se cruzan por id con el catálogo que ya cargó la home.
+//
+// Versiones del mismo carro (lib/versiones): la búsqueda ordena cada versión
+// por separado; aquí, DESPUÉS de las preguntas para afinar, se agrupan y cada
+// carro sale una vez con la versión que mejor encaja. Las otras se ofrecen en
+// amarillo, con un botón para compararlas.
 // ============================================================================
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { ArrowUpRight, Check } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowUpRight, Check, Layers } from 'lucide-react';
 import { Afinador, aplicar, type Carro, type Respuestas } from '@/components/home/Afinador';
 import { CarRender } from '@/components/car/CarRender';
 import { TarjetaCarro, type VehiculoTarjeta } from '@/components/car/TarjetaCarro';
@@ -20,6 +26,7 @@ import { CalificarIA } from '@/components/ui/CalificarIA';
 import { datosClave, millones, palabraGigante, tresDatos } from '@/lib/vehiculo-datos';
 import { AvisoIA } from '@/components/ui/AvisoIA';
 import { BotonFavorito } from '@/components/car/BotonFavorito';
+import { agruparVersiones, claveFamilia, etiquetaVersion } from '@/lib/versiones';
 
 /** Razones comparativas, calculadas con datos reales, frente a los otros del podio. */
 function razonesRelativas(v: any, podio: any[]): string[] {
@@ -55,10 +62,40 @@ function razonesRelativas(v: any, podio: any[]): string[] {
   return out;
 }
 
+/** "Te recomendamos la versión GL · también viene en GS ($93 M)" + comparar las versiones. */
+function OtrasVersiones({ v, otras, compacto = false }: { v: Carro; otras: VehiculoTarjeta[]; compacto?: boolean }) {
+  const router = useRouter();
+  if (!otras.length) return null;
+  const url = `/compare?ids=${[v.id, ...otras.map(o => o.id)].join(',')}`;
+  const nombres = otras.map(o => `${etiquetaVersion(o)} (${millones(o.price)})`);
+  const lista = nombres.length > 1 ? `${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}` : nombres[0];
+  return (
+    <div className={`rounded-[18px] border border-version/40 bg-version/10 ${compacto ? 'mt-3 px-3 py-2.5' : 'mt-5 px-4 py-3'}`}>
+      <p className="flex items-center gap-1.5 text-[13px] font-semibold text-version-oscuro">
+        <Layers className="h-4 w-4 shrink-0" /> Te recomendamos la versión {etiquetaVersion(v)}
+      </p>
+      <p className="mt-1 text-[13px] leading-snug text-tinta-2">También viene en {lista}.</p>
+      {/* Puede ir dentro de un enlace (#2 y #3): navega sin abrir la ficha. */}
+      <button
+        type="button"
+        onClick={e => {
+          e.preventDefault();
+          e.stopPropagation();
+          router.push(url);
+        }}
+        className="pastilla mt-2 h-9 !border-version !bg-version px-3.5 text-[13px] font-semibold !text-tinta hover:!bg-version/80"
+      >
+        Comparar las {otras.length + 1} versiones
+      </button>
+    </div>
+  );
+}
+
 interface Resultado {
   id: string;
   brand: string;
   model: string;
+  familia?: string | null;
   year: number;
   price: number;
   fuelType: string;
@@ -86,9 +123,16 @@ export function ResultadosIA({
 
   const [respuestas, setRespuestas] = useState<Respuestas>({});
   const visibles = aplicar(todos, respuestas);
-  const podio = conPodio ? visibles.slice(0, 3) : [];
-  const resto = conPodio ? visibles.slice(3) : visibles;
+  // Un carro por familia, con la versión mejor ubicada (la que más encaja) al frente.
+  const grupos = agruparVersiones(visibles);
+  const lideres = grupos.map(g => g[0]);
+  const podio = conPodio ? lideres.slice(0, 3) : [];
+  const gruposResto = conPodio ? grupos.slice(3) : grupos;
+  const resto = gruposResto.map(g => g[0]);
   const [primero, ...escoltas] = podio;
+  /** Las otras versiones del carro en el catálogo (también las que quedaron fuera de la búsqueda). */
+  const otrasVersiones = (v: Carro) =>
+    catalogo.filter(c => c.id !== v.id && claveFamilia(c) === claveFamilia(v)).sort((a, b) => a.price - b.price);
 
   return (
     <div className="space-y-14">
@@ -131,7 +175,7 @@ export function ResultadosIA({
             <div className="mt-5 flex items-end justify-between gap-6 md:mt-8 md:justify-start md:gap-8">
               <div>
                 <p className="t-ligero text-[36px] leading-none md:text-[52px]">
-                  1.º <span className="text-[22px] text-tinta-2">de {visibles.length}</span>
+                  1.º <span className="text-[22px] text-tinta-2">de {lideres.length}</span>
                 </p>
                 <p className="mt-1 text-[13px] text-tinta-2">
                   la mejor opción para lo que pediste
@@ -169,6 +213,8 @@ export function ResultadosIA({
                 ))}
               </ul>
             ) : null}
+
+            <OtrasVersiones v={primero} otras={otrasVersiones(primero)} />
 
             <Link href={`/vehicles/${primero.id}`} className="pastilla pastilla--wise mt-auto h-12 justify-center px-6 max-lg:mt-6 max-md:w-full md:self-start">
               Ir al panel dinámico <ArrowUpRight className="h-4 w-4" />
@@ -230,6 +276,7 @@ export function ResultadosIA({
                     ))}
                   </div>
                 )}
+                <OtrasVersiones v={v} otras={otrasVersiones(v)} compacto />
                 <p className="mt-3 inline-flex items-center gap-1 text-[13px] font-medium text-wise">
                   Ir al panel dinámico <ArrowUpRight className="h-3.5 w-3.5" />
                 </p>
@@ -259,8 +306,13 @@ export function ResultadosIA({
             {podio.length ? 'Otras opciones' : 'Los que cumplen'} <span className="t-ligero text-tinta-2/50">({resto.length})</span>
           </h3>
           <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {resto.map((v, i) => (
-              <TarjetaCarro key={v.id} vehiculo={v} indice={i} />
+            {gruposResto.map((g, i) => (
+              <TarjetaCarro
+                key={claveFamilia(g[0])}
+                vehiculo={g[0]}
+                versiones={g.length > 1 ? [...g].sort((a, b) => a.price - b.price) : undefined}
+                indice={i}
+              />
             ))}
           </div>
         </div>
