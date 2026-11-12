@@ -15,7 +15,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
@@ -217,6 +217,8 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
   const cats = useMemo(() => categorias(vehicle.fuelType, s, vehicle.type, est), [vehicle.fuelType, s, vehicle.type, est]);
   const precioEstimado = MOSTRAR_ESTIMADOS && (!!vehicle.priceEstimated || !!s.commercial?.priceEstimated);
   const [cat, setCat] = useState(0);
+  const [puntoMovil, setPuntoMovil] = useState<number | null>(null);
+  useEffect(() => setPuntoMovil(null), [cat]);
   // Un solo concesionario (o ninguno): el nombre junto al botón que se tocó y
   // directo a WhatsApp. Varios: la lista para elegir, ordenada por distancia.
   const [contacto, setContacto] = useState<{ motivo: Motivo; lugar: 'arriba' | 'abajo' } | null>(null);
@@ -361,14 +363,46 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
                   </div>
                 );
               })}
+              {/* Celular: el texto no cabe sobre el carro; van los puntos con su número, y el
+                  texto en la lista de abajo (tocar un punto o un dato los resalta juntos). */}
+              {actual?.puntos.map((p, i) => (
+                <button
+                  key={`m-${actual.id}-${i}`}
+                  type="button"
+                  onClick={() => setPuntoMovil(i)}
+                  aria-label={p.texto}
+                  className="hotspot-movil md:hidden"
+                  data-activo={puntoMovil === i}
+                  style={{ left: `${p.donde.x}%`, top: `${p.donde.y}%`, '--d': `${i * 90}ms` } as React.CSSProperties}
+                >
+                  {i + 1}
+                </button>
+              ))}
             </div>
 
             {actual && (
               <ul className="grid grid-cols-2 gap-2 md:hidden">
-                {actual.puntos.map(p => (
-                  <li key={p.texto} className="rounded-2xl bg-blanco/90 px-3 py-2.5 text-[13px] font-medium">
-                    {p.texto}
-                    {p.estimado && <MarcaE />}
+                {actual.puntos.map((p, i) => (
+                  <li key={p.texto}>
+                    <button
+                      type="button"
+                      onClick={() => setPuntoMovil(i)}
+                      className={`flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-[13px] font-medium transition-colors ${
+                        puntoMovil === i ? 'bg-tinta text-white' : 'bg-blanco/90'
+                      }`}
+                    >
+                      <span
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
+                          puntoMovil === i ? 'bg-white text-tinta' : 'bg-tinta text-white'
+                        }`}
+                      >
+                        {i + 1}
+                      </span>
+                      <span>
+                        {p.texto}
+                        {p.estimado && <MarcaE />}
+                      </span>
+                    </button>
                   </li>
                 ))}
               </ul>

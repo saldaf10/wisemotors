@@ -725,3 +725,34 @@
 @media (prefers-reduced-motion: reduce) {
   .recorrido-brillo { animation: none; box-shadow: 0 0 0 3px rgba(136, 28, 183, 0.35); }
 }
+
+/* Puntos de la ficha en celular: solo el número sobre el carro (el texto va en la lista). */
+.hotspot-movil {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: rgba(14, 12, 17, 0.78);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.7);
+  animation: hotspot-punto 700ms cubic-bezier(0.3, 1.6, 0.5, 1) var(--d, 0ms) both;
+  transition: background 200ms, transform 200ms;
+}
+.hotspot-movil::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1.5px solid rgba(255, 255, 255, 0.7);
+  animation: pulso-hotspot 2.2s var(--ease-out-soft) infinite;
+}
+.hotspot-movil[data-activo='true'] {
+  background: #881cb7;
+  transform: translate(-50%, -50%) scale(1.15);
+}

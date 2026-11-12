@@ -109,7 +109,7 @@ export function ResultadosIA({
       )}
       {primero && (
         <div className="grid overflow-hidden rounded-[36px] bg-blanco lg:grid-cols-[1.25fr_1fr]" data-recorrido="resultados">
-          <div className="estudio relative flex min-h-[320px] items-center justify-center overflow-hidden p-8">
+          <div className="estudio relative flex min-h-[210px] items-center justify-center overflow-hidden p-5 md:min-h-[320px] md:p-8">
             <p
               aria-hidden
               className="t-display pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[clamp(110px,14vw,220px)] leading-none"
@@ -117,20 +117,20 @@ export function ResultadosIA({
             >
               {palabraGigante(primero.model, primero.brand)}
             </p>
-            <span className="t-meta absolute left-6 top-6 rounded-full bg-tinta px-3 py-1.5 text-white">Tu mejor opción</span>
-            <BotonFavorito id={primero.id} className="absolute right-6 top-6 z-10" />
+            <span className="t-meta absolute left-4 top-4 rounded-full bg-tinta px-3 py-1.5 text-white md:left-6 md:top-6">Tu mejor opción</span>
+            <BotonFavorito id={primero.id} className="absolute right-4 top-4 z-10 md:right-6 md:top-6" />
             <CarRender car={primero} prioridad className="carro-entra relative aspect-[480/190] w-full max-w-[620px]" />
           </div>
-          <div className="flex flex-col p-8 md:p-10">
+          <div className="flex flex-col p-5 md:p-10">
             <p className="text-[14px] text-tinta-2">{primero.brand}</p>
-            <h3 className="t-titulo text-[40px] md:text-[52px]">{primero.model}</h3>
+            <h3 className="t-titulo text-[34px] md:text-[52px]">{primero.model}</h3>
             <p className="mt-1 text-[14px] text-tinta-2">
               {primero.year} · {primero.fuelType} · {primero.type}
             </p>
 
-            <div className="mt-8 flex items-end gap-8">
+            <div className="mt-5 flex items-end justify-between gap-6 md:mt-8 md:justify-start md:gap-8">
               <div>
-                <p className="t-ligero text-[44px] leading-none md:text-[52px]">
+                <p className="t-ligero text-[36px] leading-none md:text-[52px]">
                   1.º <span className="text-[22px] text-tinta-2">de {visibles.length}</span>
                 </p>
                 <p className="mt-1 text-[13px] text-tinta-2">
@@ -138,14 +138,14 @@ export function ResultadosIA({
                   {primero.matchPercentage != null && ` · ${primero.matchPercentage}% de coincidencia`}
                 </p>
               </div>
-              <div>
-                <p className="cifra text-[26px] font-semibold">{millones(primero.price)}</p>
+              <div className="text-right md:text-left">
+                <p className="cifra whitespace-nowrap text-[22px] font-semibold md:text-[26px]">{millones(primero.price)}</p>
                 <p className="mt-1 text-[13px] text-tinta-2">precio de lista</p>
               </div>
             </div>
 
             {tresDatos(primero).length > 0 && (
-              <div className="fila-datos mt-8 border-y border-linea py-4">
+              <div className="fila-datos mt-5 border-y border-linea py-4 md:mt-8">
                 {tresDatos(primero).map(d => (
                   <div key={d.clave} className="px-3 text-center first:pl-0 last:pr-0">
                     <p className="cifra text-[17px] font-semibold">
@@ -159,9 +159,10 @@ export function ResultadosIA({
             )}
 
             {[...razonesRelativas(primero, podio), ...(primero.reasons ?? [])].length ? (
-              <ul className="mt-6 space-y-2.5">
-                {Array.from(new Set([...razonesRelativas(primero, podio), ...(primero.reasons ?? [])])).slice(0, 4).map(r => (
-                  <li key={r} className="flex items-start gap-3 text-[15px]">
+              <ul className="mt-5 space-y-2.5 md:mt-6">
+                {/* En celular, las 2 razones principales; en pantalla grande, hasta 4. */}
+                {Array.from(new Set([...razonesRelativas(primero, podio), ...(primero.reasons ?? [])])).slice(0, 4).map((r, i) => (
+                  <li key={r} className={`flex items-start gap-3 text-[15px] ${i >= 2 ? 'max-md:hidden' : ''}`}>
                     <Check className="mt-0.5 h-4 w-4 shrink-0 text-wise" strokeWidth={2.5} />
                     {r}
                   </li>
@@ -169,7 +170,7 @@ export function ResultadosIA({
               </ul>
             ) : null}
 
-            <Link href={`/vehicles/${primero.id}`} className="pastilla pastilla--wise mt-auto h-12 self-start px-6 max-lg:mt-8">
+            <Link href={`/vehicles/${primero.id}`} className="pastilla pastilla--wise mt-auto h-12 justify-center px-6 max-lg:mt-6 max-md:w-full md:self-start">
               Ir al panel dinámico <ArrowUpRight className="h-4 w-4" />
             </Link>
           </div>
@@ -182,10 +183,10 @@ export function ResultadosIA({
             <Link
               key={v.id}
               href={`/vehicles/${v.id}`}
-              className="group relative grid grid-cols-[1fr_1.1fr] items-center gap-4 overflow-hidden rounded-[28px] bg-blanco p-5 transition-shadow duration-500 hover:shadow-[0_30px_60px_-36px_rgba(14,12,17,0.5)]"
+              className="group relative grid items-center gap-4 overflow-hidden rounded-[28px] bg-blanco p-5 transition-shadow duration-500 hover:shadow-[0_30px_60px_-36px_rgba(14,12,17,0.5)] sm:grid-cols-[1fr_1.1fr]"
             >
               <BotonFavorito id={v.id} className="absolute right-4 top-4 z-10 !h-12 !w-12" />
-              <div className="estudio flex aspect-[4/3] items-center justify-center rounded-[20px] p-3">
+              <div className="estudio flex aspect-[16/9] items-center justify-center rounded-[20px] p-3 sm:aspect-[4/3]">
                 <CarRender car={v} className="aspect-[480/180] w-full transition-transform duration-700 group-hover:translate-x-1 group-hover:scale-105" />
               </div>
               <div className="min-w-0">
@@ -215,6 +216,23 @@ export function ResultadosIA({
                         : v.reasons?.[0]);
                   return texto ? <p className="mt-3 text-[13px] leading-snug text-tinta-2">{texto}</p> : null;
                 })()}
+                {/* Los mismos tres datos de la principal: para comparar de un vistazo. */}
+                {tresDatos(v).length > 0 && (
+                  <div className="fila-datos mt-4 border-t border-linea pt-3">
+                    {tresDatos(v).map(d => (
+                      <div key={d.clave} className="px-2 text-center first:pl-0 last:pr-0">
+                        <p className="cifra text-[15px] font-semibold">
+                          {d.valor}
+                          {d.unidad && <span className="ml-0.5 text-[11px] font-normal text-tinta-2">{d.unidad}</span>}
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-tinta-2">{d.etiqueta}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="mt-3 inline-flex items-center gap-1 text-[13px] font-medium text-wise">
+                  Ir al panel dinámico <ArrowUpRight className="h-3.5 w-3.5" />
+                </p>
               </div>
             </Link>
           ))}
