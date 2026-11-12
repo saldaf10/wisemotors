@@ -112,7 +112,7 @@ const PASOS: Paso[] = [
   },
   {
     titulo: 'Dale me gusta a tus favoritos',
-    texto: 'Toca el corazón de los carros que más te llamen la atención. Si no tienes cuenta, te pedirá crearla: así quedan guardados.',
+    texto: 'Toca el corazón de los carros que más te llamen la atención. Si un carro viene en varias versiones, cámbiala con el selector amarillo: el me gusta es de la versión que estés viendo.',
     donde: enCatalogo,
     pista: 'Ve al catálogo y toca el corazón de los que te gusten.',
     objetivo: ['button[aria-label*="avoritos"]'],
