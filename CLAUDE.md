@@ -144,8 +144,8 @@ cobertura, migración, seeds, motor de cohortes.
   publicar sin ellos pide confirmación. "No lo tiene" confirmado por una persona = dato.
 - **Documentos del concesionario:** PDF o foto de la ficha en el formulario de subida
   (multipart, ≤4 MB por el límite de Vercel). Se leen primero como tier 1 y ganan empates.
-- **Fotos: seis vistas** (lateral=portada, frontal, trasera, 3/4 delantera, 3/4 trasera,
-  interior). Las del concesionario se suben por vista y se procesan al elegirlas; la IA
+- **Fotos: cinco vistas** (lateral=portada, frontal, trasera, 3/4 delantera, interior; la
+  3/4 trasera se quitó el 12-nov-2026, las viejas se siguen mostrando). Las del concesionario se suben por vista y se procesan al elegirlas; la IA
   solo busca las vacías (`cubiertos`). Revisión por vistas con "Usar como…".
 - **Concesionario** al publicar ('¿Quién lo vende?') → `VehicleDealer`.
 - **Cola "Por revisar"** (`lib/auditoria.ts`): hechos sin revisor / confianza < 0.7 / tier 3,

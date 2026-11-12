@@ -35,12 +35,12 @@ export interface FotoRevision {
   procesando?: boolean;
 }
 
+// Cinco vistas (nov-2026: se quitó la 3/4 trasera). Las fotos viejas con esa vista se siguen viendo en la ficha.
 export const VISTAS: { angulo: string; etiqueta: string }[] = [
   { angulo: 'lado', etiqueta: 'Lateral' },
   { angulo: 'frente', etiqueta: 'Frontal' },
   { angulo: 'atras', etiqueta: 'Trasera' },
   { angulo: 'tres_cuartos_frente', etiqueta: '3/4 delantera' },
-  { angulo: 'tres_cuartos_atras', etiqueta: '3/4 trasera' },
   { angulo: 'interior', etiqueta: 'Interior' },
 ];
 const ETIQUETA: Record<string, string> = { ...Object.fromEntries(VISTAS.map(v => [v.angulo, v.etiqueta])), detalle: 'Detalle' };
@@ -201,7 +201,7 @@ export function RevisionFotos({
 
   return (
     <div className="bg-blanco rounded-[28px] border border-linea p-6">
-      <h3 className="font-bold text-tinta">Fotos: {llenas} de 6 vistas</h3>
+      <h3 className="font-bold text-tinta">Fotos: {llenas} de {VISTAS.length} vistas</h3>
       <p className="mt-1 text-sm text-tinta-2">
         Sube una foto por vista o cámbiala. La marcada con ★ es la
         portada; las de lado deben mirar a la derecha (si no, voltéala).
