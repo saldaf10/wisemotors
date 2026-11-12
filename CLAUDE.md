@@ -293,6 +293,12 @@ cobertura, migración, seeds, motor de cohortes.
   invitar `?ref=`, `referidoPor`, `origen` = utm_source). Cada invitado adelanta 10
   puestos (`lib/lista-espera.ts`). CSV en el panel: botón "Lista de espera".
 - Regla de la campaña: la página de espera no muestra ninguna función del producto.
+- Con el sitio cerrado, tener CUENTA es obligatorio (12-nov-2026): el código lleva a
+  `/register?next=/` y `components/auth/ExigirCuenta.tsx` (en `app/(sitio)/layout.tsx`) manda
+  a crear cuenta (o a ingresar, si cerró sesión) desde cualquier página sin sesión; solo
+  `/register` y `/login` quedan libres. Con `SITIO_ABIERTO=1` no aplica. Al volver al inicio
+  arranca el recorrido guiado (`components/recorrido/Recorrido.tsx`, 12 pasos, mensaje
+  emergente + brillo `.recorrido-brillo`; se repite desde el pie).
 
 ## Convenciones y trampas del repo
 
