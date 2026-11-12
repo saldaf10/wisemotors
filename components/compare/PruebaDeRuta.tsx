@@ -78,29 +78,29 @@ export function PruebaDeRuta({ vehiculos }: { vehiculos: Carro[] }) {
   };
 
   return (
-    <section className="pt-10" data-recorrido="prueba-ruta">
-      <h2 className="t-titulo text-[32px] md:text-[44px]">
+    <section className="pt-6 md:pt-10" data-recorrido="prueba-ruta">
+      <h2 className="t-titulo text-[26px] md:text-[44px]">
         ¿Ya sabes cuál? <span className="text-tinta-2/50">Pruébalo.</span>
       </h2>
-      <p className="mt-2 max-w-[52ch] text-[15px] text-tinta-2">
+      <p className="mt-2 max-w-[52ch] text-[13px] text-tinta-2 md:text-[15px]">
         Separa una prueba de ruta con quien lo vende. Te responden por WhatsApp con el día y la hora.
       </p>
-      <div className={`mt-6 grid gap-4 sm:grid-cols-2 ${vehiculos.length === 3 ? 'xl:grid-cols-3' : vehiculos.length >= 4 ? 'xl:grid-cols-4' : ''}`}>
+      <div className={`mt-4 grid grid-cols-2 gap-2 md:mt-6 md:gap-4 ${vehiculos.length === 3 ? 'xl:grid-cols-3' : vehiculos.length >= 4 ? 'xl:grid-cols-4' : ''}`}>
         {vehiculos.map((v, i) => {
           const cs = porCarro[v.id];
           return (
-            <div key={v.id} className="flex flex-col rounded-[28px] bg-blanco p-5">
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ background: serie(i) }} />
-                <p className="truncate text-[17px] font-semibold tracking-[-0.02em]">
+            <div key={v.id} className="flex flex-col rounded-[20px] bg-blanco p-3 md:rounded-[28px] md:p-5">
+              <div className="flex items-start gap-1.5 md:items-center md:gap-2">
+                <span className="mt-1 h-2 w-2 shrink-0 rounded-full md:mt-0 md:h-2.5 md:w-2.5" style={{ background: serie(i) }} />
+                <p className="line-clamp-2 min-h-[2lh] text-[13px] font-semibold leading-tight tracking-[-0.02em] md:line-clamp-1 md:min-h-0 md:text-[17px]">
                   {v.brand} {v.model}
                 </p>
               </div>
-              <p className="cifra mt-0.5 text-[13px] text-tinta-2">{millones(v.price)}</p>
-              <div className="estudio mt-4 flex aspect-[16/7] items-center justify-center rounded-[20px] p-3">
+              <p className="cifra mt-0.5 text-[12px] text-tinta-2 md:text-[13px]">{millones(v.price)}</p>
+              <div className="estudio mt-2 flex aspect-[16/8] items-center justify-center rounded-[14px] p-2 md:mt-4 md:aspect-[16/7] md:rounded-[20px] md:p-3">
                 <CarRender car={v as any} className="aspect-[480/180] w-full" />
               </div>
-              <p className="mt-3 text-[13px] text-tinta-2">
+              <p className="mt-2 flex-1 text-[11px] leading-snug text-tinta-2 md:mt-3 md:text-[13px]">
                 {cs === undefined
                   ? 'Buscando quién lo vende…'
                   : cs.length === 0
@@ -113,12 +113,12 @@ export function PruebaDeRuta({ vehiculos }: { vehiculos: Carro[] }) {
                 type="button"
                 onClick={() => separar(v)}
                 aria-expanded={cs && cs.length > 1 ? lista?.id === v.id : abierto === v.id}
-                className="pastilla pastilla--verde mt-3 h-12 justify-center whitespace-nowrap px-4 text-[15px] font-semibold"
+                className="pastilla pastilla--verde mt-2 !h-auto min-h-10 justify-center !gap-1.5 !px-2 !py-2 text-center !text-[12px] font-semibold leading-tight !whitespace-normal md:mt-3 md:min-h-12 md:!gap-2 md:!whitespace-nowrap md:!px-4 md:!text-[15px]"
               >
-                <CalendarCheck className="h-4 w-4" /> Separar prueba de ruta
+                <CalendarCheck className="h-4 w-4 shrink-0" /> Separar prueba de ruta
               </button>
               {abierto === v.id && (
-                <form onSubmit={e => escribir(e, v)} className="sube mt-3 flex gap-2">
+                <form onSubmit={e => escribir(e, v)} className="sube mt-2 flex flex-col gap-2 md:mt-3 md:flex-row">
                   <label htmlFor={`nombre-prueba-${v.id}`} className="sr-only">
                     Tu nombre
                   </label>
@@ -128,9 +128,9 @@ export function PruebaDeRuta({ vehiculos }: { vehiculos: Carro[] }) {
                     value={nombre}
                     onChange={e => setNombre(e.target.value)}
                     placeholder="¿Cómo te llamas?"
-                    className="h-11 min-w-0 flex-1 rounded-full border border-linea bg-blanco px-4 text-[14px] outline-none focus:border-tinta"
+                    className="h-11 w-full min-w-0 shrink-0 rounded-full border border-linea bg-blanco px-4 text-[14px] outline-none focus:border-tinta md:w-auto md:flex-1"
                   />
-                  <button type="submit" className="pastilla pastilla--tinta h-11 px-4 text-[14px]">
+                  <button type="submit" className="pastilla pastilla--tinta h-11 justify-center px-4 text-[14px]">
                     WhatsApp <ArrowUpRight className="h-4 w-4" />
                   </button>
                 </form>

@@ -34,11 +34,14 @@ export function Fila({
   const retraso = { transitionDelay: `${100 + (indice % 3) * 60}ms` };
 
   return (
-    <div ref={ref} data-visto={visto} className="grid gap-4 border-t border-linea py-7 md:grid-cols-12 md:gap-8">
+    <div ref={ref} data-visto={visto} className="grid gap-3 border-t border-linea py-4 md:grid-cols-12 md:gap-8 md:py-7">
       <div className="md:col-span-3">
-        <p className="text-[19px] font-semibold tracking-[-0.03em]">{ronda.titulo}</p>
-        <p className="mt-1 text-[14px] leading-snug text-tinta-2">{ronda.pregunta}</p>
-        <p className="mt-2 text-[12px] leading-snug text-tinta-2/80">{ronda.porQue}</p>
+        <p className="text-[16px] font-semibold tracking-[-0.03em] md:text-[19px]">
+          {ronda.titulo}
+          <span className="ml-2 text-[13px] font-normal tracking-normal text-tinta-2 md:hidden">{ronda.pregunta}</span>
+        </p>
+        <p className="mt-1 hidden text-[14px] leading-snug text-tinta-2 md:block">{ronda.pregunta}</p>
+        <p className="mt-1 text-[11px] leading-snug text-tinta-2/80 md:mt-2 md:text-[12px]">{ronda.porQue}</p>
       </div>
 
       <div className="md:col-span-9">
@@ -54,7 +57,7 @@ export function Fila({
               const izq = i === 0;
               return (
                 <div key={e.vehicleId} className={`flex flex-col ${izq ? 'items-end text-right' : 'items-start'}`}>
-                  <p className={`text-[15px] ${e.value === null ? 'italic text-tinta-2' : e.winner ? 'font-semibold text-tinta' : 'text-tinta/70'}`}>
+                  <p className={`text-[13px] md:text-[15px] ${e.value === null ? 'italic text-tinta-2' : e.winner ? 'font-semibold text-tinta' : 'text-tinta/70'}`}>
                     {e.display ?? 'Sin dato todavía'}
                     {e.winner && ronda.comparable && (
                       <span className="ml-2 rounded-full bg-wise px-2 py-0.5 align-middle text-[11px] font-semibold text-white">mejor</span>
@@ -73,15 +76,19 @@ export function Fila({
             })}
           </div>
         ) : (
-          <div className="space-y-2.5">
+          // En celular, de a dos por fila (nombre, dato y barra apilados); desde md, una fila por carro.
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 md:block md:space-y-2.5">
             {ronda.entries.map((e, i) => {
               const v = vehiculos.find(x => x.id === e.vehicleId)!;
               return (
-                <div key={e.vehicleId} className="grid grid-cols-[140px_1fr_auto] items-center gap-3 md:grid-cols-[180px_1fr_200px]">
-                  <span className="truncate text-[13px] text-tinta-2">
-                    {v.brand} {v.model}
+                <div key={e.vehicleId} className="flex min-w-0 flex-col gap-1 md:grid md:grid-cols-[180px_1fr_200px] md:items-center md:gap-3">
+                  <span className="flex items-center gap-1.5 truncate text-[11px] text-tinta-2 md:text-[13px]">
+                    <span className="h-2 w-2 shrink-0 rounded-full md:hidden" style={{ background: serie(i) }} />
+                    <span className="truncate">
+                      {v.brand} {v.model}
+                    </span>
                   </span>
-                  <div className="h-2.5 overflow-hidden rounded-full bg-tarjeta">
+                  <div className="order-last h-2 overflow-hidden rounded-full bg-tarjeta md:order-none md:h-2.5">
                     {e.value !== null && (
                       <div
                         className="barra-der h-full w-full rounded-full"
@@ -89,7 +96,7 @@ export function Fila({
                       />
                     )}
                   </div>
-                  <span className={`text-right text-[14px] ${e.value === null ? 'italic text-tinta-2' : e.winner ? 'font-semibold' : 'text-tinta/70'}`}>
+                  <span className={`text-[13px] leading-tight md:text-right md:text-[14px] ${e.value === null ? 'italic text-tinta-2' : e.winner ? 'font-semibold' : 'text-tinta/70'}`}>
                     {e.display ?? 'Sin dato todavía'}
                   </span>
                 </div>

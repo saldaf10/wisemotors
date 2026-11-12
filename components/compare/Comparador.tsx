@@ -231,7 +231,7 @@ export function Comparador({ vehiculos }: { vehiculos: Vehiculo[] }) {
   const color = (id: string) => serie(vehiculos.findIndex(x => x.id === id));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <Escenario vehiculos={vehiculos} />
 
       <Titular
@@ -250,13 +250,13 @@ export function Comparador({ vehiculos }: { vehiculos: Vehiculo[] }) {
         titulo="Pregunta por pregunta"
         bajada="Cada fila es una pregunta que te harías antes de comprar. La barra más larga y marcada es la mejor respuesta."
       />
-      <div className="rounded-[30px] bg-blanco px-6 py-2 md:px-8">
+      <div className="rounded-[24px] bg-blanco px-4 py-1 md:rounded-[30px] md:px-8 md:py-2">
         {vehiculos.length === 2 && (
-          <div className="sticky top-[84px] z-10 -mx-6 grid grid-cols-12 bg-blanco/90 px-6 pb-3 pt-5 backdrop-blur md:top-[92px] md:-mx-8 md:px-8">
+          <div className="sticky top-[84px] z-10 -mx-4 grid grid-cols-12 bg-blanco/90 px-4 pb-3 pt-5 backdrop-blur md:top-[92px] md:-mx-8 md:px-8">
             <div className="hidden md:col-span-3 md:block" />
             <div className="col-span-12 grid grid-cols-2 gap-3 md:col-span-9">
               {vehiculos.map((v, i) => (
-                <p key={v.id} className={`flex items-center gap-2 text-[14px] font-semibold ${i === 0 ? 'justify-end' : ''}`}>
+                <p key={v.id} className={`flex items-center gap-2 text-[13px] font-semibold md:text-[14px] ${i === 0 ? 'justify-end' : ''}`}>
                   {i === 1 && <span className="h-2.5 w-2.5 rounded-full" style={{ background: serie(i) }} />}
                   {v.brand} {v.model}
                   {i === 0 && <span className="h-2.5 w-2.5 rounded-full" style={{ background: serie(i) }} />}
@@ -270,7 +270,7 @@ export function Comparador({ vehiculos }: { vehiculos: Vehiculo[] }) {
         ))}
       </div>
 
-      <div className="pt-10">
+      <div className="pt-4 md:pt-10">
         <button onClick={() => setTabla(t => !t)} className="pastilla h-12 px-6" aria-expanded={tabla}>
           {tabla ? 'Ocultar la tabla completa' : 'Ver todos los datos, uno por uno'}
           <ArrowUpRight className={`h-4 w-4 transition-transform duration-500 ${tabla ? 'rotate-[135deg]' : ''}`} />
@@ -290,9 +290,9 @@ export function Comparador({ vehiculos }: { vehiculos: Vehiculo[] }) {
 
 function Titular({ titulo, bajada }: { titulo: string; bajada: string }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-4 pb-2 pt-16">
-      <h2 className="t-titulo text-[40px] md:text-[64px]">{titulo}</h2>
-      <p className="max-w-[48ch] text-[15px] leading-relaxed text-tinta-2">{bajada}</p>
+    <div className="flex flex-wrap items-end justify-between gap-2 pt-8 md:gap-4 md:pb-2 md:pt-16">
+      <h2 className="t-titulo text-[30px] md:text-[64px]">{titulo}</h2>
+      <p className="max-w-[48ch] text-[13px] leading-snug text-tinta-2 md:text-[15px] md:leading-relaxed">{bajada}</p>
     </div>
   );
 }
@@ -301,23 +301,23 @@ function Titular({ titulo, bajada }: { titulo: string; bajada: string }) {
 function Escenario({ vehiculos }: { vehiculos: Vehiculo[] }) {
   const dos = vehiculos.length === 2;
   return (
-    <div className="estudio relative overflow-hidden rounded-[36px] px-6 pb-10 pt-10 md:px-10">
+    <div className="estudio relative overflow-hidden rounded-[28px] px-4 pb-6 pt-6 md:rounded-[36px] md:px-10 md:pb-10 md:pt-10">
       <p aria-hidden className="t-display pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 select-none text-center text-[22vw] leading-none text-tinta/[0.035]">
         VS
       </p>
-      <div className={`relative grid ${dos ? 'grid-cols-2 gap-10 md:gap-28' : vehiculos.length === 3 ? 'grid-cols-3 gap-6' : 'grid-cols-2 gap-6 lg:grid-cols-4'}`}>
+      <div className={`relative grid ${dos ? 'grid-cols-2 gap-10 md:gap-28' : vehiculos.length === 3 ? 'grid-cols-3 gap-3 md:gap-6' : 'grid-cols-2 gap-x-4 gap-y-5 md:gap-6 lg:grid-cols-4'}`}>
         {vehiculos.map((v, i) => (
           <div key={v.id} className={`sube ${dos && i === 1 ? 'text-right' : ''}`} style={{ '--d': `${i * 120}ms` } as React.CSSProperties}>
             <div className="relative aspect-[480/180] md:aspect-auto md:h-[190px]">
               <div aria-hidden className="absolute inset-x-[10%] bottom-0 h-[12%] rounded-[50%]" style={{ background: 'radial-gradient(closest-side, rgba(0,0,0,0.35), transparent)' }} />
               <CarRender car={v} ajustado className={`relative h-full w-full ${dos && i === 1 ? '-scale-x-100' : ''}`} />
             </div>
-            <div className={`mt-6 flex items-center gap-2 ${dos && i === 1 ? 'justify-end' : ''}`}>
+            <div className={`mt-3 flex items-center gap-2 md:mt-6 ${dos && i === 1 ? 'justify-end' : ''}`}>
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: serie(i) }} />
               <p className="text-[13px] text-tinta-2">{v.brand}</p>
             </div>
-            <p className="truncate text-[20px] font-semibold leading-tight tracking-[-0.03em] md:text-[30px]">{v.model}</p>
-            <p className="cifra mt-1 text-[15px]">{millones(v.price)}</p>
+            <p className="truncate text-[17px] font-semibold leading-tight tracking-[-0.03em] md:text-[30px]">{v.model}</p>
+            <p className="cifra mt-0.5 text-[13px] md:mt-1 md:text-[15px]">{millones(v.price)}</p>
           </div>
         ))}
       </div>
@@ -448,28 +448,28 @@ function VeredictoIA({ vehiculos, nombre, color }: { vehiculos: Vehiculo[]; nomb
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-12">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-12 md:gap-4">
       {/* Titular */}
-      <div className="reveal relative overflow-hidden rounded-[30px] bg-showroom p-8 text-white md:col-span-7 md:p-10" data-shown="true">
+      <div className="reveal relative col-span-2 overflow-hidden rounded-[24px] bg-showroom p-5 text-white md:col-span-7 md:rounded-[30px] md:p-10" data-shown="true">
         <div className="ia-aurora ia-aurora--quieta" aria-hidden />
         <div className="relative">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-[12px]">
             <Sparkles className="h-3.5 w-3.5 text-wise-lila" /> Veredicto de la IA
           </span>
-          <p className="mt-8 text-[30px] font-semibold leading-[1.05] tracking-[-0.04em] md:text-[44px]">{v.titular}</p>
-          <p className="mt-6 max-w-[62ch] text-[16px] leading-relaxed text-white/65">{v.resumen}</p>
+          <p className="mt-5 text-[24px] font-semibold leading-[1.05] tracking-[-0.04em] md:mt-8 md:text-[44px]">{v.titular}</p>
+          <p className="mt-4 max-w-[62ch] text-[14px] leading-snug text-white/65 md:mt-6 md:text-[16px] md:leading-relaxed">{v.resumen}</p>
         </div>
       </div>
 
       {/* Para quién es cada uno */}
-      <div className="grid gap-4 md:col-span-5">
+      <div className="col-span-2 grid gap-3 md:col-span-5 md:gap-4">
         {v.porCarro.map(p => (
-          <div key={p.id} className="sube rounded-[30px] bg-blanco p-6">
+          <div key={p.id} className="sube rounded-[24px] bg-blanco p-4 md:rounded-[30px] md:p-6">
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: color(p.id) }} />
-              <p className="text-[18px] font-semibold tracking-[-0.03em]">{nombre(p.id)}</p>
+              <p className="text-[16px] font-semibold tracking-[-0.03em] md:text-[18px]">{nombre(p.id)}</p>
             </div>
-            <p className="mt-3 text-[15px] leading-snug">
+            <p className="mt-2 text-[13px] leading-snug md:mt-3 md:text-[15px]">
               <span className="text-tinta-2">Es para ti si </span>
               {p.esParaTiSi}
             </p>
@@ -495,26 +495,26 @@ function VeredictoIA({ vehiculos, nombre, color }: { vehiculos: Vehiculo[]; nomb
         return (
           <div
             key={p.perfil}
-            className={`sube relative overflow-hidden rounded-[30px] p-6 ${spans[i % spans.length]} ${oscuro ? 'bg-wise text-white' : 'bg-blanco'}`}
+            className={`sube relative overflow-hidden rounded-[24px] p-4 md:rounded-[30px] md:p-6 ${spans[i % spans.length]} ${oscuro ? 'bg-wise text-white' : 'bg-blanco'}`}
             style={{ '--d': `${i * 70}ms` } as React.CSSProperties}
           >
-            <div className="flex items-center justify-between">
-              <span className={`flex h-10 w-10 items-center justify-center rounded-full ${oscuro ? 'bg-white/15' : 'bg-wise/10 text-wise'}`}>
+            <div className="flex flex-col items-start gap-2 md:flex-row md:items-center md:justify-between">
+              <span className={`flex h-8 w-8 items-center justify-center rounded-full md:h-10 md:w-10 ${oscuro ? 'bg-white/15' : 'bg-wise/10 text-wise'}`}>
                 <info.icono className="h-4 w-4" />
               </span>
-              <span className={`text-[13px] ${oscuro ? 'text-white/70' : 'text-tinta-2'}`}>{info.texto}</span>
+              <span className={`text-[12px] leading-tight md:text-[13px] ${oscuro ? 'text-white/70' : 'text-tinta-2'}`}>{info.texto}</span>
             </div>
-            <p className="mt-6 flex items-center gap-2 text-[26px] font-semibold leading-none tracking-[-0.04em]">
+            <p className="mt-3 flex items-center gap-2 text-[18px] font-semibold leading-none tracking-[-0.04em] md:mt-6 md:text-[26px]">
               {!oscuro && <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: color(p.ganadorId) }} />}
               {nombre(p.ganadorId)}
             </p>
-            <p className={`mt-3 text-[14px] leading-snug ${oscuro ? 'text-white/75' : 'text-tinta-2'}`}>{p.razon}</p>
+            <p className={`mt-2 text-[12px] leading-snug md:mt-3 md:text-[14px] ${oscuro ? 'text-white/75' : 'text-tinta-2'}`}>{p.razon}</p>
           </div>
         );
       })}
 
       {/* ¿Sirvió el veredicto? Lo lee el equipo en el panel para mejorarlo. */}
-      <div className="md:col-span-12">
+      <div className="col-span-2 md:col-span-12">
         <CalificarIA
           tipo="comparacion"
           clave={[...ids.split(',')].sort().join(',')}
@@ -530,17 +530,17 @@ function VeredictoIA({ vehiculos, nombre, color }: { vehiculos: Vehiculo[]; nomb
 function Radiografia({ vehiculos, dims }: { vehiculos: Vehiculo[]; dims: ReturnType<typeof puntajes> }) {
   const spans = ['md:col-span-4', 'md:col-span-4', 'md:col-span-4', 'md:col-span-3', 'md:col-span-5', 'md:col-span-4'];
   return (
-    <div className="grid gap-4 md:grid-cols-12">
-      <div className="rounded-[30px] bg-showroom p-6 text-white md:col-span-12 md:p-10">
-        <div className="grid items-center gap-8 lg:grid-cols-[1.1fr_1fr]">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-12 md:gap-4">
+      <div className="col-span-2 rounded-[24px] bg-showroom p-4 text-white md:col-span-12 md:rounded-[30px] md:p-10">
+        <div className="grid items-center gap-4 md:gap-8 lg:grid-cols-[1.1fr_1fr]">
           <RadarDimensiones vehiculos={vehiculos} dims={dims} />
           <div>
             <p className="text-[13px] text-white/50">Cómo leerlo</p>
-            <p className="mt-2 text-[24px] font-medium leading-snug tracking-[-0.03em]">
+            <p className="mt-1 text-[17px] font-medium leading-snug tracking-[-0.03em] md:mt-2 md:text-[24px]">
               Entre más grande la figura, mejor en general.{' '}
               <span className="text-white/45">Pero fíjate en la forma: dice en qué es fuerte cada uno.</span>
             </p>
-            <ul className="mt-8 space-y-3">
+            <ul className="mt-4 space-y-2 md:mt-8 md:space-y-3">
               {vehiculos.map((v, i) => {
                 const vals = dims.map(d => d.porCarro[i]).filter((n): n is number => n !== null);
                 const prom = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
@@ -549,12 +549,12 @@ function Radiografia({ vehiculos, dims }: { vehiculos: Vehiculo[]; dims: ReturnT
                   .filter(x => x.n !== null)
                   .sort((a, b) => (b.n as number) - (a.n as number))[0];
                 return (
-                  <li key={v.id} className="flex items-center justify-between gap-4 border-b border-white/10 pb-3">
-                    <span className="flex items-center gap-2.5 text-[15px]">
-                      <span className="h-3 w-3 rounded-full" style={{ background: serie(i) }} />
+                  <li key={v.id} className="flex items-center justify-between gap-3 border-b border-white/10 pb-2 md:gap-4 md:pb-3">
+                    <span className="flex items-center gap-2 text-[13px] leading-tight md:gap-2.5 md:text-[15px]">
+                      <span className="h-2.5 w-2.5 shrink-0 rounded-full md:h-3 md:w-3" style={{ background: serie(i) }} />
                       {v.brand} {v.model}
                     </span>
-                    <span className="text-right text-[13px] text-white/55">
+                    <span className="text-right text-[11px] leading-snug text-white/55 md:text-[13px]">
                       {prom !== null && (
                         <>
                           Promedio <span className="cifra text-white">{fmt(prom, 1)}/10</span>
@@ -595,28 +595,28 @@ function BloqueDimension({
 }) {
   const [ref, visto] = useEnVista<HTMLDivElement>(0.3);
   return (
-    <div ref={ref} className={`rounded-[30px] bg-blanco p-6 ${className}`}>
+    <div ref={ref} className={`rounded-[22px] bg-blanco p-3.5 md:rounded-[30px] md:p-6 ${className}`}>
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-wise/10 text-wise">
+        <div className="flex items-center gap-2 md:gap-2.5">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-wise/10 text-wise md:h-9 md:w-9">
             <d.icono className="h-4 w-4" />
           </span>
           <div>
-            <p className="text-[16px] font-semibold tracking-[-0.02em]">{d.nombre}</p>
-            <p className="text-[12px] text-tinta-2">{d.que}</p>
+            <p className="text-[14px] font-semibold leading-tight tracking-[-0.02em] md:text-[16px]">{d.nombre}</p>
+            <p className="hidden text-[12px] text-tinta-2 md:block">{d.que}</p>
           </div>
         </div>
       </div>
-      <div className="mt-6 space-y-3">
+      <div className="mt-3 space-y-2 md:mt-6 md:space-y-3">
         {vehiculos.map((v, i) => {
           const n = d.porCarro[i];
           return (
             <div key={v.id}>
-              <div className="flex items-baseline justify-between text-[12px]">
-                <span className={i === ganador ? 'font-semibold' : 'text-tinta-2'}>{v.model}</span>
+              <div className="flex items-baseline justify-between gap-1 text-[11px] md:text-[12px]">
+                <span className={`truncate ${i === ganador ? 'font-semibold' : 'text-tinta-2'}`}>{v.model}</span>
                 <span className="cifra">{n === null ? 'sin dato' : `${fmt(n, 1)}`}</span>
               </div>
-              <div className="mt-1 h-2 overflow-hidden rounded-full bg-tarjeta">
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-tarjeta md:h-2">
                 {n !== null && (
                   <div
                     className="h-full rounded-full"
@@ -633,7 +633,7 @@ function BloqueDimension({
           );
         })}
       </div>
-      <p className="mt-4 text-[13px] text-tinta-2">
+      <p className="mt-3 text-[12px] leading-tight text-tinta-2 md:mt-4 md:text-[13px]">
         {ganador >= 0 ? (
           <>
             Gana <span className="font-semibold text-tinta">{vehiculos[ganador].model}</span>
