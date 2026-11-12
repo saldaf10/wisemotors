@@ -253,7 +253,7 @@ export function Catalogo({ vehiculos }: { vehiculos: VehiculoTarjeta[] }) {
             // De a dos también en celular: tarjeta compacta (en pantallas anchas es la completa).
             <div className="grid grid-cols-2 gap-2 md:gap-5 2xl:grid-cols-3">
               {filtrados.map((v, i) => (
-                <TarjetaCarro key={v.id} vehiculo={v} indice={i} destacada={i === 0} compacta />
+                <TarjetaCarro key={v.id} vehiculo={v} indice={i} destacada={i === 0} compacta detallada />
               ))}
             </div>
           ) : (

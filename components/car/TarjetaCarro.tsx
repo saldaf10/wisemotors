@@ -34,12 +34,15 @@ export function TarjetaCarro({
   indice = 0,
   destacada = false,
   compacta = false,
+  detallada = false,
 }: {
   vehiculo: VehiculoTarjeta;
   indice?: number;
   destacada?: boolean;
   /** Para ir de a tres por fila hasta en celular: nombre arriba, un solo dato y todo más chico. */
   compacta?: boolean;
+  /** Con `compacta`, de a dos (catálogo): suma año, combustible y carrocería, y los tres datos en lista. */
+  detallada?: boolean;
 }) {
   const ref = useRef<HTMLAnchorElement>(null);
   const frame = useRef(0);
@@ -48,6 +51,8 @@ export function TarjetaCarro({
   const { isFavorite, toggleFavorite } = useFavorites();
   const fav = isFavorite(vehiculo.id);
   const datos = tresDatos(vehiculo);
+  // Lista de datos (y corazón sobre la foto) solo en la detallada, mientras no haya ancho para la fila.
+  const lista = compacta && detallada && datos.length > 0;
 
   const mover = useCallback((e: React.MouseEvent) => {
     const el = ref.current;
@@ -80,6 +85,19 @@ export function TarjetaCarro({
     await toggleFavorite(vehiculo.id);
   };
 
+  const corazon = (extra = '') => (
+    <button
+      onClick={alternarFavorito}
+      aria-label={fav ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+      aria-pressed={fav}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full border transition-colors ${compacta ? 'h-8 w-8 md:h-10 md:w-10 xl:h-12 xl:w-12' : 'h-12 w-12'} ${
+        fav ? 'border-wise bg-wise text-white' : 'border-linea bg-blanco text-tinta hover:border-tinta'
+      } ${extra}`}
+    >
+      <Heart className={compacta ? 'h-4 w-4 md:h-[18px] md:w-[18px] xl:h-[21px] xl:w-[21px]' : 'h-[21px] w-[21px]'} fill={fav ? 'currentColor' : 'none'} />
+    </button>
+  );
+
   return (
     // La entrada va en un envoltorio: su animación de transform no debe pisar la inclinación.
     <div className="sube" style={{ '--d': `${Math.min(indice, 8) * 70}ms` } as React.CSSProperties}>
@@ -97,9 +115,15 @@ export function TarjetaCarro({
             <h3 className="line-clamp-2 min-h-[2lh] text-[13px] font-semibold leading-tight tracking-[-0.02em] text-tinta md:text-[17px]">
               {vehiculo.brand} {vehiculo.model}
             </h3>
-            <p className="mt-0.5 hidden text-[12px] text-tinta-2 md:block">
-              {vehiculo.year} · {vehiculo.fuelType}
-            </p>
+            {detallada ? (
+              <p className="mt-0.5 truncate text-[11px] text-tinta-2 md:text-[12px]">
+                {vehiculo.year} · {vehiculo.fuelType} · {vehiculo.type}
+              </p>
+            ) : (
+              <p className="mt-0.5 hidden text-[12px] text-tinta-2 md:block">
+                {vehiculo.year} · {vehiculo.fuelType}
+              </p>
+            )}
             <p className="cifra mt-1 whitespace-nowrap text-[12px] font-semibold text-tinta md:text-[15px]">{millones(vehiculo.price)}</p>
           </div>
           <span className="flecha h-9 w-9 shrink-0 max-md:!hidden">
@@ -133,9 +157,24 @@ export function TarjetaCarro({
           {palabraGigante(vehiculo.model, vehiculo.brand)}
         </span>
         <CarRender car={vehiculo} ajustado className="carro relative h-full w-[92%]" />
+        {lista && corazon('absolute right-0 top-0 z-10 lg:hidden')}
       </div>
 
-      <div className={`relative z-10 flex items-end justify-between ${compacta ? 'gap-1.5 md:gap-3' : 'gap-3'}`}>
+      {lista && (
+        <dl className="relative z-10 divide-y divide-linea lg:hidden">
+          {datos.map(d => (
+            <div key={d.clave} className="flex items-baseline justify-between gap-2 py-1 md:py-1.5">
+              <dt className="truncate text-[11px] text-tinta-2 md:text-[13px]">{d.etiqueta}</dt>
+              <dd className="cifra whitespace-nowrap text-[12px] font-semibold text-tinta md:text-[15px]">
+                {d.valor}
+                {d.unidad && <span className="ml-0.5 text-[10px] font-normal text-tinta-2 md:text-[12px]">{d.unidad}</span>}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      )}
+
+      <div className={`relative z-10 flex items-end justify-between ${compacta ? 'gap-1.5 md:gap-3' : 'gap-3'} ${lista ? 'max-lg:!hidden' : ''}`}>
         {datos.length > 0 ? (
           <div className="fila-datos min-w-0 flex-1">
             {datos.map((d, i) =>
@@ -162,16 +201,7 @@ export function TarjetaCarro({
         ) : (
           <p className={`${compacta ? 'text-[10px] md:text-[13px]' : 'text-[13px]'} text-tinta-2`}>Ficha técnica en camino</p>
         )}
-        <button
-          onClick={alternarFavorito}
-          aria-label={fav ? 'Quitar de favoritos' : 'Guardar en favoritos'}
-          aria-pressed={fav}
-          className={`inline-flex shrink-0 items-center justify-center rounded-full border transition-colors ${compacta ? 'h-8 w-8 md:h-10 md:w-10 xl:h-12 xl:w-12' : 'h-12 w-12'} ${
-            fav ? 'border-wise bg-wise text-white' : 'border-linea bg-blanco text-tinta hover:border-tinta'
-          }`}
-        >
-          <Heart className={compacta ? 'h-4 w-4 md:h-[18px] md:w-[18px] xl:h-[21px] xl:w-[21px]' : 'h-[21px] w-[21px]'} fill={fav ? 'currentColor' : 'none'} />
-        </button>
+        {corazon()}
       </div>
     </Link>
     </div>
