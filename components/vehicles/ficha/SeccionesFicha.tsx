@@ -43,6 +43,7 @@ import {
 import { CarRender } from '@/components/car/CarRender';
 import { useEnVista } from '@/components/ui/useEnVista';
 import { KEYS_RENDIMIENTO, leer, millones, rendimiento, specsDe, tanque } from '@/lib/vehiculo-datos';
+import { urlImagen } from '@/lib/data/imagen';
 import { Estimado, SiEstimado } from '@/components/ui/Estimado';
 import { claseDeTipo } from '@/lib/attributes/clase';
 import { masParecidos } from '@/lib/similares';
@@ -166,6 +167,13 @@ const K = {
 // ── Componente ─────────────────────────────────────────────────────────────
 export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indices?: IndicesVehiculo | null }) {
   const s = useMemo(() => specsDe(vehicle.specifications), [vehicle.specifications]);
+  // La foto del interior (si el equipo la subió): acompaña la lista de equipo en Tecnología.
+  const fotoInterior = useMemo(() => {
+    const img = (Array.isArray(vehicle.images) ? vehicle.images : []).find(
+      (i: any) => i?.type === 'interior' || /interior/i.test(String(i?.alt ?? '').split(',').pop() ?? '')
+    );
+    return img ? urlImagen(vehicle.id, img.url, img.order ?? 0) : null;
+  }, [vehicle.id, vehicle.images]);
   const electrico = vehicle.fuelType === 'Eléctrico';
   const [catalogo, setCatalogo] = useState<any[]>([]);
 
@@ -321,7 +329,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             id="desempeno"
             icono={Zap}
             titulo="Desempeño"
-            bajada="La fuerza para subir lomas y adelantar, y qué tan rápido responde cuando pisas a fondo."
+            bajada="La potencia es la fuerza para subir lomas y adelantar. El torque es el empujón al arrancar. El 0 a 100 dice qué tan rápido responde cuando pisas a fondo."
           />
           <div className="grid gap-4 md:grid-cols-12">
             {potencia !== null && (
@@ -462,8 +470,8 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             titulo={electrico ? 'Batería' : 'Consumo'}
             bajada={
               electrico
-                ? 'Cuántos kilómetros haces con una carga y cuánto tardas en volver a llenarla.'
-                : 'Cuántos kilómetros haces con un galón y hasta dónde llegas con el tanque lleno.'
+                ? 'La autonomía es cuánto recorres con una carga completa; en ciudad suele rendir más que en carretera. La batería se mide en kWh: más kWh, más kilómetros.'
+                : 'Los km por galón dicen cuánto recorres con un galón: más es mejor para el bolsillo. En trancón se gasta más que en carretera.'
             }
           />
           <div className="grid gap-4 md:grid-cols-12">
@@ -612,7 +620,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
             titulo={clase === 'auto' ? 'Espacio' : 'Espacio y carga'}
             bajada={
               clase === 'auto'
-                ? 'Lo que le cabe por dentro, cuánto ocupa por fuera y si pasa los reductores sin raspar.'
+                ? 'Lo que le cabe por dentro, cuánto ocupa por fuera y si pasa los reductores sin raspar. El baúl se mide en litros: una maleta de cabina ocupa unos 40.'
                 : 'Cuánto carga, cuánto hala, cuánto ocupa por fuera y si pasa los reductores sin raspar.'
             }
           />
@@ -718,7 +726,7 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
       {/* ── SEGURIDAD ─────────────────────────────────────────────────── */}
       {secciones.some(x => x.id === 'seguridad') && (
         <section>
-          <Cabecera id="seguridad" icono={Shield} titulo="Seguridad" bajada="Cómo te protege en un choque y qué hace para que no llegues a chocar." />
+          <Cabecera id="seguridad" icono={Shield} titulo="Seguridad" bajada="Las estrellas salen de pruebas de choque reales. Los airbags son cojines que se inflan en un golpe. Las ayudas electrónicas frenan o corrigen antes de que alcances a reaccionar." />
           <div className="grid gap-4 md:grid-cols-12">
             {ncap !== null && (
               <Bloque tono="tinta" className={adultos !== null || ninos !== null ? 'md:col-span-5' : 'md:col-span-7'}>
@@ -782,10 +790,17 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
       {/* ── TECNOLOGÍA ────────────────────────────────────────────────── */}
       {secciones.some(x => x.id === 'tecnologia') && (
         <section>
-          <Cabecera id="tecnologia" icono={Sparkles} titulo="Tecnología y confort" bajada="Lo que usas todos los días: el celular, parquear, el aire, las luces." />
+          <Cabecera id="tecnologia" icono={Sparkles} titulo="Tecnología y confort" bajada="Lo que usas todos los días: conectar el celular, ver hacia atrás al parquear, el aire, las luces." />
           <div className="grid gap-4 md:grid-cols-12">
+            {fotoInterior && (
+              <div className={`relative min-h-[240px] overflow-hidden rounded-[30px] md:col-span-5 ${typeof celular === 'string' && celular ? 'md:row-span-2' : ''}`}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={fotoInterior} alt={`Interior del ${vehicle.brand} ${vehicle.model}`} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+                <span className="t-meta absolute left-4 top-4 rounded-full bg-tinta/80 px-3 py-1.5 text-white backdrop-blur">Así se ve por dentro</span>
+              </div>
+            )}
             {typeof celular === 'string' && celular && (
-              <Bloque tono="wise" className="md:col-span-4">
+              <Bloque tono="wise" className={fotoInterior ? 'md:col-span-7' : 'md:col-span-4'}>
                 <Titulito icono={Smartphone} claro>
                   Tu celular en la pantalla
                 </Titulito>
@@ -795,8 +810,8 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
                 <p className="mt-3 text-[13px] text-white/60">Mapas, música y WhatsApp en la pantalla del carro.</p>
               </Bloque>
             )}
-            <Bloque className={typeof celular === 'string' && celular ? 'md:col-span-8' : 'md:col-span-12'}>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <Bloque className={fotoInterior ? 'md:col-span-7' : typeof celular === 'string' && celular ? 'md:col-span-8' : 'md:col-span-12'}>
+              <div className={`grid grid-cols-2 gap-3 ${fotoInterior ? '' : 'sm:grid-cols-3'}`}>
                 {equipo
                   .filter(e => e.key !== 'technology.smartphoneIntegration')
                   .map(e => (

@@ -15,15 +15,15 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
   Armchair,
   CalendarCheck,
+  Scale,
   Fuel,
-  Gauge,
   Heart,
   Luggage,
   MessageCircle,
@@ -44,146 +44,56 @@ import { useMiUbicacion } from '@/hooks/useMiUbicacion';
 import { porCercania } from '@/lib/distancia';
 import { BotonCercania, TarjetaConcesionario, tieneUbicacion, type Concesionario } from '@/components/concesionarios/piezas';
 import { ListaContacto, useContactar, type Motivo } from '@/components/concesionarios/Contacto';
-import { KEYS_RENDIMIENTO, estimadosDe, leer, precioCompleto, rendimiento, specsDe } from '@/lib/vehiculo-datos';
+import { datosClave, precioCompleto, specsDe, tresDatos } from '@/lib/vehiculo-datos';
+import { urlImagen } from '@/lib/data/imagen';
 import { AvisoEstimados, EstimadosProvider, MOSTRAR_ESTIMADOS, MarcaE } from '@/components/ui/Estimado';
 import { AvisoIA } from '@/components/ui/AvisoIA';
-import { claseDeTipo } from '@/lib/attributes/clase';
 import { fotoDe, pinturaDe } from '@/components/car/CarRender';
 
 
-type Punto = { x: number; y: number };
-// Puntos genéricos sobre un perfil lateral mirando a la derecha.
-const P: Record<string, Punto> = {
-  capo: { x: 80, y: 40 },
-  techoF: { x: 60, y: 14 },
-  techoR: { x: 34, y: 16 },
-  cabina: { x: 48, y: 46 },
-  cola: { x: 12, y: 42 },
-  ruedaF: { x: 76, y: 80 },
-  ruedaR: { x: 24, y: 80 },
+// Las vistas del carro (fotos reales que sube el equipo), en el orden en que se recorren.
+const ORDEN_VISTAS = ['lado', 'tres_cuartos_frente', 'frente', 'tres_cuartos_atras', 'atras', 'interior', 'detalle'];
+const ETIQUETA_VISTA: Record<string, string> = {
+  lado: 'Lateral',
+  tres_cuartos_frente: '3/4 delantera',
+  frente: 'Frontal',
+  tres_cuartos_atras: '3/4 trasera',
+  atras: 'Trasera',
+  interior: 'Interior',
+  detalle: 'Detalle',
 };
+// La portada se guarda como "cover": su vista sale del texto alternativo ("…, de lado").
+const VISTA_POR_ALT: [RegExp, string][] = [
+  [/3\/4 delantera/i, 'tres_cuartos_frente'],
+  [/3\/4 trasera/i, 'tres_cuartos_atras'],
+  [/de lado|lateral/i, 'lado'],
+  [/de frente|frontal/i, 'frente'],
+  [/de atr[aá]s|trasera/i, 'atras'],
+  [/interior/i, 'interior'],
+  [/detalle/i, 'detalle'],
+];
 
-interface Hotspot {
-  donde: Punto;
-  texto: string;
-  /** Sale de un dato estimado (no oficial): lleva la "E". */
-  estimado?: boolean;
+interface Vista {
+  url: string;
+  vista: string;
+  etiqueta: string;
+  interior: boolean;
 }
 
-interface Categoria {
-  id: string;
-  nombre: string;
-  titulo: string;
-  explicacion: string;
-  puntos: Hotspot[];
-}
-
-const fmt = (n: number, dec = 0) => new Intl.NumberFormat('es-CO', { maximumFractionDigits: dec }).format(n);
-
-type Texto = string | { t: string; k: string[] } | null;
-
-function categorias(fuelType: string, s: Record<string, any>, tipo?: string, est: Set<string> = new Set()): Categoria[] {
-  const trabajo = claseDeTipo(tipo) !== 'auto';
-  const texto = (path: string) => {
-    let cur: any = s;
-    for (const k of path.split('.')) cur = cur?.[k];
-    return typeof cur === 'string' && cur.trim() ? cur.trim() : null;
-  };
-  const si = (path: string) => {
-    let cur: any = s;
-    for (const k of path.split('.')) cur = cur?.[k];
-    return cur === true;
-  };
-  // h(donde, texto, ...keys): las keys dicen si el dato es estimado.
-  const h = (donde: Punto, t: Texto, ...keys: string[]): Hotspot | null => {
-    if (!t) return null;
-    const texto = typeof t === 'string' ? t : t.t;
-    const ks = typeof t === 'string' ? keys : [...t.k, ...keys];
-    return { donde, texto, estimado: ks.some(k => est.has(k)) };
-  };
-  const n = (path: string[], f: (x: number) => string): Texto => {
-    const v = leer(s, ...path);
-    return v !== null ? { t: f(v), k: path } : null;
-  };
-  const electrico = fuelType === 'Eléctrico';
-
-  const lista: Categoria[] = [
-    {
-      id: 'desempeno',
-      nombre: 'Desempeño',
-      titulo: 'Fuerza y respuesta',
-      explicacion:
-        'La potencia es la fuerza para subir y adelantar. El torque es el empujón desde abajo, el que se siente al arrancar en una loma. El 0 a 100 dice qué tan rápido responde cuando aceleras a fondo.',
-      puntos: [
-        h(P.capo, n(['combustion.maxPower', 'hybrid.maxPower', 'phev.maxPower', 'electric.maxPower'], x => `${fmt(x)} hp de potencia`)),
-        h(P.ruedaF, n(['combustion.maxTorque', 'hybrid.maxTorque', 'electric.maxTorque'], x => `${fmt(x)} Nm de torque`)),
-        h(P.ruedaR, n(['performance.acceleration0to100'], x => `0 a 100 en ${fmt(x, 1)} s`)),
-        h(P.techoF, n(['performance.maxSpeed'], x => `${fmt(x)} km/h máximo`)),
-      ].filter((x): x is Hotspot => !!x),
-    },
-    {
-      id: 'espacio',
-      nombre: 'Espacio',
-      titulo: 'Lo que le cabe',
-      explicacion:
-        'El baúl se mide en litros: una maleta de cabina ocupa unos 40. La altura al piso decide si pasas un policía acostado o un hueco sin raspar.',
-      puntos: [
-        trabajo
-          ? h(P.cola, n(['weight.payload'], x => `Carga ${fmt(x)} kg`))
-          : h(P.cola, n(['dimensions.cargoCapacity'], x => `Baúl de ${fmt(x)} L`)),
-        h(P.cabina, n(['interior.passengerCapacity'], x => `${fmt(x)} pasajeros`)),
-        h(P.ruedaF, n(['chassis.groundClearance'], x => `${fmt(x / 10, 1)} cm del piso`)),
-        h(P.techoR, n(['dimensions.length'], x => `${fmt(x / 1000, 2)} m de largo`)),
-      ].filter((x): x is Hotspot => !!x),
-    },
-    {
-      id: 'seguridad',
-      nombre: 'Seguridad',
-      titulo: 'Cómo te cuida',
-      explicacion:
-        'Las estrellas vienen de pruebas de choque reales. Los airbags son cojines que se inflan en un impacto. Las ayudas electrónicas frenan o corrigen antes de que tú alcances a reaccionar.',
-      puntos: [
-        h(P.cabina, n(['safety.airbags'], x => `${fmt(x)} airbags`)),
-        h(P.techoF, n(['safety.ncapRating'], x => `${fmt(x)} estrellas en choques`)),
-        h(P.capo, si('safety.autonomousEmergencyBraking') ? 'Frena solo si ve un choque' : null, 'safety.autonomousEmergencyBraking'),
-        h(P.ruedaR, si('safety.stabilityControl') ? 'Control de estabilidad' : null, 'safety.stabilityControl'),
-      ].filter((x): x is Hotspot => !!x),
-    },
-    {
-      id: 'eficiencia',
-      nombre: electrico ? 'Batería' : 'Consumo',
-      titulo: electrico ? 'Cuánto aguanta' : 'Cuánto gasta',
-      explicacion: electrico
-        ? 'La autonomía es cuánto recorre con una carga completa; en ciudad suele rendir más que en carretera. La batería se mide en kWh: más kWh, más kilómetros.'
-        : 'Los km por galón dicen cuánto recorres con un galón. Más es mejor para el bolsillo. En trancón se gasta más que en carretera.',
-      puntos: electrico
-        ? [
-            h(P.cabina, n(['electric.realRangeMixed', 'electric.electricRange'], x => `${fmt(x)} km por carga`)),
-            h(P.cola, n(['electric.batteryCapacity'], x => `Batería de ${fmt(x, 1)} kWh`)),
-            h(P.capo, n(['electric.dcChargingTime'], x => `Carga rápida en ${fmt(x)} min`)),
-          ].filter((x): x is Hotspot => !!x)
-        : [
-            h(P.cabina, rendimiento(s) !== null ? `${fmt(rendimiento(s)!)} km por galón` : null, ...KEYS_RENDIMIENTO),
-            h(P.capo, n(['combustion.displacement', 'hybrid.displacement', 'phev.displacement'], x => `Motor de ${fmt(x)} cc`)),
-            h(P.cola, n(['combustion.fuelTankCapacity', 'hybrid.fuelTankCapacity'], x => `Tanque de ${fmt(x, 1)} galones`)),
-            h(P.ruedaR, texto('combustion.transmissionType') ?? texto('hybrid.transmissionType'), 'combustion.transmissionType', 'hybrid.transmissionType'),
-          ].filter((x): x is Hotspot => !!x),
-    },
-    {
-      id: 'tecnologia',
-      nombre: 'Tecnología',
-      titulo: 'Lo que trae',
-      explicacion:
-        'Lo que usas todos los días: conectar el celular, ver hacia atrás al parquear, que el carro te avise si algo se acerca.',
-      puntos: [
-        h(P.cabina, texto('technology.smartphoneIntegration') ? 'Conecta tu celular' : si('technology.bluetooth') ? 'Bluetooth' : null, texto('technology.smartphoneIntegration') ? 'technology.smartphoneIntegration' : 'technology.bluetooth'),
-        h(P.cola, si('assistance.reverseCamera') ? 'Cámara de reversa' : null, 'assistance.reverseCamera'),
-        h(P.ruedaR, si('assistance.parkingSensors') ? 'Sensores de parqueo' : null, 'assistance.parkingSensors'),
-        h(P.techoF, si('technology.touchscreen') ? 'Pantalla táctil' : null, 'technology.touchscreen'),
-      ].filter((x): x is Hotspot => !!x),
-    },
-  ];
-  return lista.filter(c => c.puntos.length > 0);
+function vistasDe(vehicle: any): Vista[] {
+  const imgs: any[] = Array.isArray(vehicle.images) ? vehicle.images : [];
+  const lista = imgs
+    .map((img, i) => {
+      const url = urlImagen(vehicle.id, img?.url, img?.order ?? i);
+      if (!url) return null;
+      const esPortada = !!img.isThumbnail || img.type === 'cover';
+      const porAlt = VISTA_POR_ALT.find(([re]) => re.test(String(img.alt ?? '').split(',').pop() ?? ''))?.[1];
+      const vista = ETIQUETA_VISTA[img.type] ? img.type : porAlt ?? (esPortada ? 'lado' : 'otra');
+      return { url, vista, etiqueta: ETIQUETA_VISTA[vista] ?? 'Foto', interior: vista === 'interior', esPortada };
+    })
+    .filter((x): x is Vista & { esPortada: boolean } => !!x);
+  const peso = (v: Vista & { esPortada: boolean }) => (v.esPortada ? -1 : ORDEN_VISTAS.indexOf(v.vista) === -1 ? 99 : ORDEN_VISTAS.indexOf(v.vista));
+  return lista.sort((a, b) => peso(a) - peso(b));
 }
 
 /** El nombre antes de abrir WhatsApp: el concesionario sabe con quién habla. */
@@ -213,12 +123,16 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
   const { user } = useAuth();
   const { isFavorite, toggleFavorite } = useFavorites();
   const s = useMemo(() => specsDe(vehicle.specifications), [vehicle.specifications]);
-  const est = useMemo(() => new Set(MOSTRAR_ESTIMADOS ? estimadosDe(s) : []), [s]);
-  const cats = useMemo(() => categorias(vehicle.fuelType, s, vehicle.type, est), [vehicle.fuelType, s, vehicle.type, est]);
+  const vistas = useMemo(() => vistasDe(vehicle), [vehicle]);
+  const [vista, setVista] = useState(0);
+  const vistaActual = vistas[vista] ?? null;
+  // Cuatro datos fijos bajo la foto: los tres de las tarjetas y el siguiente que haya.
+  const datosHero = useMemo(() => {
+    const tres = tresDatos(vehicle);
+    const extra = datosClave(vehicle).find(d => !tres.some(t => t.clave === d.clave));
+    return extra ? [...tres, extra] : tres;
+  }, [vehicle]);
   const precioEstimado = MOSTRAR_ESTIMADOS && (!!vehicle.priceEstimated || !!s.commercial?.priceEstimated);
-  const [cat, setCat] = useState(0);
-  const [puntoMovil, setPuntoMovil] = useState<number | null>(null);
-  useEffect(() => setPuntoMovil(null), [cat]);
   // Un solo concesionario (o ninguno): el nombre junto al botón que se tocó y
   // directo a WhatsApp. Varios: la lista para elegir, ordenada por distancia.
   const [contacto, setContacto] = useState<{ motivo: Motivo; lugar: 'arriba' | 'abajo' } | null>(null);
@@ -230,7 +144,6 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
   const carro = { id: vehicle.id, brand: vehicle.brand, model: vehicle.model, year: vehicle.year };
   const [nombre, setNombre] = useState(user?.username ?? '');
   const fav = isFavorite(vehicle.id);
-  const actual = cats[cat];
   const similares: VehiculoTarjeta[] = (vehicle.similarVehicles ?? []).map((v: any) => ({
     ...v,
     fuelType: v.fuelType ?? (v.fuel ? v.fuel.charAt(0) + v.fuel.slice(1).toLowerCase() : ''),
@@ -308,118 +221,81 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
         </div>
       </section>
 
-      {/* ── Escenario con puntos de interés ─────────────────────────────── */}
+      {/* ── Escenario: las fotos reales del carro, vista por vista, y sus datos clave ── */}
       <section className="mx-auto mt-8 max-w-[1440px] px-5 md:px-8">
-        <div className="estudio relative overflow-hidden rounded-[36px] px-4 py-8 md:px-8 md:py-14">
-          <p
-            aria-hidden
-            className="t-display pointer-events-none absolute inset-x-0 top-1/2 hidden -translate-y-1/2 select-none text-center text-[clamp(120px,19vw,300px)] leading-none md:block"
-            style={
-              !fotoDe(vehicle) && ['perla', 'plata'].includes(pinturaDe(vehicle).nombre)
-                ? { color: 'transparent', WebkitTextStroke: '1.5px #cfcdd5' }
-                : { color: '#dcdae0' }
-            }
-          >
-            {vehicle.brand.toUpperCase()}
-          </p>
+        <div className="estudio relative overflow-hidden rounded-[36px] px-4 pb-5 pt-8 md:px-8 md:pb-8 md:pt-12">
+          {!vistaActual?.interior && (
+            <p
+              aria-hidden
+              className="t-display pointer-events-none absolute inset-x-0 top-[38%] hidden -translate-y-1/2 select-none text-center text-[clamp(120px,19vw,300px)] leading-none md:block"
+              style={
+                !fotoDe(vehicle) && ['perla', 'plata'].includes(pinturaDe(vehicle).nombre)
+                  ? { color: 'transparent', WebkitTextStroke: '1.5px #cfcdd5' }
+                  : { color: '#dcdae0' }
+              }
+            >
+              {vehicle.brand.toUpperCase()}
+            </p>
+          )}
 
-          <div className="relative grid gap-6 lg:grid-cols-[180px_1fr_300px] lg:items-center">
-            <nav className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible" aria-label="Categorías" data-recorrido="categorias">
-              {cats.map((c, i) => (
-                <button
-                  key={c.id}
-                  onClick={() => setCat(i)}
-                  className="pastilla h-12 shrink-0 justify-center px-6 lg:w-full"
-                  data-activa={i === cat}
-                >
-                  {c.nombre}
-                </button>
-              ))}
-            </nav>
-
-            <div className="relative mx-auto aspect-[480/220] w-full max-w-[860px]">
+          <div className="relative mx-auto aspect-[480/220] w-full max-w-[980px]">
+            {!vistaActual ? (
               <CarRender car={vehicle} prioridad className="carro-entra absolute inset-x-0 bottom-0 top-[6%]" />
-              {actual?.puntos.map((p, i) => {
-                const izquierda = p.donde.x > 58;
-                return (
-                  <div
-                    key={`${actual.id}-${i}`}
-                    className="hotspot !hidden md:!flex"
-                    style={
-                      {
-                        left: `${p.donde.x}%`,
-                        top: `${p.donde.y}%`,
-                        flexDirection: izquierda ? 'row-reverse' : 'row',
-                        transform: izquierda ? 'translate(calc(-100% + 20px), -50%)' : undefined,
-                        '--d': `${i * 90}ms`,
-                      } as React.CSSProperties
-                    }
-                  >
-                    <span className="hotspot__punto" />
-                    <span className="hotspot__etiqueta">
-                      {p.texto}
-                      {p.estimado && <MarcaE />}
-                    </span>
-                  </div>
-                );
-              })}
-              {/* Celular: el texto no cabe sobre el carro; van los puntos con su número, y el
-                  texto en la lista de abajo (tocar un punto o un dato los resalta juntos). */}
-              {actual?.puntos.map((p, i) => (
+            ) : vistaActual.interior ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={vistaActual.url}
+                src={vistaActual.url}
+                alt={`${vehicle.brand} ${vehicle.model}, interior`}
+                className="sube absolute inset-0 h-full w-full rounded-[24px] object-cover"
+                draggable={false}
+              />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                key={vistaActual.url}
+                src={vistaActual.url}
+                alt={`${vehicle.brand} ${vehicle.model}, ${vistaActual.etiqueta.toLowerCase()}`}
+                className="carro-entra absolute inset-x-0 bottom-0 top-[6%] h-[94%] w-full object-contain drop-shadow-[0_18px_22px_rgba(0,0,0,0.28)]"
+                draggable={false}
+              />
+            )}
+          </div>
+
+          {vistas.length > 1 && (
+            <div className="relative mt-5 flex flex-wrap justify-center gap-2" role="tablist" aria-label="Vistas del carro">
+              {vistas.map((f, i) => (
                 <button
-                  key={`m-${actual.id}-${i}`}
+                  key={f.url}
                   type="button"
-                  onClick={() => setPuntoMovil(i)}
-                  aria-label={p.texto}
-                  className="hotspot-movil md:hidden"
-                  data-activo={puntoMovil === i}
-                  style={{ left: `${p.donde.x}%`, top: `${p.donde.y}%`, '--d': `${i * 90}ms` } as React.CSSProperties}
+                  role="tab"
+                  aria-selected={i === vista}
+                  onClick={() => setVista(i)}
+                  className={`shrink-0 rounded-[18px] border p-1.5 transition-colors ${
+                    i === vista ? 'border-tinta bg-blanco' : 'border-transparent bg-blanco/60 hover:bg-blanco'
+                  }`}
                 >
-                  {i + 1}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={f.url} alt="" loading="lazy" className={`h-11 w-[76px] rounded-xl ${f.interior ? 'object-cover' : 'object-contain'}`} draggable={false} />
+                  <span className={`mt-1 block text-center text-[11px] ${i === vista ? 'font-semibold text-tinta' : 'text-tinta-2'}`}>{f.etiqueta}</span>
                 </button>
               ))}
             </div>
+          )}
 
-            {actual && (
-              <ul className="grid grid-cols-2 gap-2 md:hidden">
-                {actual.puntos.map((p, i) => (
-                  <li key={p.texto}>
-                    <button
-                      type="button"
-                      onClick={() => setPuntoMovil(i)}
-                      className={`flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-[13px] font-medium transition-colors ${
-                        puntoMovil === i ? 'bg-tinta text-white' : 'bg-blanco/90'
-                      }`}
-                    >
-                      <span
-                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold ${
-                          puntoMovil === i ? 'bg-white text-tinta' : 'bg-tinta text-white'
-                        }`}
-                      >
-                        {i + 1}
-                      </span>
-                      <span>
-                        {p.texto}
-                        {p.estimado && <MarcaE />}
-                      </span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {actual && (
-              <div key={actual.id} className="sube overflow-hidden rounded-[28px] bg-blanco shadow-[0_30px_60px_-40px_rgba(14,12,17,0.5)]">
-                <div className="flex items-center gap-3 bg-tinta px-5 py-4 text-white">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
-                    <Gauge className="h-4 w-4" />
-                  </span>
-                  <p className="text-[17px] font-medium tracking-[-0.02em]">{actual.titulo}</p>
+          {datosHero.length > 0 && (
+            <dl className="relative mx-auto mt-5 grid max-w-[980px] grid-cols-2 gap-2 md:grid-cols-4">
+              {datosHero.map(d => (
+                <div key={d.clave} className="rounded-[20px] bg-blanco/90 px-4 py-3.5 text-center">
+                  <dd className="cifra text-[22px] font-semibold leading-none">
+                    {d.valor}
+                    {d.unidad && <span className="ml-1 text-[13px] font-normal text-tinta-2">{d.unidad}</span>}
+                  </dd>
+                  <dt className="mt-1.5 text-[12.5px] text-tinta-2">{d.etiqueta}</dt>
                 </div>
-                <p className="px-5 py-5 text-[14px] leading-relaxed text-tinta-2">{actual.explicacion}</p>
-              </div>
-            )}
-          </div>
+              ))}
+            </dl>
+          )}
         </div>
       </section>
 
@@ -501,22 +377,27 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
       {/* ── Similares: los 3 más parecidos en tipo, precio y características ── */}
       {similares.length > 0 && (
         <section className="mx-auto mt-24 max-w-[1440px] px-5 md:px-8" data-recorrido="similares">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <h2 className="t-titulo text-[32px] md:text-[44px]">
-              Si te gusta este, <span className="text-tinta-2/50">mira y</span>{' '}
-              {/* Compara este carro con los 3 similares a la vez (sin favoritos ni cuenta). */}
-              <Link
-                href={`/compare?ids=${[vehicle.id, ...similares.slice(0, 3).map(v => v.id)].join(',')}`}
-                className="inline-flex items-center gap-2 rounded-full bg-wise px-5 py-1 align-middle text-[0.8em] text-white transition-colors hover:bg-wise-dark"
-                title={`Comparar el ${vehicle.model} con los ${Math.min(3, similares.length)} similares`}
-              >
-                compara <ArrowUpRight className="h-[0.8em] w-[0.8em]" />
-              </Link>{' '}
-              <span className="text-tinta-2/50">similares.</span>
-            </h2>
-            <p className="max-w-[40ch] text-[15px] text-tinta-2">
-              Los más parecidos en precio, tamaño y tipo de carro. Toca «compara» para ponerlos todos frente a frente con el {vehicle.model}.
-            </p>
+          <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-5">
+            <div>
+              <h2 className="t-titulo text-[32px] md:text-[44px]">
+                Si te gusta este, <span className="text-tinta-2/50">mira y compara similares.</span>
+              </h2>
+              <p className="mt-2 max-w-[52ch] text-[15px] text-tinta-2">Los más parecidos en precio, tamaño y tipo de carro.</p>
+            </div>
+            {/* Este carro y sus similares, todos en una sola comparación (por ids: sin favoritos). */}
+            {similares.length >= 2 && (
+              <div className="w-full sm:w-auto">
+                <Link
+                  href={`/compare?ids=${[vehicle.id, ...similares.slice(0, 3).map(v => v.id)].join(',')}`}
+                  className="pastilla pastilla--wise h-14 w-full justify-center px-7 text-[16px] font-semibold sm:w-auto"
+                >
+                  <Scale className="h-5 w-5" /> Comparar los {Math.min(3, similares.length) + 1} a la vez <ArrowUpRight className="h-4 w-4" />
+                </Link>
+                <p className="mt-2 text-center text-[13px] text-tinta-2 sm:text-right">
+                  El {vehicle.model} frente a estos {Math.min(3, similares.length)}, lado a lado.
+                </p>
+              </div>
+            )}
           </div>
           <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {similares.slice(0, 3).map((v, i) => (

@@ -21,6 +21,7 @@ export const getVehicle = cache(async (id: string) => {
         select: {
           id: true,
           url: true,
+          alt: true,
           type: true,
           order: true,
           isThumbnail: true

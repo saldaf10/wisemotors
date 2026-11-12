@@ -88,7 +88,7 @@ const PASOS: Paso[] = [
   },
   {
     titulo: 'Compáralo antes de probarlo',
-    texto: 'Antes de programar la prueba de ruta, baja hasta «Si te gusta este»: ponlo cara a cara con uno parecido, o toca «compara» para verlo junto a los 3 similares.',
+    texto: 'Antes de programar la prueba de ruta, baja hasta «Si te gusta este»: ponlo cara a cara con uno parecido, o toca «Comparar los 4 a la vez» para verlo junto a los similares.',
     donde: enFicha,
     pista: 'Entra a un carro y baja hasta «Si te gusta este».',
     avanzaCuando: enComparacionDirecta,

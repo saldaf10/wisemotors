@@ -311,6 +311,12 @@ cobertura, migración, seeds, motor de cohortes.
   caché — cuello de botella conocido.
 - Tests (npx tsx, sin BD ni API): `scripts/verify-scoring.ts`, `verify-indices.ts`, `verify-clave.ts`, `verify-clase.ts`, `verify-demanda.ts`, `verify-mapas.ts`, `verify-suspension.ts`, `verify-subida.ts`.
 - Registro sin redundancia (8-oct-2026): 253 → 214 campos (se quedaron potencia/peso, que solo se calcula, y frenado regenerativo; el equipo retiró 22 que no se van a llenar). Formato de subida sin IA en `docs/formato-subida.md` (166 líneas; 163 desde el 17-oct-2026, cuando la prueba de choque quedó solo en "Estrellas en prueba de choque" y se retiraron agencia, año y asistencias NCAP → 211 campos). Los retirados y a dónde pasó su dato están en el comentario "CAMPOS RETIRADOS" de `registry.ts`; `lib/db/fusionar-campos.ts` mueve los datos en cada deploy (idempotente, solo llena vacíos) y `scripts/fusionar-campos.ts` lo muestra a mano. La ficha/buscador/índices siguen leyendo los campos viejos como respaldo. Antes de agregar un campo: revisar que no exista ya otro con el mismo dato. En la base SOLO quedan los campos del registro: `lib/db/limpiar-campos.ts` (en cada deploy, después de partir-suspension y fusionar-campos) borra datos, definiciones y valores del JSON de cualquier campo retirado, con respaldo en `estado_sistema` (`respaldo_campos_retirados_<fecha>`). Retirar un campo del registro = se borra de la base en el siguiente deploy.
+- Ficha, tarjeta de arriba (12-nov-2026): ya NO hay pestañas de categoría ni puntos sobre el
+  carro (duplicaban las secciones y no cuadraban con fotos reales). Es una galería de las fotos
+  por vista (`vistasDe` en `FichaVehiculo.tsx`: portada, 3/4, frontal, trasera, interior; la
+  vista de la portada sale de su `alt`) + 4 datos clave. Sin fotos, el dibujo. La única
+  navegación de categorías es `NavSecciones`. La foto `interior` acompaña el equipo en
+  Tecnología. Similares: botón "Comparar los N a la vez" (`/compare?ids=`).
 - Ficha (7-oct-2026): hay `chassis.frontBrakes` (Frenos delanteros) y se retiró `chassis.suspensionSetup` (Suspensión general) del registro. `lib/db/partir-suspension.ts` pasa ese texto viejo a Suspensión delantera/trasera (solo llena vacíos, hereda fuente/confianza) y corre solo en cada deploy de producción desde `preparar-bd.ts`; `scripts/partir-suspension.ts` lo muestra a mano (simulación por defecto, `--write` aplica).
 - Git: push directo a `main` (sin ramas ni PRs), decisión del usuario.
 - Prueba local sin tocar producción: Postgres en Docker (`wise-pg`, puerto 55432) + la
