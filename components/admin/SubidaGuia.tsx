@@ -8,15 +8,21 @@
 //      cada valor a su campo, opciones con tipeo corregidas, vacíos se saltan.
 //   3. Fotos por vista y concesionario → publicar (mismo camino de siempre:
 //      /api/admin/ingest/publish).
+// Con `baseId` ("Subir versión nueva", desde el editor de un carro): la guía
+// nueva solo necesita Modelo, Precio y lo que cambie; el resto se toma de la
+// versión base (lib/subida/version.ts) y queda en la misma familia. Todo lo de
+// versiones va en amarillo.
 // ============================================================================
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, CheckCircle2, ClipboardCopy, Loader2, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ClipboardCopy, Layers, Loader2, RotateCcw, X, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { adminFetch, mensajeDeErrorDeAuth } from '@/lib/admin-fetch';
 import { CLASES, claseDeTipo } from '@/lib/attributes/clase';
 import { TRENES, generarPlantilla, type Tren } from '@/lib/subida/formato';
 import { ORIGENES, leerGuia, type Origen } from '@/lib/subida/leer';
+import { completarConBase, quitadosDeBase } from '@/lib/subida/version';
+import { plano } from '@/lib/subida/texto';
 import { MarcaE } from '@/components/ui/Estimado';
 import { RevisionFotos, fotosIniciales, type FotoRevision } from '@/components/admin/RevisionFotos';
 
@@ -59,7 +65,13 @@ function TextoNota({ texto }: { texto: string }) {
 }
 
 /** Qué filas mostrar al tocar un contador. */
-type Filtro = Origen | 'sin' | 'avisos' | 'errores' | 'vacios' | null;
+type Filtro = Origen | 'sin' | 'base' | 'avisos' | 'errores' | 'vacios' | null;
+
+interface Base {
+  vehiculo: { id: string; brand: string; model: string; familia: string | null; year: number; fuelType: string; type: string; vehicleType: string; price: number };
+  dealerIds: string[];
+  guia: string;
+}
 
 const ALTO_LINEA = 20; // px: igual en la numeración y en el texto para que coincidan.
 
@@ -98,7 +110,12 @@ function GuiaNumerada({ texto, onCambio, areaRef }: { texto: string; onCambio: (
   );
 }
 
-export function SubidaGuia() {
+export function SubidaGuia({ baseId }: { baseId?: string } = {}) {
+  const guardado = baseId ? `${GUARDADO}:${baseId}` : GUARDADO;
+  const [base, setBase] = useState<Base | null>(null);
+  const [errorBase, setErrorBase] = useState<string | null>(null);
+  /** Keys de la base que quien sube decidió no heredar. */
+  const [excluir, setExcluir] = useState<string[]>([]);
   const [tren, setTren] = useState<Tren>('Gasolina');
   const [carroceria, setCarroceria] = useState('SUV');
   const [copiado, setCopiado] = useState(false);
@@ -112,9 +129,21 @@ export function SubidaGuia() {
 
   useEffect(() => {
     try {
-      const g = localStorage.getItem(GUARDADO);
+      const g = localStorage.getItem(guardado);
       if (g) setTexto(g);
     } catch {}
+    if (baseId) {
+      adminFetch(`/api/admin/vehicles/${baseId}/guia`)
+        .then(async res => {
+          const d = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(mensajeDeErrorDeAuth(res) ?? d.error ?? 'No se pudo cargar la versión base');
+          setBase(d);
+          setDealerIds(d.dealerIds ?? []);
+          if ((TRENES as readonly string[]).includes(d.vehiculo.fuelType)) setTren(d.vehiculo.fuelType);
+          setCarroceria(d.vehiculo.type);
+        })
+        .catch(e => setErrorBase(e instanceof Error ? e.message : 'No se pudo cargar la versión base'));
+    }
     fetch('/api/dealers')
       .then(r => (r.ok ? r.json() : []))
       .then((d: any) => setConcesionarios(Array.isArray(d) ? d : (d.dealers ?? [])))
@@ -122,12 +151,22 @@ export function SubidaGuia() {
   }, []);
   useEffect(() => {
     try {
-      localStorage.setItem(GUARDADO, texto);
+      localStorage.setItem(guardado, texto);
     } catch {}
-  }, [texto]);
+  }, [texto, guardado]);
 
   const plantilla = useMemo(() => generarPlantilla({ tren, carroceria }), [tren, carroceria]);
-  const lectura = useMemo(() => (texto.trim() ? leerGuia(texto) : null), [texto]);
+  // La versión base, leída con el mismo lector: de ahí sale lo que la guía nueva no traiga.
+  const lecturaBase = useMemo(() => (base ? leerGuia(base.guia) : null), [base]);
+  const lectura = useMemo(() => {
+    if (!texto.trim()) return null;
+    const nueva = leerGuia(texto, lecturaBase?.identidad);
+    return lecturaBase ? completarConBase(nueva, lecturaBase, new Set(excluir)) : nueva;
+  }, [texto, lecturaBase, excluir]);
+  const quitados = useMemo(
+    () => (lectura && lecturaBase ? quitadosDeBase(leerGuia(texto, lecturaBase.identidad), lecturaBase, new Set(excluir)) : []),
+    [lectura, lecturaBase, texto, excluir]
+  );
   const [filtro, setFiltro] = useState<Filtro>(null);
   const areaRef = useRef<HTMLTextAreaElement>(null);
   const tablaRef = useRef<HTMLDivElement>(null);
@@ -159,7 +198,17 @@ export function SubidaGuia() {
   const errores = lectura?.avisos.filter(a => a.tipo === 'error') ?? [];
   const avisos = lectura?.avisos.filter(a => a.tipo === 'aviso') ?? [];
   const id = lectura?.identidad;
-  const listo = !!lectura && errores.length === 0 && lectura.datos.length > 0;
+  // Una versión nueva necesita su propio nombre: con el mismo modelo y año sería el mismo carro.
+  const mismoNombre = !!base && !!id?.modelo && plano(id.modelo) === plano(base.vehiculo.model) && id.anio === base.vehiculo.year;
+  const heredados = lectura?.datos.filter(d => d.deBase).length ?? 0;
+  const listo = !!lectura && errores.length === 0 && lectura.datos.length > 0 && !mismoNombre && (!baseId || !!base);
+
+  /** La guía de la base en la caja, sin modelo ni precio (es lo que cambia), para editarla. */
+  function copiarBase() {
+    if (!base) return;
+    if (texto.trim() && !confirm('Esto reemplaza lo que pegaste. ¿Seguir?')) return;
+    setTexto(base.guia.replace(/^Modelo:.*$/m, 'Modelo: ').replace(/^Precio de lista \(COP\):.*$/m, 'Precio de lista (COP): '));
+  }
 
   async function copiar() {
     try {
@@ -188,6 +237,7 @@ export function SubidaGuia() {
           vehicleType: categoria,
           fuelType: id.tren,
           price: id.precio,
+          baseId: base?.vehiculo.id,
           priceEstimated: !!id.precioEstimado,
           priceReasoningEs: id.precioEstimado ? 'Precio estimado (marcado con E en la guía).' : 'Precio de la guía de subida.',
           priceConfidence: id.precioEstimado ? 0.6 : 1,
@@ -217,6 +267,7 @@ export function SubidaGuia() {
       if (!res.ok) throw new Error(mensajeDeErrorDeAuth(res) ?? data.error ?? 'No se pudo publicar');
       setPublicado({ id: data.vehicle.id, nombre: `${id.marca} ${id.modelo} ${id.anio}` });
       setTexto('');
+      setExcluir([]);
       setFotos(fotosIniciales(undefined));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo publicar');
@@ -230,6 +281,11 @@ export function SubidaGuia() {
       <div className="mx-auto max-w-xl rounded-[28px] border border-linea bg-blanco p-8 text-center">
         <CheckCircle2 className="mx-auto h-10 w-10 text-wise" />
         <h2 className="mt-3 text-xl font-bold text-tinta">{publicado.nombre} publicado</h2>
+        {base && (
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-version/20 px-3 py-1 text-[13px] font-semibold text-version-oscuro">
+            <Layers className="h-3.5 w-3.5" /> Queda como versión de {base.vehiculo.brand} {base.vehiculo.model}
+          </p>
+        )}
         <div className="mt-5 flex justify-center gap-2">
           <Button variant="wise" onClick={() => window.open(`/vehicles/${publicado.id}`, '_blank', 'noopener')}>
             Ver ficha
@@ -244,6 +300,42 @@ export function SubidaGuia() {
 
   return (
     <div className="space-y-6">
+      {baseId && (
+        <section className="rounded-[28px] border border-version/50 bg-version/10 p-6">
+          {errorBase ? (
+            <p className="text-sm text-rose-700">{errorBase}</p>
+          ) : !base ? (
+            <p className="flex items-center gap-2 text-sm text-tinta-2">
+              <Loader2 className="h-4 w-4 animate-spin" /> Cargando la versión base…
+            </p>
+          ) : (
+            <>
+              <p className="flex items-center gap-1.5 text-[13px] font-semibold text-version-oscuro">
+                <Layers className="h-4 w-4" /> Versión nueva de
+              </p>
+              <h2 className="mt-1 text-xl font-bold text-tinta">
+                {base.vehiculo.brand} {base.vehiculo.model} {base.vehiculo.year}
+                <span className="ml-2 text-[14px] font-normal text-tinta-2">${Math.round(base.vehiculo.price / 1e6)} M · {lecturaBase?.datos.length ?? 0} datos</span>
+              </h2>
+              <p className="mt-2 max-w-[70ch] text-sm leading-relaxed text-tinta-2">
+                En la guía basta con <span className="font-semibold text-tinta">Modelo</span> (el nombre con la versión, ej. «{base.vehiculo.model.split(' ')[0]} RS»),{' '}
+                <span className="font-semibold text-tinta">Precio</span> y lo que cambie. Todo lo demás se toma de esta versión, con sus fuentes, y sale en
+                amarillo en la tabla: puedes quitar cualquiera. Las fotos son nuevas; los concesionarios vienen marcados como los de la base.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button type="button" onClick={copiarBase} className="pastilla h-10 !border-version !bg-version px-4 font-semibold !text-tinta hover:!bg-version/80">
+                  <ClipboardCopy className="h-4 w-4" /> Copiar aquí la guía de {base.vehiculo.model} para editarla
+                </button>
+                <a href={`/admin/vehicles/${base.vehiculo.id}/edit`} className="pastilla h-10 px-4">
+                  Volver al carro
+                </a>
+              </div>
+              {base.vehiculo.familia && <p className="mt-3 text-[12px] text-version-oscuro">Familia: {base.vehiculo.familia}</p>}
+            </>
+          )}
+        </section>
+      )}
+
       {/* 1. Plantilla */}
       <section className="rounded-[28px] border border-linea bg-blanco p-6">
         <h2 className="text-lg font-bold text-tinta">1. Plantilla para este carro</h2>
@@ -294,6 +386,16 @@ export function SubidaGuia() {
           <p className="mt-1 text-sm text-tinta-2">
             {[id?.tren, id?.carroceria, id?.categoria, id?.precio ? `$${id.precio.toLocaleString('es-CO')}${id.precioEstimado ? ' (estimado)' : ''}` : null].filter(Boolean).join(' · ') || 'Faltan los datos de identidad'}
           </p>
+          {!!id?.deBase?.length && (
+            <p className="mt-1 text-[12.5px] text-version-oscuro">
+              De la versión base: {id.deBase.map(x => ({ marca: 'marca', anio: 'año', tren: 'tren motriz', carroceria: 'carrocería', categoria: 'categoría' } as Record<string, string>)[x] ?? x).join(', ')}.
+            </p>
+          )}
+          {mismoNombre && (
+            <p className="mt-2 flex items-center gap-2 text-[13.5px] text-rose-700">
+              <XCircle className="h-4 w-4" /> La versión nueva necesita su propio Modelo (con el nombre de la versión): «{base?.vehiculo.model}» ya existe.
+            </p>
+          )}
           <div className="mt-4 flex flex-wrap gap-2 text-[13px]">
             <button type="button" onClick={() => setFiltro(null)} className={`rounded-full bg-wise/10 px-3 py-1 text-wise ${filtro === null ? 'ring-2 ring-wise/40' : ''}`}>
               {lectura.datos.length} datos leídos
@@ -306,6 +408,11 @@ export function SubidaGuia() {
                 </button>
               ) : null;
             })}
+            {heredados > 0 && (
+              <button type="button" onClick={() => verFiltro('base')} aria-pressed={filtro === 'base'} className={`inline-flex items-center gap-1 rounded-full bg-version/25 px-3 py-1 font-semibold text-version-oscuro hover:brightness-95 ${filtro === 'base' ? 'ring-2 ring-version' : ''}`}>
+                <Layers className="h-3.5 w-3.5" /> {heredados} de la versión base
+              </button>
+            )}
             {lectura.datos.some(d => !d.origen) && (
               <button type="button" onClick={() => verFiltro('sin')} aria-pressed={filtro === 'sin'} className={`rounded-full bg-tarjeta px-3 py-1 text-tinta-2 hover:brightness-95 ${filtro === 'sin' ? 'ring-2 ring-tinta/30' : ''}`}>
                 {lectura.datos.filter(d => !d.origen).length} sin letra
@@ -379,7 +486,7 @@ export function SubidaGuia() {
                 <div className="mb-3 flex items-center justify-between gap-3 rounded-xl bg-papel px-4 py-2 text-[13px] text-tinta-2">
                   <span>
                     Mostrando solo los datos{' '}
-                    <span className="font-semibold text-tinta">{filtro === 'sin' ? 'sin letra' : `${ORIGENES[filtro].toLowerCase()} (${filtro})`}</span>. Toca una fila
+                    <span className="font-semibold text-tinta">{filtro === 'sin' ? 'sin letra' : filtro === 'base' ? 'de la versión base' : `${ORIGENES[filtro].toLowerCase()} (${filtro})`}</span>. Toca una fila
                     para ir a esa línea del texto.
                   </span>
                   <button type="button" onClick={() => setFiltro(null)} className="font-medium text-wise hover:underline">
@@ -400,11 +507,35 @@ export function SubidaGuia() {
                 </thead>
                 <tbody>
                   {lectura.datos
-                    .filter(d => !filtro || filtro === 'errores' || filtro === 'avisos' || filtro === 'vacios' || (filtro === 'sin' ? !d.origen : d.origen === filtro))
+                    .filter(d => !filtro || filtro === 'errores' || filtro === 'avisos' || filtro === 'vacios' || (filtro === 'sin' ? !d.origen : filtro === 'base' ? d.deBase : d.origen === filtro))
                     .map(d => (
-                    <tr key={d.key} onClick={() => irALinea(d.linea)} title="Ir a esta línea del texto" className="cursor-pointer border-b border-linea/60 align-top hover:bg-papel">
-                      <td className="py-1.5 pr-3 font-mono text-[12px] text-tinta-2/70">{d.linea}</td>
-                      <td className="py-1.5 pr-3 text-tinta-2">{d.campo}</td>
+                    <tr
+                      key={d.key}
+                      onClick={() => irALinea(d.linea)}
+                      title={d.deBase ? 'Tomado de la versión base' : 'Ir a esta línea del texto'}
+                      className={`border-b border-linea/60 align-top ${d.deBase ? 'bg-version/10' : 'cursor-pointer hover:bg-papel'}`}
+                    >
+                      <td className="py-1.5 pr-3 font-mono text-[12px] text-tinta-2/70">{d.deBase ? '—' : d.linea}</td>
+                      <td className="py-1.5 pr-3 text-tinta-2">
+                        {d.campo}
+                        {d.deBase && (
+                          <span className="ml-2 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-version/30 px-2 py-0.5 text-[11px] font-semibold text-version-oscuro">
+                            de la base
+                            <button
+                              type="button"
+                              aria-label={`No heredar ${d.campo}`}
+                              title="No heredar este dato"
+                              onClick={e => {
+                                e.stopPropagation();
+                                setExcluir(x => [...x, d.key]);
+                              }}
+                              className="rounded-full hover:bg-version/50"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        )}
+                      </td>
                       <td className="py-1.5 pr-3 font-mono text-[12.5px] text-tinta-2">{d.escrito}</td>
                       <td className={`py-1.5 pr-3 font-medium ${String(fmt(d.valor)) !== d.escrito ? 'text-wise' : 'text-tinta'}`}>
                         {fmt(d.valor)}
@@ -424,6 +555,23 @@ export function SubidaGuia() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+          {quitados.length > 0 && (
+            <div className="mt-4 rounded-2xl border border-version/40 bg-version/10 p-3 text-[13px]">
+              <p className="font-semibold text-version-oscuro">No se heredan de la base ({quitados.length}). Toca uno para volver a usarlo:</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {quitados.map(d => (
+                  <button
+                    key={d.key}
+                    type="button"
+                    onClick={() => setExcluir(x => x.filter(k => k !== d.key))}
+                    className="inline-flex items-center gap-1 rounded-full border border-version/50 bg-blanco px-2.5 py-1 text-tinta-2 hover:border-version"
+                  >
+                    <RotateCcw className="h-3 w-3" /> {d.campo}: {fmt(d.valor)}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
           {(lectura.notasGenerales.length > 0 || id?.precioNota) && (

@@ -87,3 +87,20 @@ API de WiseMotors. Pega la plantilla, adjunta la ficha técnica en PDF y usa est
 
 Antes de publicar, revisa siempre la tabla **Se guarda** contra la ficha. La IA de un chat
 también se equivoca de versión o de unidad.
+
+## Otra versión de un carro que ya está (ej. Onix RS cuando ya está el Onix LT)
+
+1. En el panel, abre el carro que ya está (el Onix LT) y toca **Subir versión nueva** (amarillo).
+2. La guía de la versión nueva solo necesita **Modelo** con el nombre de la versión ("Onix RS"),
+   **Precio** y los datos que cambian. Marca, año, tren motriz, carrocería y todos los demás datos
+   se toman del Onix LT, con sus letras O/C/X/E y sus notas. Si prefieres partir de la guía del LT
+   y editarla, toca **Copiar aquí la guía de Onix LT**.
+3. En la tabla, lo heredado sale en amarillo con «de la base». Si un dato de la base NO es igual en
+   la versión nueva y no lo tienes, quítalo con la × (no se hereda); si lo tienes, escríbelo en la
+   guía y gana el tuyo.
+4. Sube las fotos de la versión nueva. Los concesionarios vienen marcados como los de la base.
+
+Al publicar, los dos quedan en la misma **familia** ("Onix"): en el catálogo salen en una sola
+tarjeta con un toggle amarillo para pasar de una versión a otra, y en la ficha se ve "Este carro
+viene en 2 versiones". La familia se puede cambiar en el editor de cada carro (campo amarillo
+"Familia"): los carros de la misma marca con la misma familia van juntos; vacía, el carro va solo.

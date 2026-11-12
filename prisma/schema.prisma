@@ -62,6 +62,9 @@ model Vehicle {
   fuelType       String
   history        String?
   wiseCategories String?
+  // Versiones del mismo carro: los de igual marca y familia ("Seagull EV") salen en una sola
+  // tarjeta con un toggle. La etiqueta de cada versión es el modelo sin la familia ("GL", "GS").
+  familia        String?
   specifications String
   reviewVideoUrl String?
   status         String          @default("Disponible")
@@ -82,6 +85,7 @@ model Vehicle {
   @@index([status, type, price])
   @@index([status, price])
   @@index([brand, model])
+  @@index([brand, familia])
   @@map("vehicles")
 }
 

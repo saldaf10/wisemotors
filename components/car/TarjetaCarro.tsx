@@ -7,16 +7,20 @@
 // tres cifras con divisores. Al pasar el cursor: la tarjeta se inclina en 3D
 // siguiendo el mouse, se tiñe de morado desde arriba y el nombre del modelo
 // aparece gigante detrás del carro.
+//
+// Con `versiones` (el mismo carro en varias versiones, lib/versiones) la
+// tarjeta es una sola y un toggle amarillo cambia de versión en el sitio.
 // ============================================================================
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useRef } from 'react';
-import { ArrowUpRight, Heart } from 'lucide-react';
+import { useCallback, useRef, useState } from 'react';
+import { ArrowUpRight, Heart, Layers } from 'lucide-react';
 import { CarRender, type CarLike } from '@/components/car/CarRender';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/contexts/AuthContext';
 import { millones, palabraGigante, tresDatos } from '@/lib/vehiculo-datos';
+import { etiquetaVersion, nombreFamilia } from '@/lib/versiones';
 
 export interface VehiculoTarjeta extends CarLike {
   id: string;
@@ -27,16 +31,69 @@ export interface VehiculoTarjeta extends CarLike {
   fuelType: string;
   type: string;
   specifications?: unknown;
+  /** Agrupa las versiones del mismo carro (lib/versiones). */
+  familia?: string | null;
+}
+
+/** Toggle amarillo entre versiones. Va dentro de un enlace: no navega, solo cambia. */
+export function ToggleVersiones({
+  versiones,
+  activa,
+  onCambio,
+  chica = false,
+}: {
+  versiones: { id: string; model: string; familia?: string | null }[];
+  activa: number;
+  onCambio: (i: number) => void;
+  chica?: boolean;
+}) {
+  const parar = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  return (
+    <div
+      role="radiogroup"
+      aria-label={`${versiones.length} versiones`}
+      onClick={parar}
+      className="flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full bg-version/20 p-0.5 [scrollbar-width:none]"
+    >
+      <span className={`flex shrink-0 items-center gap-1 font-semibold text-version-oscuro ${chica ? 'pl-1.5 pr-0.5 text-[10px] md:pl-2 md:text-[11px]' : 'pl-2 pr-1 text-[11px]'}`} title={`${versiones.length} versiones`}>
+        <Layers className={chica ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
+        {versiones.length}
+      </span>
+      {versiones.map((v, i) => (
+        <button
+          key={v.id}
+          type="button"
+          role="radio"
+          aria-checked={i === activa}
+          onClick={e => {
+            parar(e);
+            onCambio(i);
+          }}
+          className={`whitespace-nowrap rounded-full font-semibold transition-colors ${chica ? 'px-2 py-0.5 text-[10px] md:px-2.5 md:py-1 md:text-[12px]' : 'px-3 py-1 text-[12px]'} ${
+            i === activa ? 'bg-version text-tinta shadow-sm' : 'text-version-oscuro hover:bg-version/30'
+          }`}
+        >
+          {etiquetaVersion(v)}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export function TarjetaCarro({
-  vehiculo,
+  vehiculo: inicial,
+  versiones,
   indice = 0,
   destacada = false,
   compacta = false,
   detallada = false,
 }: {
   vehiculo: VehiculoTarjeta;
+  /** Todas las versiones del mismo carro (incluida `vehiculo`), en el orden del toggle; con 2 o más sale. */
+  versiones?: VehiculoTarjeta[];
   indice?: number;
   destacada?: boolean;
   /** Para ir de a tres por fila hasta en celular: nombre arriba, un solo dato y todo más chico. */
@@ -44,6 +101,12 @@ export function TarjetaCarro({
   /** Con `compacta`, de a dos (catálogo): suma año, combustible y carrocería, y los tres datos en lista. */
   detallada?: boolean;
 }) {
+  // Arranca en la versión que se pasó como `vehiculo` (la que ubicó la tarjeta); el toggle va por precio.
+  const [activa, setActiva] = useState(() => Math.max(0, versiones?.findIndex(v => v.id === inicial.id) ?? 0));
+  const variasVersiones = !!versiones && versiones.length > 1;
+  const vehiculo = (variasVersiones && versiones[Math.min(activa, versiones.length - 1)]) || inicial;
+  // Con versiones, el título es el carro ("Seagull EV") y la versión va en el toggle.
+  const nombre = variasVersiones ? nombreFamilia(vehiculo) : vehiculo.model;
   const ref = useRef<HTMLAnchorElement>(null);
   const frame = useRef(0);
   const router = useRouter();
@@ -100,20 +163,20 @@ export function TarjetaCarro({
 
   return (
     // La entrada va en un envoltorio: su animación de transform no debe pisar la inclinación.
-    <div className="sube" style={{ '--d': `${Math.min(indice, 8) * 70}ms` } as React.CSSProperties}>
+    <div className="sube h-full" style={{ '--d': `${Math.min(indice, 8) * 70}ms` } as React.CSSProperties}>
     <Link
       ref={ref}
       href={`/vehicles/${vehiculo.id}`}
       onMouseMove={mover}
       onMouseLeave={salir}
-      className={`tarjeta-carro group block ${compacta ? 'max-md:!rounded-[18px] p-2.5 md:p-4 xl:p-6' : 'p-5 md:p-6'}`}
+      className={`tarjeta-carro group flex h-full flex-col ${compacta ? 'max-md:!rounded-[18px] p-2.5 md:p-4 xl:p-6' : 'p-5 md:p-6'}`}
       data-destacada={destacada}
     >
       {compacta ? (
         <div className="relative z-10 flex items-start justify-between gap-2 xl:hidden">
           <div className="min-w-0">
             <h3 className="line-clamp-2 min-h-[2lh] text-[13px] font-semibold leading-tight tracking-[-0.02em] text-tinta md:text-[17px]">
-              {vehiculo.brand} {vehiculo.model}
+              {vehiculo.brand} {nombre}
             </h3>
             {detallada ? (
               <p className="mt-0.5 truncate text-[11px] text-tinta-2 md:text-[12px]">
@@ -135,7 +198,7 @@ export function TarjetaCarro({
       <div className={`relative z-10 flex items-start justify-between gap-3 ${compacta ? 'max-xl:!hidden' : ''}`}>
         <div className="min-w-0">
           <h3 className="truncate text-[20px] font-semibold tracking-[-0.03em] text-tinta md:text-[22px]">
-            {vehiculo.brand} {vehiculo.model}
+            {vehiculo.brand} {nombre}
           </h3>
           <p className="mt-0.5 text-[13px] text-tinta-2">
             {vehiculo.year} · {vehiculo.fuelType} · {vehiculo.type}
@@ -149,6 +212,12 @@ export function TarjetaCarro({
         </div>
       </div>
 
+      {variasVersiones && (
+        <div className={`relative z-10 ${compacta ? 'mt-1.5 md:mt-2' : 'mt-3'}`}>
+          <ToggleVersiones versiones={versiones!} activa={Math.min(activa, versiones!.length - 1)} onCambio={setActiva} chica={compacta} />
+        </div>
+      )}
+
       <div className={`relative flex items-center justify-center overflow-hidden ${compacta ? `my-2 aspect-[4/3] md:my-3 md:aspect-[16/9] xl:my-4 ${destacada ? 'xl:aspect-[16/7]' : 'xl:aspect-[16/7.5]'}` : destacada ? 'my-4 aspect-[16/7]' : 'my-4 aspect-[16/7.5]'}`}>
         <span
           aria-hidden
@@ -160,6 +229,8 @@ export function TarjetaCarro({
         {lista && corazon('absolute right-0 top-0 z-10 lg:hidden')}
       </div>
 
+      {/* Lo de abajo, abajo: con el toggle unas tarjetas son más altas que otras en la fila. */}
+      <div className="mt-auto">
       {lista && (
         <dl className="relative z-10 divide-y divide-linea lg:hidden">
           {datos.map(d => (
@@ -202,6 +273,7 @@ export function TarjetaCarro({
           <p className={`${compacta ? 'text-[10px] md:text-[13px]' : 'text-[13px]'} text-tinta-2`}>Ficha técnica en camino</p>
         )}
         {corazon()}
+      </div>
       </div>
     </Link>
     </div>

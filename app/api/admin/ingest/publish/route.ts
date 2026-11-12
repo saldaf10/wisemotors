@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
       notasGenerales: Array.isArray(body?.notasGenerales) ? body.notasGenerales : [],
       priceOrigen: typeof body?.priceOrigen === 'string' ? body.priceOrigen : null,
       priceNota: typeof body?.priceNota === 'string' ? body.priceNota : undefined,
+      baseId: typeof body?.baseId === 'string' ? body.baseId : undefined,
       // La aceptación en la pantalla de revisión ES la verificación humana
       verifiedBy: auth.userId,
     });

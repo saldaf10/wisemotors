@@ -1,7 +1,7 @@
 // ============================================================================
 // Edición de un carro publicado desde el panel (reemplaza el formulario viejo
 // de 200 campos). Un solo guardado con todo lo que cambió:
-//   - identidad (marca, modelo, año, carrocería, categoría, tren motriz, estado),
+//   - identidad (marca, modelo, año, carrocería, categoría, tren motriz, estado, familia),
 //   - precio: lo pone una persona, así que deja de ser "estimado",
 //   - datos del registro (poner o cambiar) y datos a quitar,
 //   - concesionarios que lo venden,
@@ -16,7 +16,7 @@ import { escribirHechos, quitarHechos, upsertPrecioHecho } from '@/lib/auditoria
 import { specsDe } from '@/lib/vehiculo-datos';
 
 export interface CambiosVehiculo {
-  identidad?: Partial<{ brand: string; model: string; year: number; type: string; vehicleType: string; fuelType: string; status: string }>;
+  identidad?: Partial<{ brand: string; model: string; year: number; type: string; vehicleType: string; fuelType: string; status: string; familia: string }>;
   precio?: number;
   hechos?: { key: string; valor: unknown }[];
   quitar?: string[];
@@ -66,6 +66,8 @@ export async function editarVehiculo(id: string, c: CambiosVehiculo, userId: str
     if (!TRENES.includes(idt.fuelType)) return { ok: false, error: 'Tren motriz inválido' };
     datos.fuelType = idt.fuelType;
   }
+  // Familia: agrupa las versiones del mismo carro (lib/versiones). Vacía = va solo.
+  if (idt.familia !== undefined) datos.familia = String(idt.familia).trim().slice(0, 80) || null;
   if (idt.status !== undefined) {
     if (!ESTADOS.includes(idt.status)) return { ok: false, error: 'Estado inválido' };
     datos.status = idt.status;

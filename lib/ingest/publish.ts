@@ -9,6 +9,7 @@
 import { prisma } from '@/lib/prisma';
 import { ATTRIBUTE_REGISTRY, attributeAppliesTo } from '@/lib/attributes/registry';
 import { computeCoverage } from '@/lib/attributes/coverage';
+import { familiaEntre } from '@/lib/versiones';
 
 export interface AcceptedFact {
   key: string;
@@ -51,6 +52,8 @@ export interface PublishInput {
   priceNota?: string;
   /** userId del revisor humano; null en cargas automáticas de prueba. */
   verifiedBy: string | null;
+  /** "Subir versión nueva": el carro del que es versión. Quedan en la misma familia (lib/versiones). */
+  baseId?: string;
 }
 
 export type PublishResult =
@@ -135,6 +138,17 @@ export async function publishDraft(input: PublishInput): Promise<PublishResult> 
     };
   }
 
+  // Versión de otro carro: misma familia. Si la base aún no tenía, se le pone la que comparten
+  // los dos nombres ("Onix LT" + "Onix RS" → "Onix").
+  let familia: string | null = null;
+  if (input.baseId) {
+    const base = await prisma.vehicle.findUnique({ where: { id: input.baseId }, select: { id: true, model: true, familia: true } });
+    if (base) {
+      familia = base.familia?.trim() || familiaEntre(base.model, model);
+      if (!base.familia?.trim()) await prisma.vehicle.update({ where: { id: base.id }, data: { familia } });
+    }
+  }
+
   const specs = nestByPath(clean);
   specs.commercial = specs.commercial ?? {};
   specs.commercial.priceCop = price;
@@ -163,6 +177,7 @@ export async function publishDraft(input: PublishInput): Promise<PublishResult> 
     data: {
       brand,
       model,
+      familia,
       year: Number(year),
       price,
       priceEstimated: !!input.priceEstimated,

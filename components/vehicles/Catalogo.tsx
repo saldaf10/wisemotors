@@ -14,6 +14,7 @@ import { useMemo, useState } from 'react';
 import { ArrowDownUp, Search, SlidersHorizontal, X } from 'lucide-react';
 import { TarjetaCarro, type VehiculoTarjeta } from '@/components/car/TarjetaCarro';
 import { millones } from '@/lib/vehiculo-datos';
+import { agruparVersiones, claveFamilia } from '@/lib/versiones';
 
 const ORDENES = [
   { v: 'recientes', t: 'Recientes' },
@@ -62,6 +63,9 @@ export function Catalogo({ vehiculos }: { vehiculos: VehiculoTarjeta[] }) {
     if (orden === 'marca') out.sort((a, b) => `${a.brand}${a.model}`.localeCompare(`${b.brand}${b.model}`, 'es'));
     return out;
   }, [vehiculos, texto, combustibles, carrocerias, marcas, rango, orden]);
+
+  // Las versiones del mismo carro van en una sola tarjeta, donde estaba la primera.
+  const grupos = useMemo(() => agruparVersiones(filtrados), [filtrados]);
 
   // Histograma de precios del catálogo completo
   const barras = useMemo(() => {
@@ -218,7 +222,7 @@ export function Catalogo({ vehiculos }: { vehiculos: VehiculoTarjeta[] }) {
     <div className="mx-auto max-w-[1440px] px-5 pb-10 pt-6 md:px-8 md:pt-14">
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-linea pb-5 md:gap-5 md:pb-8">
         <h1 className="t-titulo text-[38px] md:text-[80px]">
-          Catálogo <span className="t-ligero text-tinta-2/50">({filtrados.length})</span>
+          Catálogo <span className="t-ligero text-tinta-2/50">({grupos.length})</span>
         </h1>
         <div className="flex items-center gap-2">
           <button onClick={() => setPanel(true)} className="pastilla h-11 px-4 lg:hidden">
@@ -252,8 +256,16 @@ export function Catalogo({ vehiculos }: { vehiculos: VehiculoTarjeta[] }) {
           {filtrados.length > 0 ? (
             // De a dos también en celular: tarjeta compacta (en pantallas anchas es la completa).
             <div className="grid grid-cols-2 gap-2 md:gap-5 2xl:grid-cols-3">
-              {filtrados.map((v, i) => (
-                <TarjetaCarro key={v.id} vehiculo={v} indice={i} destacada={i === 0} compacta detallada />
+              {grupos.map((g, i) => (
+                <TarjetaCarro
+                  key={claveFamilia(g[0])}
+                  vehiculo={g[0]}
+                  versiones={g.length > 1 ? [...g].sort((a, b) => a.price - b.price) : undefined}
+                  indice={i}
+                  destacada={i === 0}
+                  compacta
+                  detallada
+                />
               ))}
             </div>
           ) : (

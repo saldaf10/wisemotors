@@ -25,6 +25,7 @@ import {
   Scale,
   Fuel,
   Heart,
+  Layers,
   Luggage,
   MessageCircle,
   Shield,
@@ -44,7 +45,7 @@ import { useMiUbicacion } from '@/hooks/useMiUbicacion';
 import { porCercania } from '@/lib/distancia';
 import { BotonCercania, TarjetaConcesionario, tieneUbicacion, type Concesionario } from '@/components/concesionarios/piezas';
 import { ListaContacto, useContactar, type Motivo } from '@/components/concesionarios/Contacto';
-import { datosClave, precioCompleto, specsDe, tresDatos } from '@/lib/vehiculo-datos';
+import { datosClave, millones, precioCompleto, specsDe, tresDatos } from '@/lib/vehiculo-datos';
 import { urlImagen } from '@/lib/data/imagen';
 import { AvisoEstimados, EstimadosProvider, MOSTRAR_ESTIMADOS, MarcaE } from '@/components/ui/Estimado';
 import { AvisoIA } from '@/components/ui/AvisoIA';
@@ -94,6 +95,40 @@ function vistasDe(vehicle: any): Vista[] {
     .filter((x): x is Vista & { esPortada: boolean } => !!x);
   const peso = (v: Vista & { esPortada: boolean }) => (v.esPortada ? -1 : ORDEN_VISTAS.indexOf(v.vista) === -1 ? 99 : ORDEN_VISTAS.indexOf(v.vista));
   return lista.sort((a, b) => peso(a) - peso(b));
+}
+
+/** Las versiones del mismo carro (lib/versiones): todo lo del toggle va en amarillo. */
+function Versiones({ versiones, actual }: { versiones: { id: string; etiqueta: string; price: number }[]; actual: string }) {
+  if (versiones.length < 2) return null;
+  const precioActual = versiones.find(v => v.id === actual)?.price ?? 0;
+  return (
+    <div className="mt-5">
+      <p className="flex items-center gap-1.5 text-[13px] font-semibold text-version-oscuro">
+        <Layers className="h-4 w-4" /> Este carro viene en {versiones.length} versiones
+      </p>
+      <nav aria-label="Versiones" className="mt-2 flex flex-wrap gap-2">
+        {versiones.map(v => {
+          const esta = v.id === actual;
+          const dif = v.price - precioActual;
+          return (
+            <Link
+              key={v.id}
+              href={`/vehicles/${v.id}`}
+              aria-current={esta ? 'page' : undefined}
+              className={`rounded-[18px] border px-4 py-2.5 transition-colors ${
+                esta ? 'border-version bg-version text-tinta shadow-[0_10px_24px_-14px_rgba(234,179,8,0.9)]' : 'border-version/40 bg-version/10 text-tinta hover:bg-version/25'
+              }`}
+            >
+              <span className="block text-[15px] font-semibold leading-tight">{v.etiqueta}</span>
+              <span className="cifra mt-0.5 block text-[12px] text-tinta/70">
+                {esta ? `${millones(v.price)} · la que ves` : `${millones(v.price)} · ${dif === 0 ? 'mismo precio' : `${dif > 0 ? '+' : '−'}${millones(Math.abs(dif))}`}`}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
+    </div>
+  );
 }
 
 /** El nombre antes de abrir WhatsApp: el concesionario sabe con quién habla. */
@@ -182,6 +217,7 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
             <p className="t-ligero mt-2 text-[28px] text-tinta-2 md:text-[40px]">
               {vehicle.model} · {vehicle.year}
             </p>
+            <Versiones versiones={vehicle.versiones ?? []} actual={vehicle.id} />
           </div>
           <div className="sube flex w-full flex-col items-start gap-4 md:w-auto md:items-end" style={{ '--d': '120ms' } as React.CSSProperties}>
             <div className="md:text-right">

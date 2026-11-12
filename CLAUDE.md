@@ -329,6 +329,20 @@ cobertura, migración, seeds, motor de cohortes.
   carrocería y los tres datos en lista, corazón sobre la foto); desde `xl` la compacta muestra la
   cabecera completa, así que en escritorio se ve igual. Series (`lib/palette.ts`): el 4.º color
   es amarillo (`#eab308`), antes magenta, que en el radar se confundía con el rojo.
+- Versiones (12-nov-2026): `Vehicle.familia` (nullable). Misma marca + misma familia = versiones
+  del mismo carro (`lib/versiones.ts`: `claveFamilia`, `etiquetaVersion` = modelo sin la familia,
+  "Base" si es igual; `agruparVersiones`, `familiaEntre`). Catálogo: una tarjeta por familia con
+  `ToggleVersiones` (en `TarjetaCarro`, ordenado por precio, cambia en el sitio sin navegar).
+  Ficha: `vehicle.versiones` (getVehicle) → selector arriba; las hermanas no salen en similares.
+  Todo lo de versiones es amarillo: color `version` en tailwind (`version`, `version-suave`,
+  `version-oscuro`; texto encima en tinta). "Subir versión nueva": botón en `EditorVehiculo` →
+  `/admin/ingest?base=<id>`; `GET /api/admin/vehicles/[id]/guia` escribe el carro como guía
+  (`lib/subida/guia-de-vehiculo.ts`, con letras y notas) y `leerGuia(texto, identidadBase)` +
+  `completarConBase` (`lib/subida/version.ts`) heredan lo que la guía nueva no trae (se puede
+  quitar con la ×). `publishDraft({ baseId })` pone la familia (la de la base, o
+  `familiaEntre(modeloBase, modeloNuevo)` y se la pone también a la base). En producción los
+  modelos traen la versión en el nombre ("Seagull EV GL"): las familias se asignan a mano en el
+  editor (no adivinar por la primera palabra: "Yuan Plus" y "Yuan Up" son carros distintos).
 - Ficha (7-oct-2026): hay `chassis.frontBrakes` (Frenos delanteros) y se retiró `chassis.suspensionSetup` (Suspensión general) del registro. `lib/db/partir-suspension.ts` pasa ese texto viejo a Suspensión delantera/trasera (solo llena vacíos, hereda fuente/confianza) y corre solo en cada deploy de producción desde `preparar-bd.ts`; `scripts/partir-suspension.ts` lo muestra a mano (simulación por defecto, `--write` aplica).
 - Git: push directo a `main` (sin ramas ni PRs), decisión del usuario.
 - Prueba local sin tocar producción: Postgres en Docker (`wise-pg`, puerto 55432) + la

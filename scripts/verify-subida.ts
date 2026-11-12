@@ -6,6 +6,9 @@ import { campoDeLinea, leerGuia, leerNumero, leerSiNo, separarEstimado, separarO
 import { opcionMasCercana } from '../lib/subida/opciones';
 import { plano } from '../lib/subida/texto';
 import { ATTRIBUTE_REGISTRY } from '../lib/attributes/registry';
+import { guiaDeVehiculo, numeroGuia } from '../lib/subida/guia-de-vehiculo';
+import { completarConBase } from '../lib/subida/version';
+import { agruparVersiones, claveFamilia, etiquetaVersion, familiaEntre } from '../lib/versiones';
 
 let fallas = 0;
 function check(nombre: string, ok: boolean) {
@@ -222,6 +225,54 @@ check('Kona: sin avisos de repetido ni de "X sin nota"', !kona.avisos.some(a => 
 check('Kona: "Dual" en zonas de clima = 2', dK('comfort.climateZones')?.valor === 2 || kona.datos.some(d => d.campo === 'Zonas de climatizador' && d.valor === 2));
 const repetidoReal = leerGuia('Marca: X\nModelo: Y\nAño: 2026\nTren motriz: Gasolina\nCarrocería: Sedán\nPrecio de lista (COP): 90000000\nAirbags: 6 O\nAirbags: 8 O');
 check('un dato repetido de verdad sigue avisando', repetidoReal.avisos.some(a => /repetido/.test(a.texto)));
+
+// --- Versiones (nov-2026): guía de un carro publicado → lector, y herencia de la base ---
+check('numeroGuia: 10.9 → "10,9", 0.285 → "0,2850", 4270 → "4270"', numeroGuia(10.9) === '10,9' && numeroGuia(0.285) === '0,2850' && numeroGuia(4270) === '4270');
+check('numeroGuia se lee de vuelta igual', [10.9, 0.285, 4270, 1.5, 113000000, 0.5].every(n => leerNumero(numeroGuia(n)) === n));
+const attr = (attributeKey: string, v: number | boolean | string, extra: Record<string, unknown> = {}) => ({
+  attributeKey,
+  valueNum: typeof v === 'number' ? v : null,
+  valueBool: typeof v === 'boolean' ? v : null,
+  valueText: typeof v === 'string' ? v : null,
+  ...extra,
+});
+const baseVehiculo = { brand: 'BYD', model: 'Seagull EV GL', year: 2026, fuelType: 'Eléctrico', type: 'Hatchback', vehicleType: 'Automóvil', price: 84990000 };
+const guiaBase = guiaDeVehiculo(baseVehiculo, [
+  attr('commercial.priceCop', 84990000, { origen: 'O', nota: 'https://byd.com.co/seagull' }),
+  attr('electric.maxPower', 74, { origen: 'O' }),
+  attr('electric.batteryCapacity', 30.08, { origen: 'C', nota: 'Revista Motor' }),
+  attr('electric.electricRange', 305, { origen: 'E', estimado: true, nota: 'WLTP ajustado a Colombia' }),
+  attr('safety.airbags', 6),
+  attr('technology.bluetooth', true),
+]);
+const lBase = leerGuia(guiaBase);
+const dB = (k: string) => lBase.datos.find(d => d.key === k);
+check('guía de un carro: se lee sin errores', lBase.avisos.filter(a => a.tipo === 'error').length === 0);
+check('guía de un carro: identidad completa', lBase.identidad.marca === 'BYD' && lBase.identidad.modelo === 'Seagull EV GL' && lBase.identidad.tren === 'Eléctrico' && lBase.identidad.precio === 84990000 && lBase.identidad.precioOrigen === 'O');
+check('guía de un carro: valores, letras y notas vuelven iguales', dB('electric.maxPower')?.valor === 74 && dB('electric.batteryCapacity')?.valor === 30.08 && dB('electric.batteryCapacity')?.origen === 'C' && /Revista/.test(dB('electric.batteryCapacity')?.nota ?? '') && dB('electric.electricRange')?.estimado === true && dB('technology.bluetooth')?.valor === true);
+const guiaNueva = 'Modelo: Seagull EV GS\nPrecio de lista (COP): 92990000 O\nPotencia máxima (hp): 101 O\nAirbags: 6 O';
+const lNueva = completarConBase(leerGuia(guiaNueva, lBase.identidad), lBase, new Set());
+const dN = (k: string) => lNueva.datos.find(d => d.key === k);
+check('versión nueva: marca, año, tren y carrocería salen de la base', lNueva.identidad.marca === 'BYD' && lNueva.identidad.anio === 2026 && lNueva.identidad.tren === 'Eléctrico' && lNueva.identidad.carroceria === 'Hatchback' && !lNueva.avisos.some(a => a.tipo === 'error'));
+check('versión nueva: lo que trae gana; lo que no, se hereda con su letra y nota', dN('electric.maxPower')?.valor === 101 && !dN('electric.maxPower')?.deBase && dN('electric.batteryCapacity')?.deBase === true && dN('electric.batteryCapacity')?.origen === 'C' && /Revista/.test(dN('electric.batteryCapacity')?.nota ?? ''));
+const lSin = completarConBase(leerGuia(guiaNueva, lBase.identidad), lBase, new Set(['electric.batteryCapacity']));
+check('versión nueva: un dato quitado no se hereda', !lSin.datos.some(d => d.key === 'electric.batteryCapacity'));
+const lSinPrecio = leerGuia('Modelo: Seagull EV GS', lBase.identidad);
+check('versión nueva: sin precio sigue siendo error (no se hereda)', lSinPrecio.avisos.some(a => a.tipo === 'error' && /Precio/.test(a.campo ?? '')));
+const aPhev = completarConBase(leerGuia('Modelo: Seagull PHEV\nTren motriz: Híbrido Enchufable\nPrecio de lista (COP): 99000000', lBase.identidad), lBase, new Set());
+check('versión con otro tren motriz: los campos por motor se pasan a su key', aPhev.datos.find(d => d.campo === 'Potencia máxima (hp)')?.key === 'phev.maxPower');
+
+check('familiaEntre: "Onix LT" + "Onix RS" → "Onix"', familiaEntre('Onix LT', 'Onix RS') === 'Onix');
+check('familiaEntre: "Seagull EV GL" + "Seagull EV GS" → "Seagull EV"', familiaEntre('Seagull EV GL', 'Seagull EV GS') === 'Seagull EV');
+check('familiaEntre: sin palabras en común → el modelo de la base', familiaEntre('Captiva', 'Equinox') === 'Captiva');
+check('etiquetaVersion: "Seagull EV GL" en "Seagull EV" → "GL"; igual a la familia → "Base"; otro nombre → el modelo', etiquetaVersion({ model: 'Seagull EV GL', familia: 'seagull ev' }) === 'GL' && etiquetaVersion({ model: 'Blazer EV', familia: 'Blazer EV' }) === 'Base' && etiquetaVersion({ model: 'Captiva', familia: 'Equinox' }) === 'Captiva');
+const grupos = agruparVersiones([
+  { id: '1', brand: 'BYD', model: 'Seagull EV GL', familia: 'Seagull EV' },
+  { id: '2', brand: 'Kia', model: 'Picanto', familia: null },
+  { id: '3', brand: 'byd', model: 'Seagull EV GS', familia: 'Seagull ev' },
+  { id: '4', brand: 'Kia', model: 'Picanto GT', familia: null },
+]);
+check('agruparVersiones: misma marca y familia (sin mayúsculas) juntas, en el lugar de la primera; sin familia, solos', grupos.length === 3 && grupos[0].map(x => x.id).join() === '1,3' && grupos[1][0].id === '2' && claveFamilia(grupos[2][0]) === 'id:4');
 
 console.log(fallas ? `\n${fallas} fallas` : '\nTodo verificado ✓');
 process.exit(fallas ? 1 : 0);

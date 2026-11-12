@@ -1,6 +1,7 @@
 import { leer } from '@/lib/vehiculo-datos';
 import { masParecidos } from '@/lib/similares';
 import { urlImagen } from '@/lib/data/imagen';
+import { claveFamilia, etiquetaVersion } from '@/lib/versiones';
 import { prisma } from '@/lib/prisma';
 import { cache } from 'react';
 
@@ -58,12 +59,13 @@ export const getVehicle = cache(async (id: string) => {
   // 2. Los 3 más parecidos en tipo, precio, tren motriz y características
   // (lib/similares). El catálogo es chico: se compara contra todo lo
   // disponible y se ordena en memoria.
-  const candidatos = await prisma.vehicle.findMany({
+  const todos = await prisma.vehicle.findMany({
     where: { id: { not: vehicle.id }, status: 'Disponible' },
     select: {
       id: true,
       brand: true,
       model: true,
+      familia: true,
       year: true,
       price: true,
       fuelType: true,
@@ -77,6 +79,14 @@ export const getVehicle = cache(async (id: string) => {
       },
     },
   });
+  // Las otras versiones del mismo carro no son "similares": salen en el toggle de versiones.
+  const familia = claveFamilia(vehicle);
+  const hermanos = todos.filter(v => claveFamilia(v) === familia);
+  const candidatos = todos.filter(v => claveFamilia(v) !== familia);
+  const versiones = [vehicle, ...hermanos]
+    .sort((a, b) => a.price - b.price)
+    .map(v => ({ id: v.id, etiqueta: etiquetaVersion(v), model: v.model, year: v.year, price: v.price, fuelType: v.fuelType }));
+
   const similarVehicles = masParecidos(
     { id: vehicle.id, price: vehicle.price, type: vehicle.type, fuelType: vehicle.fuelType, specifications: parsedSpecs },
     candidatos,
@@ -147,6 +157,8 @@ export const getVehicle = cache(async (id: string) => {
     type: vehicle.type,
     reviewVideoUrl: vehicle.reviewVideoUrl,
     similarVehicles: transformedSimilar,
+    // Esta y las otras versiones del mismo carro, de la más barata a la más cara (1 = no tiene otras).
+    versiones,
     categories: vehicle.wiseCategories
       ? vehicle.wiseCategories.split(',').map((cat: string, index: number) => ({
         id: (index + 1).toString(),
@@ -250,6 +262,7 @@ export const getVehicles = cache(async (options: GetVehiclesOptions = {}) => {
       id: true,
       brand: true,
       model: true,
+      familia: true,
       year: true,
       price: true,
       fuelType: true,
@@ -291,6 +304,7 @@ export const getVehicles = cache(async (options: GetVehiclesOptions = {}) => {
       id: vehicle.id,
       brand: vehicle.brand,
       model: vehicle.model,
+      familia: vehicle.familia,
       year: vehicle.year,
       price: vehicle.price,
       fuel: vehicle.fuelType.toUpperCase(),

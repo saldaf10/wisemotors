@@ -13,11 +13,12 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowUpRight, Loader2, Search, Trash2 } from 'lucide-react';
+import { ArrowUpRight, Layers, Loader2, Search, Trash2 } from 'lucide-react';
 import { adminFetch, mensajeDeErrorDeAuth } from '@/lib/admin-fetch';
 import { ATTRIBUTE_REGISTRY, attributeAppliesTo, type AttributeDef } from '@/lib/attributes/registry';
 import { sinDatoDeSpecs, valoresDeSpecs } from '@/lib/attributes/clave';
 import { estimadosDe } from '@/lib/vehiculo-datos';
+import { etiquetaVersion } from '@/lib/versiones';
 import { DatosClave, numeroEscrito } from './DatosClave';
 import { RevisionFotos, VISTAS, type FotoRevision } from './RevisionFotos';
 import { CATEGORIAS, claseDeTipo, TIPOS_CARROCERIA } from '@/lib/attributes/clase';
@@ -153,8 +154,8 @@ export function EditorVehiculo({ vehicleId }: { vehicleId: string }) {
       return;
     }
     const d = await res.json();
-    setV(d);
-    setIdentidad({ brand: d.brand, model: d.model, year: d.year, type: d.type, vehicleType: d.vehicleType, fuelType: d.fuelType, status: d.status });
+    setV({ ...d, familia: d.familia ?? '' });
+    setIdentidad({ brand: d.brand, model: d.model, year: d.year, type: d.type, vehicleType: d.vehicleType, fuelType: d.fuelType, status: d.status, familia: d.familia ?? '' });
     setPrecio(String(Math.round(d.price)));
     setCambios({});
     setFotos(fotosDeImagenes(d.images));
@@ -280,6 +281,8 @@ export function EditorVehiculo({ vehicleId }: { vehicleId: string }) {
   }
 
   const campo = 'h-10 w-full rounded-lg border border-linea bg-blanco px-3 text-[14px]';
+  // Con familia escrita, el ejemplo es este carro; sin familia, uno inventado.
+  const ejemplo = identidad.familia?.trim() ? { model: identidad.model ?? '', familia: identidad.familia } : { model: 'Seagull EV GL', familia: 'Seagull EV' };
 
   return (
     <div className="mt-6 space-y-6 pb-28">
@@ -291,7 +294,11 @@ export function EditorVehiculo({ vehicleId }: { vehicleId: string }) {
           </h1>
           <p className="mt-1 text-tinta-2">{v.year} · {v.fuelType} · {v.type}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {/* Nueva versión de este carro: la guía nueva solo trae lo que cambia; el resto se toma de este. */}
+          <Link href={`/admin/ingest?base=${v.id}`} className="pastilla h-11 !border-version !bg-version px-5 font-semibold !text-tinta hover:!bg-version/80">
+            <Layers className="h-4 w-4" /> Subir versión nueva
+          </Link>
           <Link href={`/vehicles/${v.id}`} target="_blank" className="pastilla h-11 px-5">
             Ver ficha <ArrowUpRight className="h-4 w-4" />
           </Link>
@@ -346,6 +353,24 @@ export function EditorVehiculo({ vehicleId }: { vehicleId: string }) {
               {ESTADOS.map(t => <option key={t}>{t}</option>)}
             </select>
           </label>
+        </div>
+        <div className="mt-5 rounded-2xl border border-version/40 bg-version/10 p-4">
+          <label className="block text-xs font-semibold text-version-oscuro">
+            <span className="flex items-center gap-1.5">
+              <Layers className="h-3.5 w-3.5" /> Familia (versiones del mismo carro)
+            </span>
+            <input
+              className={`${campo} mt-1 max-w-sm border-version/50`}
+              placeholder="Ej. Seagull EV"
+              value={identidad.familia ?? ''}
+              onChange={e => setIdentidad({ ...identidad, familia: e.target.value })}
+            />
+          </label>
+          <p className="mt-2 text-[12px] leading-snug text-tinta-2">
+            Los carros de la misma marca con la misma familia salen en una sola tarjeta, con un toggle para cambiar de versión. El nombre de cada
+            versión es el modelo sin la familia: «{ejemplo.model}» con familia «{ejemplo.familia}» se ve como «{etiquetaVersion(ejemplo)}». Vacía: el carro
+            va solo.
+          </p>
         </div>
         <div className="mt-5">
           <p className="text-xs text-tinta-2">¿Quién lo vende?</p>

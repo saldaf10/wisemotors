@@ -44,6 +44,8 @@ export interface Identidad {
   precioEstimado?: boolean;
   precioOrigen?: Origen;
   precioNota?: string;
+  /** Datos de identidad que no traía la guía y se tomaron de la versión base. */
+  deBase?: CampoIdentidad[];
 }
 
 /** De dónde salió un dato: Oficial, sitio Confiable, calculado (X) o Estimado. */
@@ -69,6 +71,8 @@ export interface DatoLeido {
   origen: Origen | null;
   /** Fuente, razón o cálculo, de la sección de notas. */
   nota?: string;
+  /** No venía en la guía: se tomó de la versión base (lib/subida/version.ts). */
+  deBase?: boolean;
 }
 
 export interface Lectura {
@@ -247,7 +251,12 @@ interface Linea {
   escrito: string;
 }
 
-export function leerGuia(texto: string): Lectura {
+/**
+ * `base`: identidad de la versión base ("Subir versión nueva"). Marca, año, tren
+ * motriz, carrocería y categoría que la guía no traiga se toman de ahí; el modelo
+ * y el precio no, porque son justo lo que cambia entre versiones.
+ */
+export function leerGuia(texto: string, base?: Identidad): Lectura {
   const avisos: Aviso[] = [];
   const lineas: Linea[] = [];
   const vistos = new Set<CampoFormato>();
@@ -361,6 +370,14 @@ export function leerGuia(texto: string): Lectura {
       } else avisos.push({ linea: l.n, campo: l.campo.nombre, tipo: 'error', texto: `«${l.escrito}» no parece un precio en pesos (ej. 113.000.000).` });
     } else if (id === 'marca') identidad.marca = l.escrito;
     else identidad.modelo = l.escrito;
+  }
+  if (base) {
+    for (const id of ['marca', 'anio', 'tren', 'carroceria', 'categoria'] as const) {
+      if (identidad[id] === undefined && base[id] !== undefined) {
+        (identidad as Record<string, unknown>)[id] = base[id];
+        identidad.deBase = [...(identidad.deBase ?? []), id];
+      }
+    }
   }
   for (const [id, nombre] of [['marca', 'Marca'], ['modelo', 'Modelo'], ['anio', 'Año'], ['tren', 'Tren motriz'], ['carroceria', 'Carrocería'], ['precio', 'Precio de lista (COP)']] as const) {
     if (identidad[id] === undefined) avisos.push({ linea: 0, campo: nombre, tipo: 'error', texto: `Falta ${nombre}.` });

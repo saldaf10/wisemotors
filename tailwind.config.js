@@ -69,6 +69,8 @@ module.exports = {
         tinta: { DEFAULT: "rgb(14 12 17 / <alpha-value>)", 2: "rgb(95 91 102 / <alpha-value>)" },
         linea: "rgb(217 215 222 / <alpha-value>)",
         showroom: "rgb(12 10 15 / <alpha-value>)",
+        // Amarillo de las versiones (toggle entre versiones del mismo carro). Texto encima: tinta o version-oscuro.
+        version: { DEFAULT: "rgb(234 179 8 / <alpha-value>)", suave: "rgb(254 243 199 / <alpha-value>)", oscuro: "rgb(113 63 18 / <alpha-value>)" },
       },
       borderRadius: {
         lg: "var(--radius)",
