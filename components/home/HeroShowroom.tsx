@@ -19,7 +19,7 @@ import { ArrowUpRight } from 'lucide-react';
 import { CarRender } from '@/components/car/CarRender';
 import { BuscadorIA } from '@/components/home/BuscadorIA';
 
-const INTERVALO = 7000;
+const INTERVALO = 5000;
 
 // Carros de exhibición dibujados, uno por carrocería, sin datos.
 const VITRINA: { id: string; tipo: string; car: any }[] = [
@@ -44,25 +44,24 @@ function Palabra({ texto, color }: { texto: string; color: string }) {
 
 export function HeroShowroom({ consulta }: { consulta: string }) {
   const [i, setI] = useState(0);
-  const [pausa, setPausa] = useState(false);
   const total = VITRINA.length;
 
+  // Rota siempre (antes se pausaba con el cursor encima, y en computador el hero ocupa
+  // toda la pantalla: el carro casi nunca cambiaba). Tocar un punto reinicia la cuenta.
   useEffect(() => {
-    if (pausa) return;
-    const t = setTimeout(() => setI(x => (x + 1) % total), INTERVALO);
-    return () => clearTimeout(t);
-  }, [i, pausa, total]);
+    // Con la pestaña escondida no avanza (y sigue revisando hasta que vuelva).
+    const t = setInterval(() => {
+      if (!document.hidden) setI(x => (x + 1) % total);
+    }, INTERVALO);
+    return () => clearInterval(t);
+  }, [i, total]);
 
   const exhibicion = VITRINA[i % total];
   // La palabra es siempre la marca: los carros cambian, WISE se queda.
   const palabra = 'WISE';
 
   return (
-    <section
-      className="hero-showroom relative isolate overflow-hidden bg-showroom text-white"
-      onMouseEnter={() => setPausa(true)}
-      onMouseLeave={() => setPausa(false)}
-    >
+    <section className="hero-showroom relative isolate overflow-hidden bg-showroom text-white">
       {/* Panel morado */}
       <div
         aria-hidden

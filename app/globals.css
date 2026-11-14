@@ -426,16 +426,6 @@
 .hoja-filtros { animation: hoja-filtros 450ms var(--ease-out-strong) both; }
 @keyframes hoja-filtros { from { transform: translateX(100%); } }
 
-/* Marquesina de marcas */
-.marquesina {
-  display: flex;
-  width: max-content;
-  animation: marquesina 38s linear infinite;
-}
-.marquesina:hover { animation-play-state: paused; }
-@keyframes marquesina {
-  to { transform: translateX(-50%); }
-}
 
 /* Barras divergentes desde el centro (comparador) */
 .barra-izq,
@@ -457,7 +447,6 @@
     transition-duration: 1ms !important;
   }
   .reveal { opacity: 1; transform: none; clip-path: none; }
-  .marquesina { animation: none; }
 }
 
 /* ════════════════════════════════════════════════════════════════════════

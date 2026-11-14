@@ -13,25 +13,6 @@ import { Reveal } from '@/components/ui/Reveal';
 import { useEnVista } from '@/components/ui/useEnVista';
 import { datosClave, millones } from '@/lib/vehiculo-datos';
 
-// ── Marquesina de marcas ────────────────────────────────────────────────────
-const MARCAS_CO = ['Toyota', 'Mazda', 'Renault', 'Chevrolet', 'Kia', 'BYD', 'Volkswagen', 'Tesla', 'Hyundai', 'Nissan', 'Suzuki'];
-
-export function Marquesina() {
-  const lista = [...MARCAS_CO, ...MARCAS_CO];
-  return (
-    <div className="overflow-hidden border-b border-linea bg-papel py-8" aria-label="Marcas en WiseMotors">
-      <div className="marquesina">
-        {lista.map((m, i) => (
-          <span key={i} className="t-ligero flex items-center gap-12 px-6 text-[40px] text-tinta md:text-[56px]">
-            {m}
-            <span className="h-2.5 w-2.5 rounded-full bg-wise" aria-hidden />
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ── Cómo funciona ───────────────────────────────────────────────────────────
 // Tres pasos que se pueden tocar (y avanzan solos). A la izquierda, una
 // demostración de cada paso que no depende de que haya carros en la base.

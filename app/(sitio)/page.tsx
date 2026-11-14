@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { HeroShowroom } from '@/components/home/HeroShowroom';
-import { BandaComparar, ComoFunciona, Destacados, Marquesina } from '@/components/home/Secciones';
+import { BandaComparar, ComoFunciona, Destacados } from '@/components/home/Secciones';
 import type { VehiculoTarjeta } from '@/components/car/TarjetaCarro';
 import { AIResultsLoader } from '@/components/vehicles/AIResultsLoader';
 import { ResultadosIA } from '@/components/home/ResultadosIA';
@@ -83,7 +83,6 @@ function Inicio() {
         </section>
       )}
 
-      <Marquesina />
       <ComoFunciona />
       <Destacados vehiculos={vehiculos} total={total} />
       <BandaComparar vehiculos={vehiculos} />
