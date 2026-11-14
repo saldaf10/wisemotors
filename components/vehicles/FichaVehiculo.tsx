@@ -317,7 +317,7 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
       </EstimadosProvider>
 
       {/* ── Contacto: hablar con quien lo vende (verde = una persona al otro lado) ── */}
-      <section className="mx-auto mt-24 max-w-[1440px] px-5 md:px-8">
+      <section className="mx-auto mt-24 max-w-[1440px] px-5 md:px-8" data-recorrido="contacto">
         <div className="grid gap-8 rounded-[36px] bg-blanco p-8 md:grid-cols-[1.2fr_1fr] md:items-start md:p-12">
           <div>
             <h2 className="t-titulo text-[32px] md:text-[44px]">
@@ -399,6 +399,7 @@ export function FichaVehiculo({ vehicle, indices = null }: { vehicle: any; indic
               <div className="w-full sm:w-auto">
                 <Link
                   href={`/compare?ids=${[vehicle.id, ...similares.slice(0, 3).map(v => v.id)].join(',')}`}
+                  data-recorrido="comparar-todos"
                   className="pastilla pastilla--wise h-14 w-full justify-center px-7 text-[16px] font-semibold sm:w-auto"
                 >
                   <Scale className="h-5 w-5" /> Comparar los {Math.min(3, similares.length) + 1} a la vez <ArrowUpRight className="h-4 w-4" />

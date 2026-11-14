@@ -325,8 +325,14 @@ cobertura, migración, seeds, motor de cohortes.
   `/register?next=/` y `components/auth/ExigirCuenta.tsx` (en `app/(sitio)/layout.tsx`) manda
   a crear cuenta (o a ingresar, si cerró sesión) desde cualquier página sin sesión; solo
   `/register` y `/login` quedan libres. Con `SITIO_ABIERTO=1` no aplica. Al volver al inicio
-  arranca el recorrido guiado (`components/recorrido/Recorrido.tsx`, 12 pasos, mensaje
-  emergente + brillo `.recorrido-brillo`; se repite desde el pie).
+  arranca el recorrido guiado (`components/recorrido/Recorrido.tsx`, 12 pasos; se repite desde el pie).
+  Recorrido (14-nov-2026): mensaje oscuro PEGADO a lo que señala (debajo si cabe, si no encima, con
+  flecha; si no hay objetivo o no cabe, en la esquina), aro morado `.recorrido-brillo` (outline +
+  onda), y al empezar un paso lleva la pantalla hasta el objetivo una vez (`llevarA`). Pasos que
+  avanzan solos: `accion` (el Afinador llama `avisarRecorrido('afinador')` al responder → pasa a
+  "Entra al panel dinámico", que señala `[data-recorrido="panel-dinamico"]`) y `alVer` (en la ficha,
+  al llegar a `[data-recorrido="contacto"]` pasa a "Compáralo con sus parecidos", que lleva hasta
+  `[data-recorrido="comparar-todos"]`). No se usa amarillo: es solo de versiones.
 - Encuesta al terminar el recorrido (14-nov-2026, `components/recorrido/Encuesta.tsx`): sale al
   tocar "Terminar" (no al saltarlo), 4 pantallas: búsqueda IA 1-10 + comentario; información y
   organización (Muy mala…Excelente) + comentario; comparación + facilidad de los me gusta (si es

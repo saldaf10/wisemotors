@@ -9,9 +9,13 @@
 // selector [data-recorrido=…]) y, si la acción de la persona lo cumple, cuándo
 // avanza solo (`avanzaCuando`: buscar, entrar a un carro, comparar…); igual
 // siempre hay un botón para seguir. El paso vive en localStorage para seguir
-// entre páginas. Es un mensaje emergente en la esquina con un brillo suave en
-// lo que menciona: no oscurece, no desplaza ni persigue nada. Al terminarlo
-// (no al saltarlo) sale la encuesta (Encuesta.tsx).
+// entre páginas. El mensaje sale pegado a lo que señala (con una flecha) y lo
+// señalado se marca con un aro morado que late; si no hay nada que señalar o
+// no cabe al lado, va en la esquina. No oscurece la página. Al empezar un paso,
+// si lo señalado está fuera de la pantalla, la lleva hasta allá una sola vez.
+// Además de la URL, un paso avanza con una acción (`accion`: el afinador avisa
+// con avisarRecorrido) o al llegar a una parte de la página (`alVer`). Al
+// terminarlo (no al saltarlo) sale la encuesta (Encuesta.tsx).
 // ============================================================================
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -34,6 +38,10 @@ interface Paso {
   objetivo?: string[];
   /** La acción que lo cumple: al pasar, avanza solo. */
   avanzaCuando?: (l: Lugar) => boolean;
+  /** Avanza cuando la página avisa esta acción (avisarRecorrido). */
+  accion?: string;
+  /** Avanza cuando este elemento aparece en pantalla (la persona bajó hasta allá). */
+  alVer?: string;
   /** Botón para avanzar (si no avanza solo). */
   boton?: string;
 }
@@ -64,39 +72,40 @@ const PASOS: Paso[] = [
   },
   {
     titulo: 'Ajusta tu presupuesto',
-    texto: 'Con estos botones afinas los resultados: el presupuesto, el tipo de motor y más. Toca los que apliquen para ti.',
+    texto: 'Elige cuánto quieres gastar. Con eso afinamos los resultados y seguimos.',
     donde: conBusqueda,
     pista: 'Vuelve a tus resultados de búsqueda.',
     objetivo: ['[data-recorrido="afinador"]'],
-    boton: 'Siguiente',
+    accion: 'afinador',
     avanzaCuando: enFicha,
   },
   {
     titulo: 'Entra al panel dinámico',
-    texto: 'Toca «Ir al panel dinámico» del carro que más te llame la atención para ver toda su información.',
+    texto: '¡Listo! Ahora toca «Ir al panel dinámico» de tu mejor opción: ahí está toda su información.',
     donde: conBusqueda,
     pista: 'Vuelve a tus resultados y entra a un carro.',
-    objetivo: ['[data-recorrido="resultados"]'],
+    objetivo: ['[data-recorrido="panel-dinamico"]', '[data-recorrido="resultados"]'],
     avanzaCuando: enFicha,
   },
   {
     titulo: 'Explora el carro a tu ritmo',
-    texto: 'Baja por la ficha o salta a la categoría que más te importe: desempeño, espacio, seguridad, consumo o tecnología. Cuando quieras, toca Siguiente.',
+    texto: 'Baja por la ficha: fotos, desempeño, consumo, espacio, seguridad y tecnología. Cuando llegues a «Habla con quien lo vende», seguimos.',
     donde: enFicha,
     pista: 'Entra al panel dinámico de un carro.',
-    boton: 'Siguiente',
+    alVer: '[data-recorrido="contacto"]',
     avanzaCuando: enComparacionDirecta,
   },
   {
-    titulo: 'Compáralo antes de probarlo',
-    texto: 'Antes de programar la prueba de ruta, baja hasta «Si te gusta este»: ponlo cara a cara con uno parecido, o toca «Comparar los 4 a la vez» para verlo junto a los similares.',
+    titulo: 'Compáralo con sus parecidos',
+    texto: 'Toca «Comparar los 4 a la vez»: lo pones frente a sus 3 similares y ves en qué gana cada uno.',
     donde: enFicha,
     pista: 'Entra a un carro y baja hasta «Si te gusta este».',
+    objetivo: ['[data-recorrido="comparar-todos"]', '[data-recorrido="similares"]'],
     avanzaCuando: enComparacionDirecta,
   },
   {
-    titulo: 'Cara a cara',
-    texto: 'Aquí ves en qué gana cada uno, pregunta por pregunta. Toca un carro de arriba para sacarlo o volverlo a meter.',
+    titulo: 'Los 4, frente a frente',
+    texto: 'Baja y mira en qué gana cada uno, pregunta por pregunta. Si quieres, toca un carro de aquí arriba para sacarlo o volverlo a meter.',
     donde: enComparacionDirecta,
     pista: 'Abre una comparación desde la ficha de un carro.',
     objetivo: ['[data-recorrido="seleccion"]'],
@@ -144,6 +153,37 @@ const PASOS: Paso[] = [
     boton: 'Terminar',
   },
 ];
+
+/** Avisa una acción de la página (ej. 'afinador'): si el paso actual la espera, avanza. */
+export function avisarRecorrido(accion: string) {
+  try {
+    window.dispatchEvent(new CustomEvent('wm-recorrido-accion', { detail: accion }));
+  } catch {}
+}
+
+/** ¿Se ve casi todo el elemento? (debajo del menú fijo y encima del borde de abajo). */
+function enPantalla(el: HTMLElement) {
+  const r = el.getBoundingClientRect();
+  const alto = Math.min(r.height, window.innerHeight - 140);
+  const visible = Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 80);
+  return visible >= alto * 0.7;
+}
+
+/** Lleva la pantalla hasta el elemento (centrado). Si el desplazamiento suave no arranca, salta. */
+function llevarA(el: HTMLElement) {
+  const r = el.getBoundingClientRect();
+  const y = Math.max(0, window.scrollY + r.top - Math.max(90, (window.innerHeight - r.height) / 2));
+  window.scrollTo({ top: y, behavior: 'smooth' });
+  // Si no llegó (o la página se desplazó por su cuenta justo después, como al cargar resultados), insiste.
+  for (const ms of [1000, 2200]) {
+    setTimeout(() => {
+      if (el.isConnected && !enPantalla(el)) {
+        const r2 = el.getBoundingClientRect();
+        window.scrollTo({ top: Math.max(0, window.scrollY + r2.top - Math.max(90, (window.innerHeight - r2.height) / 2)) });
+      }
+    }, ms);
+  }
+}
 
 /** Arranca el recorrido (al entrar con el código, o desde el pie de página). */
 export function iniciarRecorrido(forzar = false) {
@@ -195,6 +235,9 @@ export function Recorrido() {
   const [paso, setPaso] = useState<number | null>(null);
   const [lugar, setLugar] = useState<Lugar | null>(null);
   const ultimaUrl = useRef('');
+  const tarjeta = useRef<HTMLDivElement>(null);
+  const flecha = useRef<HTMLSpanElement>(null);
+  const llevado = useRef<number | null>(null);
 
   // Paso guardado + dónde está la persona (cambia de página, o la URL con ?q=).
   // La URL vista se guarda en una ref: guardarla en el estado volvía a disparar el efecto sin fin.
@@ -216,6 +259,21 @@ export function Recorrido() {
     setPaso(p => (p === n ? p : n));
   }, []);
 
+  /** Pasa al siguiente paso desde `desde` (si sigue siendo el actual). */
+  const avanzarDesde = useCallback((desde: number) => {
+    setPaso(p => {
+      if (p !== desde) return p;
+      const n = desde + 1;
+      if (n >= PASOS.length) {
+        guardarPaso('hecho');
+        pedirEncuesta();
+        return null;
+      }
+      guardarPaso(n);
+      return n;
+    });
+  }, []);
+
   useEffect(() => {
     sincronizar();
     // La búsqueda cambia ?q= sin cambiar la ruta: se revisa también cada medio segundo.
@@ -235,40 +293,108 @@ export function Recorrido() {
   const actual = paso !== null ? PASOS[paso] : null;
   const aqui = !!(actual && lugar && actual.donde(lugar));
 
-  // Brillo suave sobre el elemento del que habla el paso: una clase en el propio elemento
-  // (se mueve con él), sin oscurecer la página ni desplazarla. Si aparece tarde, se busca otra vez.
+  // Una acción de la página (el afinador) cumple el paso que la espera.
+  useEffect(() => {
+    if (paso === null || !actual?.accion || !aqui) return;
+    const escuchar = (e: Event) => {
+      if ((e as CustomEvent).detail === actual.accion) avanzarDesde(paso);
+    };
+    window.addEventListener('wm-recorrido-accion', escuchar);
+    return () => window.removeEventListener('wm-recorrido-accion', escuchar);
+  }, [paso, actual, aqui, avanzarDesde]);
+
+  // Llegar a una parte de la página (bajar hasta el concesionario) cumple el paso.
+  useEffect(() => {
+    if (paso === null || !actual?.alVer || !aqui) return;
+    const t = setInterval(() => {
+      const el = document.querySelector<HTMLElement>(actual.alVer!);
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      if (r.top < window.innerHeight * 0.75 && r.bottom > 0) avanzarDesde(paso);
+    }, 300);
+    return () => clearInterval(t);
+  }, [paso, actual, aqui, avanzarDesde]);
+
+  // Aro sobre lo que señala el paso (una clase en el propio elemento: se mueve con él). Al empezar
+  // el paso, si está fuera de la pantalla, la lleva hasta allá una vez. Si aparece tarde, se busca otra vez.
   useEffect(() => {
     if (!actual || !aqui || !actual.objetivo) return;
     let marcado: HTMLElement | null = null;
+    let vistoEn = 0;
     const marcar = () => {
       const el = buscarObjetivo(actual.objetivo);
+      // Espera un momento desde que aparece: la página puede estar desplazándose sola (los resultados).
+      if (el && llevado.current !== paso) {
+        if (!vistoEn) vistoEn = Date.now();
+        else if (Date.now() - vistoEn > 500) {
+          llevado.current = paso;
+          if (!enPantalla(el)) llevarA(el);
+        }
+      }
       if (el === marcado) return;
       marcado?.classList.remove('recorrido-brillo');
       marcado = el;
       el?.classList.add('recorrido-brillo');
     };
     marcar();
-    const t = setInterval(marcar, 700);
+    const t = setInterval(marcar, 350);
     return () => {
       clearInterval(t);
       marcado?.classList.remove('recorrido-brillo');
     };
   }, [actual, aqui, paso, lugar?.path]);
 
+  // El mensaje se pega a lo que señala: debajo si cabe, si no encima, con la flecha apuntándole.
+  // Se mueve con la página (cada cuadro, sin animación: se siente pegado, no persiguiendo).
+  // Si no hay qué señalar, no se ve o no cabe al lado, va en la esquina.
+  useEffect(() => {
+    if (!actual || !aqui) return;
+    let cuadro = 0;
+    const ubicar = () => {
+      const c = tarjeta.current;
+      const f = flecha.current;
+      const el = actual.objetivo ? buscarObjetivo(actual.objetivo) : null;
+      let anclado = false;
+      if (c && el) {
+        const r = el.getBoundingClientRect();
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const ancho = Math.min(380, vw - 24);
+        c.style.width = `${ancho}px`;
+        const alto = c.offsetHeight;
+        const gap = 16;
+        const arriba = 76; // debajo del menú fijo
+        const visible = r.bottom > arriba && r.top < vh - 24;
+        let top: number | null = null;
+        let lado: 'abajo' | 'arriba' = 'abajo';
+        if (visible && r.bottom + gap + alto <= vh - 12) top = r.bottom + gap;
+        else if (visible && r.top - gap - alto >= arriba) {
+          top = r.top - gap - alto;
+          lado = 'arriba';
+        }
+        if (top !== null) {
+          const centro = r.left + r.width / 2;
+          const left = Math.max(12, Math.min(centro - ancho / 2, vw - ancho - 12));
+          Object.assign(c.style, { top: `${top}px`, left: `${left}px`, right: 'auto', bottom: 'auto' });
+          c.dataset.anclado = lado;
+          if (f) f.style.left = `${Math.max(22, Math.min(centro - left, ancho - 22)) - 8}px`;
+          anclado = true;
+        }
+      }
+      if (c && !anclado) {
+        Object.assign(c.style, { top: '', left: '', right: '', bottom: '', width: '' });
+        delete c.dataset.anclado;
+      }
+      cuadro = requestAnimationFrame(ubicar);
+    };
+    cuadro = requestAnimationFrame(ubicar);
+    return () => cancelAnimationFrame(cuadro);
+  }, [actual, aqui, paso]);
+
   // Mientras crea la cuenta o inicia sesión, el recorrido espera (arranca al volver al inicio).
   if (!actual || !lugar || lugar.path === '/register' || lugar.path === '/login') return null;
 
-  const avanzar = () => {
-    const n = (paso ?? 0) + 1;
-    if (n >= PASOS.length) {
-      guardarPaso('hecho');
-      setPaso(null);
-      pedirEncuesta();
-    } else {
-      guardarPaso(n);
-      setPaso(n);
-    }
-  };
+  const avanzar = () => avanzarDesde(paso!);
   const saltar = () => {
     guardarPaso('hecho');
     setPaso(null);
@@ -289,27 +415,29 @@ export function Recorrido() {
     );
   }
 
-  // Un mensaje emergente en la esquina: la persona sigue usando la página con libertad.
   return (
     <div
+      ref={tarjeta}
       key={paso}
       role="dialog"
       aria-label={actual.titulo}
-      className="sube fixed bottom-4 left-4 right-4 z-[95] mx-auto max-w-[400px] rounded-[24px] bg-blanco p-5 shadow-[0_24px_60px_-20px_rgba(14,12,17,0.55)] ring-1 ring-black/5 sm:left-auto sm:right-6 sm:mx-0 sm:w-[380px]"
+      className="recorrido-tarjeta sube fixed bottom-4 left-4 right-4 z-[95] mx-auto max-w-[400px] rounded-[24px] bg-tinta p-5 text-white shadow-[0_24px_60px_-16px_rgba(14,12,17,0.6)] sm:left-auto sm:right-6 sm:mx-0 sm:w-[380px]"
     >
+      {/* Flecha hacia lo señalado (solo cuando el mensaje está pegado a algo). */}
+      <span ref={flecha} aria-hidden className="recorrido-flecha absolute hidden h-4 w-4 rotate-45 bg-tinta" />
       <div className="flex items-start justify-between gap-3">
-        <p className="t-meta text-wise">{numero}</p>
-        <button onClick={saltar} aria-label="Salir del recorrido" className="-m-1 rounded-full p-1 text-tinta-2 hover:text-tinta">
+        <p className="t-meta text-wise-lila">{numero}</p>
+        <button onClick={saltar} aria-label="Salir del recorrido" className="-m-1 rounded-full p-1 text-white/50 hover:text-white">
           <X className="h-4 w-4" />
         </button>
       </div>
       <p className="mt-2 text-[19px] font-semibold leading-tight tracking-[-0.03em]">{actual.titulo}</p>
-      <p className="mt-2 text-[14.5px] leading-relaxed text-tinta-2">{actual.texto}</p>
+      <p className="mt-2 text-[14.5px] leading-relaxed text-white/75">{actual.texto}</p>
       <div className="mt-4 flex items-center justify-between gap-3">
-        <button onClick={saltar} className="text-[13px] text-tinta-2 hover:text-tinta">
+        <button onClick={saltar} className="text-[13px] text-white/55 hover:text-white">
           Saltar recorrido
         </button>
-        {/* Siempre se puede seguir: si la persona hace la acción, avanza solo. */}
+        {/* Siempre se puede seguir: si la persona hace la acción, avanza sola. */}
         <button onClick={avanzar} className="pastilla pastilla--wise h-10 px-5 text-[14px]">
           {actual.boton ?? 'Siguiente'}
         </button>

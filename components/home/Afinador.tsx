@@ -13,6 +13,7 @@
 
 import { X } from 'lucide-react';
 import type { VehiculoTarjeta } from '@/components/car/TarjetaCarro';
+import { avisarRecorrido } from '@/components/recorrido/Recorrido';
 
 type Prioridad = 'comodidad' | 'economia' | 'seguridad' | 'espacio' | 'desempeno';
 type Dimension = 'presupuesto' | 'combustible' | 'carroceria' | 'caja' | 'traccion' | 'prioridad';
@@ -156,7 +157,11 @@ export function Afinador({
 
   if (!siguiente && respondidas.length === 0) return null;
 
-  const responder = (d: Dimension, v: string | null) => onCambio({ ...respuestas, [d]: v });
+  const responder = (d: Dimension, v: string | null) => {
+    onCambio({ ...respuestas, [d]: v });
+    // El recorrido guiado avanza solo cuando la persona afina (Recorrido.tsx, paso "Ajusta tu presupuesto").
+    avisarRecorrido('afinador');
+  };
   const quitar = (d: Dimension) => {
     const r = { ...respuestas };
     delete r[d];

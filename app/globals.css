@@ -661,13 +661,19 @@
 
 /* Recorrido guiado: brillo suave sobre lo que menciona el paso (components/recorrido). */
 .recorrido-brillo {
-  /* Sin tocar la forma del elemento: el brillo sigue sus propias esquinas. */
-  animation: recorrido-brillo 2.4s ease-in-out infinite;
+  /* Aro morado fijo (sigue las esquinas del elemento) y una onda que late hacia afuera. */
+  outline: 3px solid var(--wise) !important;
+  outline-offset: 5px;
+  animation: recorrido-brillo 1.6s ease-out infinite;
 }
 @keyframes recorrido-brillo {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(136, 28, 183, 0); }
-  50% { box-shadow: 0 0 0 4px rgba(136, 28, 183, 0.35), 0 0 28px rgba(136, 28, 183, 0.35); }
+  0% { box-shadow: 0 0 0 0 rgba(136, 28, 183, 0.45); }
+  100% { box-shadow: 0 0 0 18px rgba(136, 28, 183, 0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .recorrido-brillo { animation: none; box-shadow: 0 0 0 3px rgba(136, 28, 183, 0.35); }
+  .recorrido-brillo { animation: none; }
 }
+/* El mensaje del recorrido pegado a lo que señala: la flecha sale por arriba o por abajo. */
+.recorrido-tarjeta[data-anclado] .recorrido-flecha { display: block; }
+.recorrido-tarjeta[data-anclado='abajo'] .recorrido-flecha { top: -7px; }
+.recorrido-tarjeta[data-anclado='arriba'] .recorrido-flecha { bottom: -7px; }

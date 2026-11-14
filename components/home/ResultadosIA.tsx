@@ -216,9 +216,18 @@ export function ResultadosIA({
 
             <OtrasVersiones v={primero} otras={otrasVersiones(primero)} />
 
-            <Link href={`/vehicles/${primero.id}`} className="pastilla pastilla--wise mt-auto h-12 justify-center px-6 max-lg:mt-6 max-md:w-full md:self-start">
-              Ir al panel dinámico <ArrowUpRight className="h-4 w-4" />
-            </Link>
+            {/* La acción del podio: separada de las razones, a todo el ancho y con lo que hay adentro. */}
+            <div className="mt-6 border-t border-linea pt-5 md:mt-8 md:pt-6 lg:mt-auto">
+              <Link
+                href={`/vehicles/${primero.id}`}
+                data-recorrido="panel-dinamico"
+                className="pastilla pastilla--wise !h-14 !w-full !justify-between !px-6 !text-[16px] !font-semibold"
+              >
+                Ir al panel dinámico del {primero.model}
+                <ArrowUpRight className="h-5 w-5 shrink-0" />
+              </Link>
+              <p className="mt-2 text-center text-[13px] text-tinta-2">Fotos, desempeño, consumo, espacio y con quién hablar.</p>
+            </div>
           </div>
         </div>
       )}
@@ -235,7 +244,7 @@ export function ResultadosIA({
               <div className="estudio flex aspect-[16/9] items-center justify-center rounded-[20px] p-3 sm:aspect-[4/3]">
                 <CarRender car={v} className="aspect-[480/180] w-full transition-transform duration-700 group-hover:translate-x-1 group-hover:scale-105" />
               </div>
-              <div className="min-w-0">
+              <div className="flex h-full min-w-0 flex-col">
                 <p className="cifra text-[12px] text-tinta-2">#{i + 2}</p>
                 <p className="truncate pr-12 text-[22px] font-semibold tracking-[-0.03em]">
                   {v.brand} {v.model}
@@ -277,9 +286,10 @@ export function ResultadosIA({
                   </div>
                 )}
                 <OtrasVersiones v={v} otras={otrasVersiones(v)} compacto />
-                <p className="mt-3 inline-flex items-center gap-1 text-[13px] font-medium text-wise">
-                  Ir al panel dinámico <ArrowUpRight className="h-3.5 w-3.5" />
-                </p>
+                {/* Un botón de verdad, abajo y a todo el ancho: alineado en las dos tarjetas. */}
+                <span className="pastilla mt-4 !w-full !justify-center !border-wise/30 !text-wise transition-colors group-hover:!border-wise group-hover:!bg-wise group-hover:!text-white sm:mt-auto">
+                  Ir al panel dinámico <ArrowUpRight className="h-4 w-4" />
+                </span>
               </div>
             </Link>
           ))}
