@@ -290,17 +290,21 @@ cobertura, migración, seeds, motor de cohortes.
   inicio va con `X-Robots-Tag: noindex`) y toda API da 403 salvo `/api/auth/login`,
   `/api/auth/register` y `/api/salud`. La bienvenida (`components/bienvenida/Bienvenida.tsx`)
   tiene "Tengo una invitación" (código + nombre + correo + contraseña + autorización Ley 1581)
-  y "Ya tengo cuenta". `?codigo=WISE-XXXXXX` llega con el código escrito; `?modo=ingresar`
+  y "Ya tengo cuenta". `?codigo=482913` llega con el código escrito; `?modo=ingresar`
   abre en ingresar. Al crear la cuenta: "Invitación #037 de 100 · Ya estás adentro, [nombre]."
   → "Empezar el recorrido" (`iniciarRecorrido(true)`).
-- Códigos (`lib/invitaciones.ts`, tabla `codigos_invitacion`): un solo uso, canjeado en la
+- Códigos (`lib/invitaciones.ts`, tabla `codigos_invitacion`): SOLO NÚMEROS, 6 cifras ("482 913";
+  `formatearCodigo` en lib/invitaciones-formato.ts), un solo uso, canjeado en la
   MISMA transacción que crea la cuenta (si el código no sirve, no queda cuenta). Los primeros
   100 se siembran solos en el deploy si la tabla está vacía. El código del equipo
   (`CODIGO_ACCESO`, admin931 por defecto) sirve como invitación sin límite. Registrar e ingresar
   dejan la cookie (`darAcceso` en lib/acceso.ts): con el sitio cerrado solo existen cuentas con
   invitación. `/register` y `/login` del sitio redirigen a la bienvenida mientras esté cerrado.
-- Panel → pestaña "Invitaciones": usados/libres, "¿A quién se lo diste?" por código, copiar
-  código o enlace, CSV y "Más códigos".
+- Panel → pestaña "Invitaciones": "Generar invitación" (nombre → aparta el primer código libre,
+  `nota` = nombre, y dibuja la invitación PNG 1080×1350 en el navegador con
+  `lib/invitacion-imagen.ts`: nombre, código, "Invitación #001 de 100"; descargar, compartir en el
+  celular o copiar enlace). Estados: libre / entregado (con nombre) / usado. Copiar enlace, CSV y
+  "Más códigos". Los códigos viejos con letras sin usar se cambian por numéricos en el deploy.
 - La página y el formulario de lista de espera se borraron; la tabla `lista_espera` y su CSV
   en el panel se conservan.
 

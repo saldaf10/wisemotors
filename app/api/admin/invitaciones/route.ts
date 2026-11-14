@@ -6,8 +6,9 @@ import { generarCodigos } from '@/lib/invitaciones';
 export const dynamic = 'force-dynamic';
 
 // Códigos de invitación (lib/invitaciones.ts).
-// GET: todos, con quién los usó (?formato=csv → CSV). POST { cantidad }: crea
-// más. PATCH { codigo, nota }: anota a quién se le entregó.
+// GET: todos, con quién los usó (?formato=csv → CSV). POST { nombre }: aparta
+// el primer código libre para esa persona (la imagen la dibuja el panel);
+// POST { cantidad }: crea más. PATCH { codigo, nota }: anota a quién se le entregó.
 
 const ENLACE = (codigo: string) => `https://wisemotors.co/?codigo=${codigo}`;
 
@@ -44,13 +45,38 @@ export async function GET(request: NextRequest) {
       headers: { 'Content-Type': 'text/csv; charset=utf-8' },
     });
   }
-  return NextResponse.json({ total: lista.length, usados: lista.filter(c => c.usadoEn).length, lista });
+  return NextResponse.json({
+    total: lista.length,
+    usados: lista.filter(c => c.usadoEn).length,
+    entregados: lista.filter(c => !c.usadoEn && c.nota).length,
+    lista,
+  });
 }
 
 export async function POST(request: NextRequest) {
   const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
   const body = await request.json().catch(() => null);
+
+  // Invitación para una persona: el primer código que nadie usó ni se le dio a nadie.
+  if (body?.nombre !== undefined) {
+    const nombre = String(body.nombre).trim().replace(/\s+/g, ' ').slice(0, 40);
+    if (nombre.length < 2) return NextResponse.json({ error: 'Escribe el nombre de la persona.' }, { status: 400 });
+    for (let intento = 0; intento < 3; intento++) {
+      const libre = await prisma.codigoInvitacion.findFirst({ where: { usadoPor: null, nota: null }, orderBy: { numero: 'asc' } });
+      if (!libre) {
+        await generarCodigos(prisma, 1);
+        continue;
+      }
+      // Solo si sigue libre (dos personas del equipo generando a la vez no se pisan).
+      const r = await prisma.codigoInvitacion.updateMany({ where: { codigo: libre.codigo, nota: null, usadoPor: null }, data: { nota: nombre } });
+      if (r.count !== 1) continue;
+      const total = await prisma.codigoInvitacion.count();
+      return NextResponse.json({ codigo: libre.codigo, numero: libre.numero, nombre, total, enlace: ENLACE(libre.codigo) });
+    }
+    return NextResponse.json({ error: 'No se pudo apartar un código. Intenta de nuevo.' }, { status: 409 });
+  }
+
   const cantidad = Math.floor(Number(body?.cantidad));
   if (!(cantidad >= 1 && cantidad <= 500)) return NextResponse.json({ error: 'Entre 1 y 500 códigos.' }, { status: 400 });
   return NextResponse.json({ creados: await generarCodigos(prisma, cantidad) });

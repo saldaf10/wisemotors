@@ -7,7 +7,8 @@
 // Dos caminos: "Tengo una invitación" (crear cuenta con el código) y "Ya tengo
 // cuenta" (ingresar). Al crear la cuenta hay un momento de bienvenida (sin género: "Ya estás adentro, Laura.")
 // —"Invitación #037 de 100"— y de ahí arranca el recorrido guiado. Un enlace
-// con ?codigo=WISE-XXXXXX llega con el código ya escrito.
+// con ?codigo=482913 llega con el código ya escrito. Los códigos son de 6
+// números (se muestran "482 913"); el del equipo, con letras, también entra.
 // ============================================================================
 
 import { useEffect, useState } from 'react';
@@ -17,6 +18,14 @@ import { CarRender } from '@/components/car/CarRender';
 import { Logo, LogoMarca } from '@/components/brand/Logo';
 import { iniciarRecorrido } from '@/components/recorrido/Recorrido';
 import { destinoSeguro } from '@/lib/destino';
+import { formatearCodigo } from '@/lib/invitaciones-formato';
+
+/** Mientras escribe: solo números, en dos grupos de 3. Si escribe letras, es el código del equipo y se deja tal cual. */
+function escribirCodigo(v: string): string {
+  if (/[a-z]/i.test(v)) return v.slice(0, 20);
+  const d = v.replace(/\D/g, '').slice(0, 6);
+  return d.length > 3 ? `${d.slice(0, 3)} ${d.slice(3)}` : d;
+}
 
 const CORREO_DATOS = 'hola@wisemotors.co';
 
@@ -112,7 +121,7 @@ export function Bienvenida() {
     const q = new URLSearchParams(window.location.search);
     if (q.get('modo') === 'ingresar') setModo('ingresar');
     const c = q.get('codigo');
-    if (c) setCodigo(c.toUpperCase().slice(0, 20));
+    if (c) setCodigo(escribirCodigo(formatearCodigo(c)));
     const t = setInterval(() => {
       if (!document.hidden) setCarro(x => (x + 1) % VITRINA.length);
     }, 5000);
@@ -268,12 +277,13 @@ export function Bienvenida() {
                   <span className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-wise-lila">Tu código de invitación</span>
                   <input
                     value={codigo}
-                    onChange={e => setCodigo(e.target.value.toUpperCase().slice(0, 20))}
-                    placeholder="WISE-XXXXXX"
-                    autoCapitalize="characters"
+                    onChange={e => setCodigo(escribirCodigo(e.target.value))}
+                    placeholder="000 000"
+                    inputMode="numeric"
+                    autoCapitalize="none"
                     autoComplete="off"
                     spellCheck={false}
-                    className="mt-1 w-full bg-transparent font-mono text-[26px] font-medium tracking-[0.12em] text-white outline-none placeholder:text-white/25"
+                    className="mt-1 w-full bg-transparent font-mono text-[32px] font-medium tracking-[0.18em] text-white outline-none placeholder:text-white/25"
                   />
                 </label>
 

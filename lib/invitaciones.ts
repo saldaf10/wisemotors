@@ -10,21 +10,19 @@
 import { randomInt } from 'crypto';
 import type { PrismaClient } from '@prisma/client';
 
-// Sin letras ni números que se confunden al dictarlos o copiarlos a mano (0/O, 1/I/L).
-const ALFABETO = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';
-
+// Solo números (nov-2026): fáciles de dictar y escribir en el celular. Seis
+// cifras que no empiezan en 0: "482913", que se muestra "482 913".
 export function nuevoCodigoInvitacion(): string {
-  let x = '';
-  for (let i = 0; i < 6; i++) x += ALFABETO[randomInt(ALFABETO.length)];
-  return `WISE-${x}`;
+  return String(randomInt(100_000, 1_000_000));
 }
 
-/** "wise 7k3-pq9", "7K3PQ9" → "WISE-7K3PQ9" (sin espacios, guiones ni minúsculas). */
+/** "482 913", "482-913" → "482913". */
 export function normalizarCodigo(valor: string): string {
-  const limpio = valor.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  const cuerpo = limpio.startsWith('WISE') ? limpio.slice(4) : limpio;
-  return `WISE-${cuerpo}`;
+  return valor.replace(/\D/g, '');
 }
+
+/** Códigos de la primera versión ("WISE-7K3PQ9"): se reemplazan por numéricos si nadie los usó. */
+export const esCodigoViejo = (codigo: string) => !/^\d+$/.test(codigo);
 
 /** Crea `n` códigos nuevos con número consecutivo. Devuelve cuántos creó. */
 export async function generarCodigos(prisma: PrismaClient, n: number): Promise<number> {
