@@ -21,7 +21,7 @@ export interface CarLike {
   fuelType?: string;
   specifications?: unknown;
   imageUrl?: string | null;
-  images?: { url: string; type?: string | null; isThumbnail?: boolean | null }[] | null;
+  images?: { url: string; type?: string | null; isThumbnail?: boolean | null; alt?: string | null; order?: number | null }[] | null;
 }
 
 type Carroceria = 'sedan' | 'hatch' | 'suv' | 'suvCoupe' | 'pickup';

@@ -344,6 +344,14 @@
   from { opacity: 0; transform: translateY(24px); }
 }
 
+/* Cambio de foto en las tarjetas (flechas de components/car/TarjetaCarro.tsx) */
+.foto-entra {
+  animation: foto-entra 320ms var(--ease-out-strong) both;
+}
+@keyframes foto-entra {
+  from { opacity: 0; }
+}
+
 /* Revelado al hacer scroll (components/ui/Reveal.tsx) */
 .reveal {
   opacity: 0;

@@ -10,17 +10,21 @@
 //
 // Con `versiones` (el mismo carro en varias versiones, lib/versiones) la
 // tarjeta es una sola y un toggle amarillo cambia de versión en el sitio.
+//
+// Si el carro tiene varias fotos reales, flechas (y deslizar el dedo) pasan de
+// una vista a otra sin salir de la tarjeta (lib/vistas, el mismo orden de la ficha).
 // ============================================================================
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, Heart, Layers } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowUpRight, ChevronLeft, ChevronRight, Heart, Layers } from 'lucide-react';
 import { CarRender, type CarLike } from '@/components/car/CarRender';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useAuth } from '@/contexts/AuthContext';
 import { millones, palabraGigante, tresDatos } from '@/lib/vehiculo-datos';
 import { etiquetaVersion, nombreFamilia } from '@/lib/versiones';
+import { vistasDe } from '@/lib/vistas';
 
 export interface VehiculoTarjeta extends CarLike {
   id: string;
@@ -84,6 +88,101 @@ export function ToggleVersiones({
           {favorita?.(v.id) && <Heart className={chica ? 'h-2.5 w-2.5' : 'h-3 w-3'} fill="currentColor" strokeWidth={0} />}
         </button>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Las fotos del carro con flechas para pasar de vista en vista. Va dentro del
+ * enlace de la tarjeta: las flechas y el deslizamiento no navegan.
+ * Con una sola foto (o ninguna) es el CarRender de siempre.
+ */
+function FotosTarjeta({ car, chica }: { car: VehiculoTarjeta; chica: boolean }) {
+  const vistas = useMemo(() => vistasDe(car), [car]);
+  // `i` es la foto pedida; `vista` la que se ve. La anterior se queda hasta que la nueva cargue.
+  const [i, setI] = useState(0);
+  const [vista, setVista] = useState(0);
+  const toque = useRef<{ x: number; y: number } | null>(null);
+  const precargadas = useRef(false);
+  // Otra versión, otras fotos: vuelve a la portada.
+  useEffect(() => {
+    setI(0);
+    setVista(0);
+    precargadas.current = false;
+  }, [car.id]);
+
+  if (vistas.length < 2) return <CarRender car={car} ajustado className="carro relative h-full w-[92%]" />;
+
+  const n = vistas.length;
+  const pedida = Math.min(i, n - 1);
+  const actual = vistas[Math.min(vista, n - 1)];
+  const ir = (paso: number) => setI(k => (k + paso + n) % n);
+  // Las fotos pesan: se piden apenas la persona se acerca a la tarjeta, no al cargar el catálogo.
+  const precargar = () => {
+    if (precargadas.current) return;
+    precargadas.current = true;
+    for (const v of vistas) new Image().src = v.url;
+  };
+  const parar = (e: React.SyntheticEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  const alt = `${car.brand} ${car.model}, ${actual.etiqueta.toLowerCase()}`;
+  // En pantallas con mouse las flechas aparecen al pasar el cursor; en celular siempre están.
+  const flecha = `absolute top-1/2 z-20 inline-flex -translate-y-1/2 items-center justify-center rounded-full border border-linea bg-blanco/90 text-tinta shadow-sm backdrop-blur transition-opacity hover:bg-blanco [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 focus-visible:opacity-100 ${
+    chica ? 'h-7 w-7 md:h-9 md:w-9' : 'h-9 w-9'
+  }`;
+
+  return (
+    <div
+      className="absolute inset-0 flex items-center justify-center"
+      onPointerEnter={precargar}
+      onTouchStart={e => {
+        precargar();
+        const t = e.touches[0];
+        toque.current = { x: t.clientX, y: t.clientY };
+      }}
+      onTouchEnd={e => {
+        const ini = toque.current;
+        toque.current = null;
+        if (!ini) return;
+        const t = e.changedTouches[0];
+        const dx = t.clientX - ini.x;
+        // Solo un deslizamiento horizontal claro cambia de foto; el vertical es scroll.
+        if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(t.clientY - ini.y) * 1.5) {
+          parar(e);
+          ir(dx < 0 ? 1 : -1);
+        }
+      }}
+    >
+      {actual.interior ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key={actual.url} src={actual.url} alt={alt} loading="lazy" draggable={false} className="foto-entra absolute inset-0 h-full w-full rounded-[14px] object-cover" />
+      ) : (
+        <div key={actual.url} className="carro foto-entra relative h-full w-[92%]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={actual.url} alt={alt} loading="lazy" draggable={false} className="block h-full w-full object-contain drop-shadow-[0_18px_22px_rgba(0,0,0,0.28)]" />
+        </div>
+      )}
+      {pedida !== vista && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img key={`carga-${vistas[pedida].url}`} src={vistas[pedida].url} alt="" aria-hidden className="pointer-events-none absolute h-px w-px opacity-0" onLoad={() => setVista(pedida)} onError={() => setVista(pedida)} />
+      )}
+      <button type="button" aria-label="Foto anterior" onClick={e => { parar(e); ir(-1); }} className={`${flecha} left-0`}>
+        <ChevronLeft className={chica ? 'h-4 w-4' : 'h-5 w-5'} />
+      </button>
+      <button type="button" aria-label="Foto siguiente" onClick={e => { parar(e); ir(1); }} className={`${flecha} right-0`}>
+        <ChevronRight className={chica ? 'h-4 w-4' : 'h-5 w-5'} />
+      </button>
+      <div className="absolute inset-x-0 bottom-0 z-20 flex justify-center gap-1" aria-label={`Foto ${pedida + 1} de ${n}: ${vistas[pedida].etiqueta}`}>
+        {vistas.map((v, k) => (
+          <span
+            key={`${v.vista}-${k}`}
+            aria-hidden
+            className={`h-1.5 rounded-full transition-all ${k === pedida ? 'w-4 bg-wise' : 'w-1.5 bg-tinta/25'}`}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -248,7 +347,7 @@ export function TarjetaCarro({
         >
           {palabraGigante(vehiculo.model, vehiculo.brand)}
         </span>
-        <CarRender car={vehiculo} ajustado className="carro relative h-full w-[92%]" />
+        <FotosTarjeta car={vehiculo} chica={compacta} />
         {lista && corazon('absolute right-0 top-0 z-10 lg:hidden')}
       </div>
 

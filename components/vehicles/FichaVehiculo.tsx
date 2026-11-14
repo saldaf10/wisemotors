@@ -46,56 +46,12 @@ import { porCercania } from '@/lib/distancia';
 import { BotonCercania, TarjetaConcesionario, tieneUbicacion, type Concesionario } from '@/components/concesionarios/piezas';
 import { ListaContacto, useContactar, type Motivo } from '@/components/concesionarios/Contacto';
 import { datosClave, millones, precioCompleto, specsDe, tresDatos } from '@/lib/vehiculo-datos';
-import { urlImagen } from '@/lib/data/imagen';
+import { vistasDe } from '@/lib/vistas';
 import { AvisoEstimados, EstimadosProvider, MOSTRAR_ESTIMADOS, MarcaE } from '@/components/ui/Estimado';
 import { AvisoIA } from '@/components/ui/AvisoIA';
 import { fotoDe, pinturaDe } from '@/components/car/CarRender';
 
 
-// Las vistas del carro (fotos reales que sube el equipo), en el orden en que se recorren.
-const ORDEN_VISTAS = ['lado', 'tres_cuartos_frente', 'frente', 'tres_cuartos_atras', 'atras', 'interior', 'detalle'];
-const ETIQUETA_VISTA: Record<string, string> = {
-  lado: 'Lateral',
-  tres_cuartos_frente: '3/4 delantera',
-  frente: 'Frontal',
-  tres_cuartos_atras: '3/4 trasera',
-  atras: 'Trasera',
-  interior: 'Interior',
-  detalle: 'Detalle',
-};
-// La portada se guarda como "cover": su vista sale del texto alternativo ("…, de lado").
-const VISTA_POR_ALT: [RegExp, string][] = [
-  [/3\/4 delantera/i, 'tres_cuartos_frente'],
-  [/3\/4 trasera/i, 'tres_cuartos_atras'],
-  [/de lado|lateral/i, 'lado'],
-  [/de frente|frontal/i, 'frente'],
-  [/de atr[aá]s|trasera/i, 'atras'],
-  [/interior/i, 'interior'],
-  [/detalle/i, 'detalle'],
-];
-
-interface Vista {
-  url: string;
-  vista: string;
-  etiqueta: string;
-  interior: boolean;
-}
-
-function vistasDe(vehicle: any): Vista[] {
-  const imgs: any[] = Array.isArray(vehicle.images) ? vehicle.images : [];
-  const lista = imgs
-    .map((img, i) => {
-      const url = urlImagen(vehicle.id, img?.url, img?.order ?? i);
-      if (!url) return null;
-      const esPortada = !!img.isThumbnail || img.type === 'cover';
-      const porAlt = VISTA_POR_ALT.find(([re]) => re.test(String(img.alt ?? '').split(',').pop() ?? ''))?.[1];
-      const vista = ETIQUETA_VISTA[img.type] ? img.type : porAlt ?? (esPortada ? 'lado' : 'otra');
-      return { url, vista, etiqueta: ETIQUETA_VISTA[vista] ?? 'Foto', interior: vista === 'interior', esPortada };
-    })
-    .filter((x): x is Vista & { esPortada: boolean } => !!x);
-  const peso = (v: Vista & { esPortada: boolean }) => (v.esPortada ? -1 : ORDEN_VISTAS.indexOf(v.vista) === -1 ? 99 : ORDEN_VISTAS.indexOf(v.vista));
-  return lista.sort((a, b) => peso(a) - peso(b));
-}
 
 /** Las versiones del mismo carro (lib/versiones): todo lo del toggle va en amarillo. */
 function Versiones({

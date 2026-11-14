@@ -104,7 +104,7 @@ const PASOS: Paso[] = [
   },
   {
     titulo: 'Ahora ve al catálogo',
-    texto: 'Mira todos los carros y guarda los que te gusten.',
+    texto: 'Mira todos los carros, pasa sus fotos con las flechas y guarda los que te gusten.',
     donde: l => !enCatalogo(l),
     pista: 'Ve al catálogo.',
     objetivo: NAV('/vehicles'),
