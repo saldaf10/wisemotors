@@ -10,7 +10,8 @@
 
 import { readFileSync } from 'node:fs';
 import { VALORES_POR_DEFECTO as P } from '../lib/indices/parametros';
-import { calcularIndices, costoRealTenencia, indiceAltura, indiceHueco, indicePalmas, leerLlanta } from '../lib/indices/calculo';
+import { calcularIndices, costoRealTenencia, indiceAltura, indiceHueco, indicePalmas, indiceResalto, leerLlanta } from '../lib/indices/calculo';
+import { picoYPlaca } from '../lib/indices/pico-y-placa';
 import { opcionMasCercana } from '../lib/subida/opciones';
 
 let fallas = 0;
@@ -92,6 +93,34 @@ const otra = costoRealTenencia({ ...corolla, confiabilidadMarca: 50 }, P);
 check('marca confiable se desvaloriza menos', toyota.disponible && otra.disponible && toyota.valorAlFinal > otra.valorAlFinal);
 
 console.log('\nNormalización de la tracción y la inducción');
+// ── Policías acostados ──
+const res = (h: number, l: number, extra: Record<string, number> = {}) =>
+  indiceResalto({ fuelType: 'Gasolina', price: 1, specifications: { chassis: { groundClearance: h }, dimensions: { wheelbase: l }, offRoad: extra } }, P);
+const rBajo = res(120, 2700);
+const rSuv = res(160, 2570, { approachAngle: 17, breakoverAngle: 14.2 });
+const rPick = res(274, 3745, { approachAngle: 30, breakoverAngle: 23 });
+check('resalto: hatch de 120 mm raspa', rBajo.disponible && rBajo.veredicto === 'Raspa si no vas con cuidado');
+check('resalto: ventral calculado ≈ publicado (Tracker 14,2°)', (() => { const r = res(160, 2570); return r.disponible && r.ventralCalculado && Math.abs(r.ventral - 14.2) < 0.2; })());
+check('resalto: SUV de 160 mm pasa tranquilo', rSuv.disponible && rSuv.veredicto === 'Pasa tranquilo');
+check('resalto: pickup alta ni los siente', rPick.disponible && rPick.puntaje === 100);
+check('resalto: sin altura al piso no se muestra', !indiceResalto({ fuelType: 'Gasolina', price: 1, specifications: { dimensions: { wheelbase: 2600 } } }, P).disponible);
+
+// ── Pico y placa ──
+const hoy = new Date('2026-11-14');
+const tiene = (fuelType: string, ciudad: string, d = hoy) => {
+  const r = picoYPlaca({ fuelType }, d);
+  return r.disponible ? r.ciudades.find(c => c.nombre === ciudad)?.tiene : undefined;
+};
+check('pyp: gasolina en Bogotá sí', tiene('Gasolina', 'Bogotá') === true);
+check('pyp: eléctrico en Bogotá no', tiene('Eléctrico', 'Bogotá') === false);
+check('pyp: híbrido en Medellín no', tiene('Híbrido', 'Medellín') === false);
+check('pyp: enchufable cuenta como híbrido', tiene('Híbrido Enchufable', 'Cali') === false);
+check('pyp: Barranquilla no tiene para particulares', tiene('Gasolina', 'Barranquilla') === false);
+check('pyp: híbrido en Manizales sí (nov-2026)', tiene('Híbrido', 'Manizales') === true);
+check('pyp: Manizales desaparece al vencer la medida', tiene('Híbrido', 'Manizales', new Date('2026-12-01')) === undefined);
+check('pyp: Pereira no se muestra (fuentes contradictorias)', tiene('Gasolina', 'Pereira') === undefined);
+check('pyp: vans de carga no se muestran', !picoYPlaca({ fuelType: 'Diesel', type: 'Van', vehicleType: 'Comercial' }, hoy).disponible);
+
 for (const [entra, sale] of [
   ['4WD', '4x4'], ['Tracción total', 'Integral (AWD)'], ['AWD', 'Integral (AWD)'], ['4x2', 'Delantera'],
   ['Tracción delantera', 'Delantera'], ['RWD', 'Trasera'], ['xDrive', 'Integral (AWD)'], ['E-Four', 'Integral (AWD)'],
@@ -119,6 +148,7 @@ for (const v of demo) {
   console.log(`     Altura: ${txt(r.altura, x => `Bogotá ${x.ciudades[8].potencia}/${x.potenciaNominal} hp (−${x.ciudades[8].perdidaPct} %)`)}`);
   console.log(`     Palmas: ${txt(r.palmas, x => `${x.hpPorTonelada} hp/t · ${x.veredicto} (${x.puntaje})`)}`);
   console.log(`     Hueco:  ${txt(r.hueco, x => `${x.veredicto} (${x.puntaje})`)}`);
+  console.log(`     Resalto: ${txt(r.resalto, x => `${x.veredicto} (${x.puntaje})`)}`);
   console.log(`     CRT:    ${txt(r.crt, x => `$${Math.round(x.total / 1e6)} M en 5 años ($${(x.porMes / 1e6).toFixed(1)} M/mes)`)}`);
 }
 

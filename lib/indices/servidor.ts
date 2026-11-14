@@ -27,6 +27,8 @@ export async function parametrosVigentes(): Promise<Valores> {
 
 export async function indicesDeVehiculo(v: {
   brand: string;
+  type?: string | null;
+  vehicleType?: string | null;
   fuelType: string;
   price: number;
   specifications: unknown;
@@ -36,7 +38,14 @@ export async function indicesDeVehiculo(v: {
     prisma.brandPerception.findFirst({ where: { brand: { equals: v.brand, mode: 'insensitive' } } }).catch(() => null),
   ]);
   return calcularIndices(
-    { fuelType: v.fuelType, price: v.price, specifications: v.specifications, confiabilidadMarca: marca?.reliability ?? null },
+    {
+      fuelType: v.fuelType,
+      price: v.price,
+      specifications: v.specifications,
+      confiabilidadMarca: marca?.reliability ?? null,
+      type: v.type,
+      vehicleType: v.vehicleType,
+    },
     p
   );
 }

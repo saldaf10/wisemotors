@@ -96,6 +96,36 @@ export const PARAMETROS: Parametro[] = [
     fuente: 'Criterio WiseMotors',
   },
 
+  // ── Policías acostados y rampas ───────────────────────────────────────────
+  {
+    clave: 'resalto.alturaMm',
+    valor: 100,
+    unidad: 'mm',
+    descripcionEs: 'Alto de un policía acostado alto en una calle colombiana.',
+    fuente: 'Criterio WiseMotors',
+  },
+  {
+    clave: 'resalto.despejeMin',
+    valor: 100,
+    unidad: 'mm',
+    descripcionEs: 'Altura al piso con la que un policía acostado alto casi toca la panza (puntaje 0 en esa parte).',
+    fuente: 'Criterio WiseMotors',
+  },
+  {
+    clave: 'resalto.despejeMax',
+    valor: 200,
+    unidad: 'mm',
+    descripcionEs: 'Altura al piso con la que ningún policía acostado preocupa (puntaje 100 en esa parte).',
+    fuente: 'Criterio WiseMotors',
+  },
+  {
+    clave: 'resalto.rampaPct',
+    valor: 18,
+    unidad: '%',
+    descripcionEs: 'Pendiente de una rampa de parqueadero empinada (edificios y centros comerciales).',
+    fuente: 'Criterio WiseMotors',
+  },
+
   // ── Costo Real de Tenencia (5 años, Medellín) ─────────────────────────────
   { clave: 'crt.anios', valor: 5, unidad: 'años', descripcionEs: 'Horizonte del cálculo.', fuente: 'Plan WiseMotors §4.4' },
   {

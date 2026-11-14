@@ -321,7 +321,16 @@ cobertura, migración, seeds, motor de cohortes.
   vista de la portada sale de su `alt`) + 4 datos clave. Sin fotos, el dibujo. La única
   navegación de categorías es `NavSecciones`. La foto `interior` acompaña el equipo en
   Tecnología. Similares: botón "Comparar los N a la vez" (`/compare?ids=`).
-- Ficha: "Hecho para Colombia" (Altura, Hueco, CRT) va de ÚLTIMA sección, después de "Su categoría" (14-nov-2026).
+- Ficha: "Hecho para Colombia" va de ÚLTIMA sección, después de "Su categoría" (14-nov-2026): Altura,
+  Pico y placa, Hueco, Policías acostados y CRT.
+  - Pico y placa (`lib/indices/pico-y-placa.ts`): SOLO sí o no por ciudad (decisión del usuario: nada de
+    días ni horarios). Reglas por ciudad con fuente y fecha de verificación; las temporales llevan `hasta`
+    y desaparecen al vencer. Pereira NO está (fuentes contradictorias en sep–nov 2026). Híbrido y
+    enchufable = "hibrido"; los MHEV no tienen exención en Bogotá y el catálogo aún no los separa.
+    Camiones y vans comerciales no lo muestran (reglas de carga distintas). Revisar las reglas cada semestre.
+  - Policías acostados (`indiceResalto`): altura al piso + ángulo ventral (publicado o 2·atan(2h/L)) +
+    ángulo de entrada si existe, contra un resalto de 10 cm y una rampa de parqueadero de 18 %
+    (parámetros `resalto.*`).
 - Ficha en celular (12-nov-2026): las grillas de sección son de 2 columnas; `Bloque` ocupa
   las dos salvo con `mitad` (torque+motor, tanque+ciudad/carretera, pasajeros+altura,
   protección+airbags: cada par con la misma condición para que nunca quede uno

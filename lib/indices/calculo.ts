@@ -4,6 +4,8 @@
 //   Altura  — cuánta potencia le queda al carro en cada ciudad.
 //   Palmas  — potencia real por tonelada subiendo al Alto de Las Palmas, cargado.
 //   Hueco   — despeje + alto de la llanta: ¿sobrevive a una vía colombiana?
+//   Resalto — altura al piso + ángulos: ¿raspa en policías acostados y rampas?
+//   Pico y placa — sí o no por ciudad (lib/indices/pico-y-placa.ts).
 //   CRT     — Costo Real de Tenencia a 5 años en Medellín, en pesos.
 //
 // Funciones puras (sin BD): reciben la ficha y los parámetros vigentes
@@ -15,6 +17,7 @@
 
 import { leer, rendimiento, specsDe } from '@/lib/vehiculo-datos';
 import type { Valores } from './parametros';
+import { picoYPlaca, type ResultadoPicoYPlaca } from './pico-y-placa';
 
 export interface EntradaIndices {
   fuelType: string;
@@ -22,6 +25,11 @@ export interface EntradaIndices {
   specifications: unknown;
   /** Confiabilidad percibida de la marca (0-100), de brand_perception_co. */
   confiabilidadMarca?: number | null;
+  /** Carrocería y categoría: los de carga no muestran pico y placa. */
+  type?: string | null;
+  vehicleType?: string | null;
+  /** Para las reglas temporales de pico y placa (por defecto, hoy). */
+  hoy?: Date;
 }
 
 export type Motor = 'atmosferico' | 'turbo' | 'electrico' | 'hibrido';
@@ -226,6 +234,76 @@ export function indiceHueco(e: EntradaIndices, p: Valores): ResultadoHueco | NoD
 }
 
 // ---------------------------------------------------------------------------
+// POLICÍAS ACOSTADOS Y RAMPAS
+// ---------------------------------------------------------------------------
+
+export interface ResultadoResalto {
+  disponible: true;
+  despejeMm: number;
+  /** Ángulo ventral: publicado o calculado con la altura al piso y la distancia entre ejes. */
+  ventral: number;
+  ventralCalculado: boolean;
+  /** Ángulo de entrada (ataque), si la marca lo publica. */
+  entrada: number | null;
+  puntaje: number;
+  veredicto: string;
+  explicacion: string;
+}
+
+const grados = (rad: number) => (rad * 180) / Math.PI;
+
+export function indiceResalto(e: EntradaIndices, p: Valores): ResultadoResalto | NoDisponible {
+  const s = specsDe(e.specifications);
+  const despeje = leer(s, 'chassis.groundClearance');
+  const entreEjes = leer(s, 'dimensions.wheelbase');
+  const publicado = leer(s, 'offRoad.breakoverAngle');
+  const entrada = leer(s, 'offRoad.approachAngle');
+  const faltan: string[] = [];
+  if (despeje === null) faltan.push('la altura al piso');
+  if (publicado === null && entreEjes === null) faltan.push('la distancia entre ejes (o el ángulo ventral)');
+  if (despeje === null || (publicado === null && entreEjes === null)) return { disponible: false, faltan };
+
+  // Ventral: el ángulo de la cresta que alcanza a pasar sin que la panza toque.
+  const ventral = publicado ?? grados(2 * Math.atan((2 * despeje) / entreEjes!));
+  const rampa = grados(Math.atan(p['resalto.rampaPct'] / 100));
+  const parte = (x: number, min: number, max: number) => acotar(((x - min) / (max - min)) * 100);
+  const pDespeje = parte(despeje, p['resalto.despejeMin'], p['resalto.despejeMax']);
+  // 0 = la cresta de la rampa le toca la panza / la trompa; 100 = le sobran 8° (ventral) o 15° (entrada).
+  const pVentral = parte(ventral, rampa, rampa + 8);
+  const pEntrada = entrada === null ? null : parte(entrada, rampa, rampa + 15);
+  const puntaje = redondear(
+    pEntrada === null ? 0.55 * pDespeje + 0.45 * pVentral : 0.4 * pDespeje + 0.35 * pVentral + 0.25 * pEntrada
+  );
+  const veredicto = puntaje < 30 ? 'Raspa si no vas con cuidado' : puntaje < 50 ? 'Despacio y en diagonal' : puntaje < 75 ? 'Pasa tranquilo' : 'Ni los siente';
+
+  const alto = p['resalto.alturaMm'];
+  const margen = redondear(despeje - alto);
+  const cm = new Intl.NumberFormat('es-CO').format(alto / 10);
+  const resalto =
+    margen <= 0
+      ? `Va a ${redondear(despeje)} mm del piso: un policía acostado alto (${cm} cm) le puede tocar la panza.`
+      : `Va a ${redondear(despeje)} mm del piso: a un policía acostado alto (${cm} cm) le saca ${margen} mm.`;
+  const holgura = ventral - rampa;
+  const cresta =
+    holgura >= 3
+      ? ` En la parte de arriba de una rampa de parqueadero empinada pasa sin tocar.`
+      : holgura >= 0
+        ? ` En la parte de arriba de una rampa de parqueadero empinada pasa justo: súbela despacio.`
+        : ` En la parte de arriba de una rampa de parqueadero empinada puede rozar la panza: súbela despacio y en diagonal.`;
+  const trompa = entrada !== null && entrada < rampa + 4 ? ' La trompa va baja: entra a las rampas en diagonal.' : '';
+  return {
+    disponible: true,
+    despejeMm: redondear(despeje),
+    ventral: Math.round(ventral * 10) / 10,
+    ventralCalculado: publicado === null,
+    entrada,
+    puntaje,
+    veredicto,
+    explicacion: resalto + cresta + trompa,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // COSTO REAL DE TENENCIA
 // ---------------------------------------------------------------------------
 
@@ -399,6 +477,8 @@ export interface IndicesVehiculo {
   altura: ResultadoAltura | NoDisponible;
   palmas: ResultadoPalmas | NoDisponible;
   hueco: ResultadoHueco | NoDisponible;
+  resalto: ResultadoResalto | NoDisponible;
+  picoYPlaca: ResultadoPicoYPlaca | NoDisponible;
   crt: ResultadoCRT | NoDisponible;
 }
 
@@ -407,6 +487,8 @@ export function calcularIndices(e: EntradaIndices, p: Valores): IndicesVehiculo 
     altura: indiceAltura(e, p),
     palmas: indicePalmas(e, p),
     hueco: indiceHueco(e, p),
+    resalto: indiceResalto(e, p),
+    picoYPlaca: picoYPlaca(e, e.hoy),
     crt: costoRealTenencia(e, p),
   };
 }

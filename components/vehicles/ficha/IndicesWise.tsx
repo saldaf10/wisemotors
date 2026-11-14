@@ -3,23 +3,25 @@
 // ============================================================================
 // Índices WiseMotors en la ficha (plan §4): lo que solo importa en Colombia.
 //
-// Altura (con selector de ciudad), Hueco y Costo Real de Tenencia. (El Índice
-// Palmas se quitó de la ficha en nov-2026; su cálculo sigue en lib/indices.)
+// Altura (con selector de ciudad), pico y placa (sí o no por ciudad), Hueco,
+// policías acostados y Costo Real de Tenencia. (El Índice Palmas se quitó de la
+// ficha en nov-2026; su cálculo sigue en lib/indices.)
 // Llegan ya calculados del servidor (lib/indices). Un índice sin los datos que
 // lo sostienen no aparece (qué falta se ve en la cola de auditoría del panel,
 // no se le cuenta al comprador).
 // ============================================================================
 
 import { useState } from 'react';
-import { Coins, Mountain, MountainSnow, Waves } from 'lucide-react';
-import type { IndicesVehiculo, ResultadoAltura, ResultadoCRT, ResultadoHueco } from '@/lib/indices/calculo';
+import { CalendarX, Coins, Mountain, MountainSnow, TrafficCone, Waves } from 'lucide-react';
+import type { IndicesVehiculo, ResultadoAltura, ResultadoCRT, ResultadoHueco, ResultadoResalto } from '@/lib/indices/calculo';
+import type { ResultadoPicoYPlaca } from '@/lib/indices/pico-y-placa';
 import { Bloque, Cabecera, Titulito } from './SeccionesFicha';
 
 const fmt = (n: number) => new Intl.NumberFormat('es-CO').format(Math.round(n));
 const mill = (n: number) => `$${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 }).format(n / 1_000_000)} M`;
 
 export function hayIndices(i: IndicesVehiculo | null | undefined) {
-  return !!i && (i.altura.disponible || i.hueco.disponible || i.crt.disponible);
+  return !!i && (i.altura.disponible || i.hueco.disponible || i.resalto?.disponible || i.picoYPlaca?.disponible || i.crt.disponible);
 }
 
 function Medidor({ puntaje, claro = false }: { puntaje: number; claro?: boolean }) {
@@ -62,6 +64,63 @@ function Altura({ a }: { a: ResultadoAltura }) {
         {c.perdidaPct === 0 ? 'No pierde nada.' : `Pierde ${a.aproximado ? 'hasta ' : ''}${c.perdidaPct} % de su fuerza.`}
       </p>
       <p className="mt-4 max-w-[52ch] text-[13px] leading-snug text-white/80 md:mt-6 md:text-[15px] md:leading-relaxed">{a.explicacion}</p>
+    </>
+  );
+}
+
+/** Solo sí o no, ciudad por ciudad (decisión del equipo: nada de días ni horarios). */
+function PicoYPlaca({ r }: { r: ResultadoPicoYPlaca }) {
+  const [ciudad, setCiudad] = useState(r.ciudades.some(c => c.nombre === 'Bogotá') ? 'Bogotá' : r.ciudades[0].nombre);
+  const c = r.ciudades.find(x => x.nombre === ciudad) ?? r.ciudades[0];
+  return (
+    <>
+      <div className="mt-4 flex flex-wrap gap-1.5 md:mt-5" role="radiogroup" aria-label="Ciudad">
+        {r.ciudades.map(x => (
+          <button
+            key={x.nombre}
+            role="radio"
+            aria-checked={x.nombre === ciudad}
+            onClick={() => setCiudad(x.nombre)}
+            className={`rounded-full px-2.5 py-1 text-[12px] transition-colors md:px-3 md:py-1.5 md:text-[13px] ${
+              x.nombre === ciudad ? 'bg-tinta text-white' : 'bg-tinta/[0.06] text-tinta-2 hover:bg-tinta/10'
+            }`}
+          >
+            {x.nombre}
+          </button>
+        ))}
+      </div>
+      <p className="mt-5 text-[13px] text-tinta-2 md:mt-7">¿Tiene pico y placa en {c.nombre}?</p>
+      <p key={c.nombre} className={`sube mt-1 text-[56px] font-light leading-none tracking-[-0.05em] md:text-[96px] ${c.tiene ? 'text-tinta' : 'text-wise'}`}>
+        {c.tiene ? 'Sí' : 'No'}
+      </p>
+      <p className="mt-4 text-[11px] text-tinta-2/80 md:mt-6 md:text-[12px]">Carro particular, reglas de {r.verificado}. Cada ciudad las puede cambiar.</p>
+    </>
+  );
+}
+
+function Resalto({ r }: { r: ResultadoResalto }) {
+  const grado = (n: number) => `${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 }).format(n)}°`;
+  return (
+    <>
+      <p className="mt-4 text-[22px] font-semibold leading-none tracking-[-0.03em] md:mt-6 md:text-[32px]">{r.veredicto}</p>
+      <dl className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-[12px] md:mt-4 md:gap-8 md:text-[13px]">
+        <div>
+          <dt className="text-tinta-2">Altura al piso</dt>
+          <dd className="cifra text-[15px] font-semibold md:text-[20px]">{r.despejeMm} mm</dd>
+        </div>
+        <div>
+          <dt className="text-tinta-2">Ángulo ventral</dt>
+          <dd className="cifra text-[15px] font-semibold md:text-[20px]">{grado(r.ventral)}</dd>
+        </div>
+        {r.entrada !== null && (
+          <div>
+            <dt className="text-tinta-2">Ángulo de entrada</dt>
+            <dd className="cifra text-[15px] font-semibold md:text-[20px]">{grado(r.entrada)}</dd>
+          </div>
+        )}
+      </dl>
+      <Medidor puntaje={r.puntaje} />
+      <p className="mt-4 text-[12px] leading-snug text-tinta-2 md:mt-5 md:text-[14px] md:leading-relaxed">{r.explicacion}</p>
     </>
   );
 }
@@ -133,27 +192,42 @@ function CRT({ c }: { c: ResultadoCRT }) {
 
 export function SeccionIndices({ indices }: { indices: IndicesVehiculo }) {
   const { altura, hueco, crt } = indices;
+  // Índices nuevos (nov-2026): pueden faltar si el servidor es viejo.
+  const resalto = indices.resalto ?? { disponible: false as const };
+  const pyp = indices.picoYPlaca ?? { disponible: false as const };
   return (
     <section>
       <Cabecera
         id="colombia"
         icono={MountainSnow}
         titulo="Hecho para Colombia"
-        bajada="Lo que ninguna ficha te dice: cuánta fuerza le queda en tu ciudad, si aguanta un hueco y cuánto te cuesta de verdad."
+        bajada="Lo que ninguna ficha te dice: cuánta fuerza le queda en tu ciudad, si tiene pico y placa, si aguanta huecos y policías acostados y cuánto te cuesta de verdad."
       />
       <div className="grid grid-cols-2 gap-3 md:grid-cols-12 md:gap-4">
         {altura.disponible && (
-          <Bloque tono="tinta" className={hueco.disponible ? 'md:col-span-7' : 'md:col-span-12'}>
+          <Bloque tono="tinta" className={pyp.disponible ? 'md:col-span-7' : 'md:col-span-12'}>
             <Titulito icono={Mountain} claro>
               Índice Altura
             </Titulito>
             <Altura a={altura} />
           </Bloque>
         )}
+        {pyp.disponible && (
+          <Bloque className={altura.disponible ? 'md:col-span-5' : 'md:col-span-12'}>
+            <Titulito icono={CalendarX}>Pico y placa</Titulito>
+            <PicoYPlaca r={pyp} />
+          </Bloque>
+        )}
         {hueco.disponible && (
-          <Bloque tono="lila" className={altura.disponible ? 'md:col-span-5' : 'md:col-span-12'}>
+          <Bloque tono="lila" mitad={resalto.disponible} className={resalto.disponible ? 'md:col-span-6' : 'md:col-span-12'}>
             <Titulito icono={Waves}>Índice Hueco</Titulito>
             <Hueco h={hueco} />
+          </Bloque>
+        )}
+        {resalto.disponible && (
+          <Bloque mitad={hueco.disponible} className={hueco.disponible ? 'md:col-span-6' : 'md:col-span-12'}>
+            <Titulito icono={TrafficCone}>Policías acostados</Titulito>
+            <Resalto r={resalto} />
           </Bloque>
         )}
         {crt.disponible && (
