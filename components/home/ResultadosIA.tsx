@@ -149,7 +149,9 @@ export function ResultadosIA({
         onCambio={setRespuestas}
       />
       {visibles.length === 0 && (
-        <p className="rounded-[20px] bg-tarjeta px-5 py-4 text-[15px]">Con esas respuestas no queda ninguno. Quita una de arriba.</p>
+        <p className="rounded-[20px] bg-tarjeta px-5 py-4 text-[15px]" data-recorrido="sin-coincidencias">
+          Con esas respuestas no queda ninguno. Quita una de arriba.
+        </p>
       )}
       {primero && (
         <div className="grid overflow-hidden rounded-[36px] bg-blanco lg:grid-cols-[1.25fr_1fr]" data-recorrido="resultados">

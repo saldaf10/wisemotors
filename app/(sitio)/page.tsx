@@ -65,12 +65,16 @@ function Inicio() {
             <p className="t-meta text-tinta-2">(Tu búsqueda)</p>
             <h2 className="t-titulo mt-3 max-w-[22ch] text-[36px] md:text-[52px]">“{query}”</h2>
             <div className="mt-10">
-              {cargandoIA && <AIResultsLoader />}
+              {cargandoIA && (
+                <div data-recorrido="cargando">
+                  <AIResultsLoader />
+                </div>
+              )}
               {!cargandoIA && hayResultados && (
                 <ResultadosIA key={query} resultados={resultados} consulta={query} catalogo={vehiculos} />
               )}
               {!cargandoIA && resultados && !hayResultados && (
-                <div className="rounded-[28px] bg-tarjeta p-10">
+                <div className="rounded-[28px] bg-tarjeta p-10" data-recorrido="sin-resultados">
                   <p className="text-[22px] font-semibold tracking-[-0.03em]">No encontramos carros con esa combinación.</p>
                   <p className="mt-2 text-tinta-2">Prueba con menos condiciones o usa una de estas opciones.</p>
                   <div className="mt-6">

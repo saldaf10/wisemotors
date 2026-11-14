@@ -333,6 +333,13 @@ cobertura, migración, seeds, motor de cohortes.
   "Entra al panel dinámico", que señala `[data-recorrido="panel-dinamico"]`) y `alVer` (en la ficha,
   al llegar a `[data-recorrido="contacto"]` pasa a "Compáralo con sus parecidos", que lleva hasta
   `[data-recorrido="comparar-todos"]`). No se usa amarillo: es solo de versiones.
+  Sentido común (14-nov-2026): los pasos que necesitan una acción (buscar, entrar a un carro,
+  comparar los 4, ir al catálogo/Comparar, 2 me gusta) NO tienen "Siguiente": dicen qué hacer
+  (`requiere`, `listo`). `alternos` cambian el mensaje si la búsqueda está cargando
+  (`data-recorrido="cargando"`), no salió nada (`sin-resultados`), las respuestas dejaron la lista
+  vacía (`sin-coincidencias`), no hay "mejor opción" (búsquedas objetivas) o en Comparar quedan
+  menos de 2 me gusta. `saltarSi` salta pasos que no aplican (sin pregunta para afinar; carro sin
+  similares → a "Ahora ve al catálogo"), tras mirar otra vez a los 1,2 s.
   Cuentas de prueba: `User.recorridoSiempre = true` (a mano en la base) → cada vez que inician
   sesión arranca el recorrido desde el paso 1 y la encuesta vuelve a quedar pendiente
   (`recorridoAlIngresar`). Hoy: "Miguel Olarte Prueba".

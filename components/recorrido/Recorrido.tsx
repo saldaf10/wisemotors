@@ -16,10 +16,18 @@
 // Además de la URL, un paso avanza con una acción (`accion`: el afinador avisa
 // con avisarRecorrido) o al llegar a una parte de la página (`alVer`). Al
 // terminarlo (no al saltarlo) sale la encuesta (Encuesta.tsx).
+//
+// Sentido común (nov-2026): un paso que necesita una acción (buscar, entrar a
+// un carro, ir a otra página, dar 2 me gusta) NO tiene "Siguiente": dice qué
+// hacer (`requiere`) y se puede saltar el recorrido. Mientras la búsqueda carga,
+// si no salió nada o las respuestas dejaron la lista vacía, el paso cambia de
+// mensaje (`alternos`). Un paso que no aplica (sin pregunta para afinar, carro
+// sin similares) se salta solo (`saltarSi`).
 // ============================================================================
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useFavorites } from '@/hooks/useFavorites';
 import { X } from 'lucide-react';
 import { pedirEncuesta } from './Encuesta';
 
@@ -27,6 +35,17 @@ const CLAVE_ESTADO = 'wm_recorrido'; // 'activo' | 'hecho'
 const CLAVE_PASO = 'wm_recorrido_paso';
 
 type Lugar = { path: string; params: URLSearchParams };
+/** Lo que el recorrido mira de la página para decidir (se revisa cada medio segundo). */
+interface Contexto {
+  favoritos: number;
+}
+interface Alterno {
+  si: (c: Contexto) => boolean;
+  titulo: string;
+  texto: string;
+  objetivo?: string[];
+  requiere?: string;
+}
 interface Paso {
   titulo: string;
   texto: string;
@@ -44,6 +63,16 @@ interface Paso {
   alVer?: string;
   /** Botón para avanzar (si no avanza solo). */
   boton?: string;
+  /** Sin esta acción no se puede seguir: en vez de "Siguiente" se dice qué hacer. */
+  requiere?: string;
+  /** Con `requiere`: cuándo ya se puede seguir (entonces sí sale el botón). */
+  listo?: (c: Contexto) => boolean;
+  /** Mensajes para cuando la página no está como el paso espera (cargando, sin resultados…). */
+  alternos?: Alterno[];
+  /** El paso no aplica aquí (ej. el carro no tiene similares): se salta solo. */
+  saltarSi?: (c: Contexto) => boolean;
+  /** A qué paso salta (por defecto, al siguiente). */
+  saltarA?: number;
 }
 
 const enInicio = (l: Lugar) => l.path === '/';
@@ -53,6 +82,29 @@ const enComparacionDirecta = (l: Lugar) => l.path === '/compare' && l.params.has
 const enComparar = (l: Lugar) => l.path === '/compare';
 const enCatalogo = (l: Lugar) => l.path === '/vehicles';
 const NAV = (href: string) => [`[data-recorrido="nav-${href}"]`, '[data-recorrido="menu"]'];
+const hay = (selector: string) => typeof document !== 'undefined' && !!document.querySelector(selector);
+
+// Estados de la búsqueda (app/(sitio)/page.tsx y ResultadosIA) que cambian lo que se puede hacer.
+const BUSCANDO: Alterno = {
+  si: () => hay('[data-recorrido="cargando"]'),
+  titulo: 'Buscando tus carros…',
+  texto: 'La IA está revisando el catálogo para lo que escribiste. Un momento.',
+  requiere: 'Espera los resultados.',
+};
+const SIN_RESULTADOS: Alterno = {
+  si: () => hay('[data-recorrido="sin-resultados"]'),
+  titulo: 'No salió ningún carro',
+  texto: 'Con esas palabras no encontramos carros. Prueba otra búsqueda arriba o toca una de las opciones que te proponemos.',
+  objetivo: ['[data-recorrido="sin-resultados"]'],
+  requiere: 'Busca otra vez para seguir.',
+};
+const SIN_COINCIDENCIAS: Alterno = {
+  si: () => hay('[data-recorrido="sin-coincidencias"]'),
+  titulo: 'No quedó ningún carro',
+  texto: 'Con esas respuestas no queda ninguno. Quita una de arriba (la ×) y seguimos.',
+  objetivo: ['[data-recorrido="afinador"]'],
+  requiere: 'Quita una respuesta para seguir.',
+};
 
 const PASOS: Paso[] = [
   {
@@ -69,15 +121,19 @@ const PASOS: Paso[] = [
     pista: 'Ve al inicio y usa el buscador.',
     objetivo: ['[data-recorrido="buscador"]'],
     avanzaCuando: conBusqueda,
+    requiere: 'Escribe lo que buscas y toca la flecha (o una de las opciones).',
   },
   {
-    titulo: 'Ajusta tu presupuesto',
-    texto: 'Elige cuánto quieres gastar. Con eso afinamos los resultados y seguimos.',
+    titulo: 'Afina los resultados',
+    texto: 'Responde la pregunta (por ejemplo, cuánto quieres gastar) y seguimos solos.',
     donde: conBusqueda,
     pista: 'Vuelve a tus resultados de búsqueda.',
     objetivo: ['[data-recorrido="afinador"]'],
     accion: 'afinador',
     avanzaCuando: enFicha,
+    alternos: [BUSCANDO, SIN_RESULTADOS, SIN_COINCIDENCIAS],
+    // Con pocos resultados no hay nada que afinar: directo a entrar a un carro.
+    saltarSi: () => hay('[data-recorrido="resultados"]') && !hay('[data-recorrido="afinador"]'),
   },
   {
     titulo: 'Entra al panel dinámico',
@@ -86,6 +142,20 @@ const PASOS: Paso[] = [
     pista: 'Vuelve a tus resultados y entra a un carro.',
     objetivo: ['[data-recorrido="panel-dinamico"]', '[data-recorrido="resultados"]'],
     avanzaCuando: enFicha,
+    requiere: 'Toca «Ir al panel dinámico» para seguir.',
+    alternos: [
+      BUSCANDO,
+      SIN_RESULTADOS,
+      SIN_COINCIDENCIAS,
+      {
+        // Búsquedas como "con turbo": lista sin "mejor opción".
+        si: () => hay('[data-recorrido="resultados"]') && !hay('[data-recorrido="panel-dinamico"]'),
+        titulo: 'Entra a un carro',
+        texto: 'Toca cualquiera de los carros de la lista para ver su panel dinámico: toda su información.',
+        objetivo: ['[data-recorrido="resultados"]'],
+        requiere: 'Toca un carro para seguir.',
+      },
+    ],
   },
   {
     titulo: 'Explora el carro a tu ritmo',
@@ -102,6 +172,10 @@ const PASOS: Paso[] = [
     pista: 'Entra a un carro y baja hasta «Si te gusta este».',
     objetivo: ['[data-recorrido="comparar-todos"]', '[data-recorrido="similares"]'],
     avanzaCuando: enComparacionDirecta,
+    requiere: 'Toca «Comparar los 4 a la vez» para seguir.',
+    // Un carro sin similares no tiene esa comparación: se salta hasta ir al catálogo.
+    saltarSi: () => hay('[data-recorrido="contacto"]') && !hay('[data-recorrido="comparar-todos"]'),
+    saltarA: 7,
   },
   {
     titulo: 'Los 4, frente a frente',
@@ -119,14 +193,18 @@ const PASOS: Paso[] = [
     pista: 'Ve al catálogo.',
     objetivo: NAV('/vehicles'),
     avanzaCuando: enCatalogo,
+    requiere: 'Toca «Catálogo» para seguir.',
   },
   {
     titulo: 'Dale me gusta a tus favoritos',
-    texto: 'Toca el corazón de los carros que más te llamen la atención. Si un carro viene en varias versiones, cámbiala con el selector amarillo: el me gusta es de la versión que estés viendo.',
+    texto: 'Toca el corazón de al menos 2 carros que te llamen la atención: así luego los comparas. Si un carro viene en varias versiones, cámbiala con el selector amarillo: el me gusta es de la versión que estés viendo.',
     donde: enCatalogo,
     pista: 'Ve al catálogo y toca el corazón de los que te gusten.',
     objetivo: ['button[aria-label*="avoritos"]'],
     boton: 'Ya les di me gusta',
+    // Con menos de 2 no hay nada que comparar en el paso siguiente.
+    requiere: 'Dale corazón a al menos 2 carros para seguir.',
+    listo: c => c.favoritos >= 2,
   },
   {
     titulo: 'Tus me gusta quedan en Comparar',
@@ -135,6 +213,7 @@ const PASOS: Paso[] = [
     pista: 'Ve a Comparar.',
     objetivo: NAV('/compare'),
     avanzaCuando: l => enComparar(l) && !l.params.has('ids'),
+    requiere: 'Toca «Comparar» para seguir.',
   },
   {
     titulo: 'Arma tu comparación',
@@ -143,6 +222,15 @@ const PASOS: Paso[] = [
     pista: 'Ve a Comparar.',
     objetivo: ['[data-recorrido="seleccion"]'],
     boton: 'Siguiente',
+    alternos: [
+      {
+        si: c => c.favoritos < 2,
+        titulo: 'Te falta un me gusta',
+        texto: 'Para comparar necesitas al menos 2 carros con corazón. Ve al catálogo y dale corazón a otro.',
+        objetivo: NAV('/vehicles'),
+        requiere: 'Dale corazón a otro carro.',
+      },
+    ],
   },
   {
     titulo: 'Separa tu prueba de ruta',
@@ -151,6 +239,15 @@ const PASOS: Paso[] = [
     pista: 'Ve a Comparar y baja hasta el final.',
     objetivo: ['[data-recorrido="prueba-ruta"]'],
     boton: 'Terminar',
+    alternos: [
+      {
+        si: c => c.favoritos < 2,
+        titulo: 'Te falta un me gusta',
+        texto: 'Para comparar necesitas al menos 2 carros con corazón. Ve al catálogo y dale corazón a otro.',
+        objetivo: NAV('/vehicles'),
+        requiere: 'Dale corazón a otro carro.',
+      },
+    ],
   },
 ];
 
@@ -306,6 +403,41 @@ export function Recorrido() {
   const actual = paso !== null ? PASOS[paso] : null;
   const aqui = !!(actual && lugar && actual.donde(lugar));
 
+  // La página cambia sin cambiar de URL (carga la búsqueda, se da un me gusta…): se revisa seguido.
+  const { favorites } = useFavorites();
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!actual || !aqui) return;
+    const t = setInterval(() => setTick(x => x + 1), 500);
+    return () => clearInterval(t);
+  }, [actual, aqui]);
+  const contexto: Contexto = { favoritos: favorites.length };
+  // Lo que se muestra: el paso, o su mensaje alterno si la página no está como el paso espera.
+  const alterno = actual && aqui ? actual.alternos?.find(a => a.si(contexto)) : undefined;
+  const vista = actual ? { ...actual, ...(alterno ?? {}), requiere: alterno ? alterno.requiere : actual.requiere } : null;
+  const objetivo = alterno ? alterno.objetivo : actual?.objetivo;
+  const claveObjetivo = (objetivo ?? []).join('|');
+  const puedeSeguir = !vista?.requiere || (!alterno && !!actual?.listo?.(contexto));
+
+  // Un paso que no aplica aquí se salta solo.
+  const debeSaltar = !!(actual && aqui && paso !== null && actual.saltarSi?.(contexto));
+  // Espera un momento y vuelve a mirar: la página puede estar armándose (resultados que llegan por partes).
+  const contextoRef = useRef(contexto);
+  contextoRef.current = contexto;
+  useEffect(() => {
+    if (!debeSaltar || paso === null || !actual) return;
+    const t = setTimeout(() => {
+      if (!actual.saltarSi?.(contextoRef.current)) return;
+      const destino = actual.saltarA ?? paso + 1;
+      setPaso(p => {
+        if (p !== paso) return p;
+        guardarPaso(destino);
+        return destino;
+      });
+    }, 1200);
+    return () => clearTimeout(t);
+  }, [debeSaltar, paso, actual]);
+
   // Una acción de la página (el afinador) cumple el paso que la espera.
   useEffect(() => {
     if (paso === null || !actual?.accion || !aqui) return;
@@ -331,11 +463,11 @@ export function Recorrido() {
   // Aro sobre lo que señala el paso (una clase en el propio elemento: se mueve con él). Al empezar
   // el paso, si está fuera de la pantalla, la lleva hasta allá una vez. Si aparece tarde, se busca otra vez.
   useEffect(() => {
-    if (!actual || !aqui || !actual.objetivo) return;
+    if (!actual || !aqui || !objetivo) return;
     let marcado: HTMLElement | null = null;
     let vistoEn = 0;
     const marcar = () => {
-      const el = buscarObjetivo(actual.objetivo);
+      const el = buscarObjetivo(objetivo);
       // Espera un momento desde que aparece: la página puede estar desplazándose sola (los resultados).
       if (el && llevado.current !== paso) {
         if (!vistoEn) vistoEn = Date.now();
@@ -355,7 +487,8 @@ export function Recorrido() {
       clearInterval(t);
       marcado?.classList.remove('recorrido-brillo');
     };
-  }, [actual, aqui, paso, lugar?.path]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actual, aqui, paso, lugar?.path, claveObjetivo]);
 
   // El mensaje se pega a lo que señala: debajo si cabe, si no encima, con la flecha apuntándole.
   // Se mueve con la página (cada cuadro, sin animación: se siente pegado, no persiguiendo).
@@ -366,7 +499,7 @@ export function Recorrido() {
     const ubicar = () => {
       const c = tarjeta.current;
       const f = flecha.current;
-      const el = actual.objetivo ? buscarObjetivo(actual.objetivo) : null;
+      const el = objetivo ? buscarObjetivo(objetivo) : null;
       let anclado = false;
       if (c && el) {
         const r = el.getBoundingClientRect();
@@ -402,7 +535,8 @@ export function Recorrido() {
     };
     cuadro = requestAnimationFrame(ubicar);
     return () => cancelAnimationFrame(cuadro);
-  }, [actual, aqui, paso]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actual, aqui, paso, claveObjetivo]);
 
   // Mientras crea la cuenta o inicia sesión, el recorrido espera (arranca al volver al inicio).
   if (!actual || !lugar || lugar.path === '/register' || lugar.path === '/login') return null;
@@ -433,7 +567,7 @@ export function Recorrido() {
       ref={tarjeta}
       key={paso}
       role="dialog"
-      aria-label={actual.titulo}
+      aria-label={vista!.titulo}
       className="recorrido-tarjeta sube fixed bottom-4 left-4 right-4 z-[95] mx-auto max-w-[400px] rounded-[24px] bg-tinta p-5 text-white shadow-[0_24px_60px_-16px_rgba(14,12,17,0.6)] sm:left-auto sm:right-6 sm:mx-0 sm:w-[380px]"
     >
       {/* Flecha hacia lo señalado (solo cuando el mensaje está pegado a algo). */}
@@ -444,16 +578,20 @@ export function Recorrido() {
           <X className="h-4 w-4" />
         </button>
       </div>
-      <p className="mt-2 text-[19px] font-semibold leading-tight tracking-[-0.03em]">{actual.titulo}</p>
-      <p className="mt-2 text-[14.5px] leading-relaxed text-white/75">{actual.texto}</p>
+      <p className="mt-2 text-[19px] font-semibold leading-tight tracking-[-0.03em]">{vista!.titulo}</p>
+      <p className="mt-2 text-[14.5px] leading-relaxed text-white/75">{vista!.texto}</p>
       <div className="mt-4 flex items-center justify-between gap-3">
         <button onClick={saltar} className="text-[13px] text-white/55 hover:text-white">
           Saltar recorrido
         </button>
-        {/* Siempre se puede seguir: si la persona hace la acción, avanza sola. */}
-        <button onClick={avanzar} className="pastilla pastilla--wise h-10 px-5 text-[14px]">
-          {actual.boton ?? 'Siguiente'}
-        </button>
+        {/* Si el paso necesita una acción, no hay "Siguiente": se dice qué hacer (o se salta el recorrido). */}
+        {puedeSeguir ? (
+          <button onClick={avanzar} className="pastilla pastilla--wise h-10 px-5 text-[14px]">
+            {actual.boton ?? 'Siguiente'}
+          </button>
+        ) : (
+          <p className="max-w-[58%] text-right text-[13px] font-medium leading-snug text-wise-lila">{vista!.requiere}</p>
+        )}
       </div>
     </div>
   );
