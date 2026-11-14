@@ -11,7 +11,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowUpRight, Building2, Car, ClipboardCheck, ClipboardList, Download, MessageCircle, Sparkles, Star, ThumbsUp, TrendingUp } from 'lucide-react';
+import { ArrowUpRight, Building2, Car, ClipboardCheck, ClipboardList, Download, Ticket, MessageCircle, Sparkles, Star, ThumbsUp, TrendingUp } from 'lucide-react';
 import { adminFetch, mensajeDeErrorDeAuth } from '@/lib/admin-fetch';
 import { VehiclesTable } from './VehiclesTable';
 import { DealershipsTable } from './DealershipsTable';
@@ -19,10 +19,11 @@ import { TrendingManagement } from './TrendingManagement';
 import { ColaAuditoria } from './ColaAuditoria';
 import { Calificaciones } from './Calificaciones';
 import { Encuestas } from './Encuestas';
+import { Invitaciones } from './Invitaciones';
 import { Demanda } from './Demanda';
 import { specsDe } from '@/lib/vehiculo-datos';
 
-type Pestana = 'vehicles' | 'auditoria' | 'demanda' | 'calificaciones' | 'encuesta' | 'dealerships' | 'trending';
+type Pestana = 'vehicles' | 'auditoria' | 'demanda' | 'calificaciones' | 'encuesta' | 'invitaciones' | 'dealerships' | 'trending';
 
 const PESTANAS: { clave: Pestana; texto: string; icono: typeof Car }[] = [
   { clave: 'vehicles', texto: 'Vehículos', icono: Car },
@@ -30,6 +31,7 @@ const PESTANAS: { clave: Pestana; texto: string; icono: typeof Car }[] = [
   { clave: 'demanda', texto: 'Demanda', icono: TrendingUp },
   { clave: 'calificaciones', texto: 'Calificaciones', icono: ThumbsUp },
   { clave: 'encuesta', texto: 'Encuesta', icono: ClipboardList },
+  { clave: 'invitaciones', texto: 'Invitaciones', icono: Ticket },
   { clave: 'dealerships', texto: 'Concesionarios', icono: Building2 },
   { clave: 'trending', texto: 'Destacados', icono: Star },
 ];
@@ -158,6 +160,8 @@ export function AdminDashboard() {
           <Calificaciones />
         ) : pestana === 'encuesta' ? (
           <Encuestas />
+        ) : pestana === 'invitaciones' ? (
+          <Invitaciones />
         ) : pestana === 'dealerships' ? (
           <DealershipsTable />
         ) : (

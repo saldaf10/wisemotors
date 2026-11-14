@@ -240,6 +240,20 @@ model WhatsAppLead {
 // Lista de espera de la campaña de expectativa (app/espera). Un correo, una
 // fila. `codigo` arma su enlace para invitar (wisemotors.co/?ref=codigo) y
 // `referidoPor` guarda el código de quien lo invitó.
+// Códigos de invitación (nov-2026): mientras el sitio está cerrado, crear
+// cuenta exige uno. Cada código sirve una sola vez (usadoPor = la cuenta que
+// lo canjeó). Los primeros 100 se siembran solos en el deploy.
+model CodigoInvitacion {
+  codigo    String    @id // "WISE-7K3PQ9", siempre en mayúsculas
+  numero    Int       @unique // 1..N, para el "invitación #037"
+  nota      String? // a quién se le entregó (lo escribe el equipo)
+  usadoPor  String?   @unique // id de la cuenta que lo canjeó
+  usadoEn   DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("codigos_invitacion")
+}
+
 model ListaEspera {
   id           String   @id @default(cuid())
   nombre       String

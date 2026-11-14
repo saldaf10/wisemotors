@@ -27,8 +27,9 @@ export function ExigirCuenta({ activo, children }: { activo: boolean; children: 
   useEffect(() => {
     if (!falta) return;
     const destino = encodeURIComponent(window.location.pathname + window.location.search);
-    // Quien cerró sesión ya tiene cuenta: va a ingresar. Los demás, a crearla.
-    window.location.replace(`${tuvoSesion.current ? '/login' : '/register'}?next=${destino}`);
+    // Con el sitio cerrado, cuenta nueva = con invitación: todo pasa por la bienvenida.
+    // Quien cerró sesión ya tiene cuenta: llega en "Ya tengo cuenta".
+    window.location.replace(`/bienvenida?${tuvoSesion.current ? 'modo=ingresar&' : ''}next=${destino}`);
   }, [falta]);
 
   // Mientras redirige no se muestra la página.

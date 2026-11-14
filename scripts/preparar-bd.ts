@@ -32,6 +32,7 @@ import { sembrarBandas, sembrarDefiniciones, sembrarPercepcion } from '../lib/db
 import { crearAdminInicial } from '../lib/db/admin-inicial';
 import { cargarVehiculosDemo } from '../lib/db/vehiculos-demo';
 import { sembrarParametros } from '../lib/indices/parametros';
+import { generarCodigos } from '../lib/invitaciones';
 import { partirSuspensiones } from '../lib/db/partir-suspension';
 import { fusionarCampos } from '../lib/db/fusionar-campos';
 import { limpiarCamposRetirados } from '../lib/db/limpiar-campos';
@@ -79,6 +80,11 @@ async function main() {
     }
     if ((await prisma.brandPerception.count()) === 0) {
       console.log(`[preparar-bd] ✓ ${await sembrarPercepcion(prisma)} marcas sembradas (base nueva)`);
+    }
+
+    // Los primeros 100 códigos de invitación, una sola vez (si la tabla está vacía).
+    if ((await prisma.codigoInvitacion.count()) === 0) {
+      console.log(`[preparar-bd] ✓ ${await generarCodigos(prisma, 100)} códigos de invitación creados`);
     }
 
     // Un problema con los carros de prueba nunca debe tumbar el deploy.

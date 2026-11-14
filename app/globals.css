@@ -344,6 +344,15 @@
   from { opacity: 0; transform: translateY(24px); }
 }
 
+/* Halo que respira detrás de la bienvenida (app/bienvenida) */
+.bienvenida-halo {
+  animation: bienvenida-halo 5s ease-in-out infinite;
+}
+@keyframes bienvenida-halo {
+  0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.92); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+}
+
 /* Cambio de foto en las tarjetas (flechas de components/car/TarjetaCarro.tsx) */
 .foto-entra {
   animation: foto-entra 320ms var(--ease-out-strong) both;

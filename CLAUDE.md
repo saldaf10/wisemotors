@@ -284,7 +284,27 @@ cobertura, migración, seeds, motor de cohortes.
    View Transitions catálogo↔ficha; solo animar transform/opacity; dark editorial con
    morado `#881cb7` como luz, no como relleno.
 
-## Expectativa: sitio cerrado con lista de espera (desde 6-oct-2026)
+## Acceso por invitación (desde 14-nov-2026; reemplazó la lista de espera)
+
+- Sin la cookie `wm_acceso`, toda URL muestra `app/bienvenida` (rewrite, misma URL; fuera del
+  inicio va con `X-Robots-Tag: noindex`) y toda API da 403 salvo `/api/auth/login`,
+  `/api/auth/register` y `/api/salud`. La bienvenida (`components/bienvenida/Bienvenida.tsx`)
+  tiene "Tengo una invitación" (código + nombre + correo + contraseña + autorización Ley 1581)
+  y "Ya tengo cuenta". `?codigo=WISE-XXXXXX` llega con el código escrito; `?modo=ingresar`
+  abre en ingresar. Al crear la cuenta: "Invitación #037 de 100 · Ya estás adentro, [nombre]."
+  → "Empezar el recorrido" (`iniciarRecorrido(true)`).
+- Códigos (`lib/invitaciones.ts`, tabla `codigos_invitacion`): un solo uso, canjeado en la
+  MISMA transacción que crea la cuenta (si el código no sirve, no queda cuenta). Los primeros
+  100 se siembran solos en el deploy si la tabla está vacía. El código del equipo
+  (`CODIGO_ACCESO`, admin931 por defecto) sirve como invitación sin límite. Registrar e ingresar
+  dejan la cookie (`darAcceso` en lib/acceso.ts): con el sitio cerrado solo existen cuentas con
+  invitación. `/register` y `/login` del sitio redirigen a la bienvenida mientras esté cerrado.
+- Panel → pestaña "Invitaciones": usados/libres, "¿A quién se lo diste?" por código, copiar
+  código o enlace, CSV y "Más códigos".
+- La página y el formulario de lista de espera se borraron; la tabla `lista_espera` y su CSV
+  en el panel se conservan.
+
+## Expectativa: sitio cerrado con lista de espera (6-oct → 14-nov-2026, YA NO SE USA)
 
 - `middleware.ts` + `lib/acceso.ts`: mientras `SITIO_ABIERTO` no sea `1`, toda página
   muestra `app/espera` (rewrite, misma URL) y toda API responde 403, salvo

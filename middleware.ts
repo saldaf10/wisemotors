@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { COOKIE_ACCESO, huellaAcceso, sitioAbierto } from '@/lib/acceso';
 
-// Portero de la expectativa (lib/acceso.ts): sin la cookie del equipo, toda
-// página muestra la de espera (misma URL, así ?ref= y ?utm_ llegan intactos) y
-// toda API responde 403, salvo las de la lista de espera.
-const LIBRES = ['/espera', '/api/espera', '/api/salud'];
+// Portero mientras el sitio está cerrado (lib/acceso.ts): sin la cookie de
+// acceso, toda página muestra la bienvenida por invitación (misma URL) y toda
+// API responde 403, salvo crear cuenta e ingresar.
+const LIBRES = ['/bienvenida', '/api/auth/login', '/api/auth/register', '/api/salud'];
 
 export async function middleware(request: NextRequest) {
   if (sitioAbierto()) return NextResponse.next();
@@ -18,7 +18,10 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith('/api/')) {
     return NextResponse.json({ error: 'WiseMotors abre muy pronto.' }, { status: 403 });
   }
-  return NextResponse.rewrite(new URL(`/espera${search}`, request.url));
+  const res = NextResponse.rewrite(new URL(`/bienvenida${search}`, request.url));
+  // Todas las URLs muestran la bienvenida: para Google solo cuenta el inicio (sin duplicados).
+  if (pathname !== '/') res.headers.set('X-Robots-Tag', 'noindex');
+  return res;
 }
 
 export const config = {

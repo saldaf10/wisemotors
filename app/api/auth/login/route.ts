@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { loginSchema } from '@/lib/schemas/auth';
 import { verifyPassword, generateToken } from '@/lib/auth';
 import { esAdminInicial, reclamarAdminInicial } from '@/lib/db/admin-inicial';
+import { darAcceso, sitioAbierto } from '@/lib/acceso';
 
 export async function POST(request: NextRequest) {
   try {
@@ -67,11 +68,14 @@ export async function POST(request: NextRequest) {
     // Retornar usuario sin contraseña y token
     const { password, ...userWithoutPassword } = user;
     
-    return NextResponse.json({
+    const res = NextResponse.json({
       message: 'Inicio de sesión exitoso',
       user: userWithoutPassword,
       token
     });
+    // Con el sitio cerrado, solo hay cuentas creadas con invitación: ingresar abre el sitio en este navegador.
+    if (!sitioAbierto()) await darAcceso(res);
+    return res;
     
   } catch (error: any) {
     if (error.name === 'ZodError') {

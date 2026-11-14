@@ -48,9 +48,8 @@ const NAV = (href: string) => [`[data-recorrido="nav-${href}"]`, '[data-recorrid
 
 const PASOS: Paso[] = [
   {
-    titulo: 'Bienvenido a WiseMotors',
-    texto:
-      'Eres de las primeras personas en entrar. Te mostramos en un minuto cómo encontrar tu carro: buscar, comparar y separar la prueba de ruta.',
+    titulo: 'Empecemos',
+    texto: 'En un minuto te mostramos cómo encontrar tu carro: buscar, comparar y separar la prueba de ruta.',
     donde: enInicio,
     pista: 'Ve al inicio para empezar.',
     boton: 'Empezar',
