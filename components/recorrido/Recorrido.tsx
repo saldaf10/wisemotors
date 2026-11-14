@@ -185,6 +185,19 @@ function llevarA(el: HTMLElement) {
   }
 }
 
+/**
+ * Al iniciar sesión: las cuentas de prueba (`recorridoSiempre`) arrancan el recorrido desde el
+ * paso 1 y con la encuesta otra vez pendiente. Devuelve true si lo arrancó (hay que ir al inicio).
+ */
+export function recorridoAlIngresar(user: { recorridoSiempre?: boolean } | null | undefined): boolean {
+  if (!user?.recorridoSiempre) return false;
+  try {
+    localStorage.removeItem('wm_encuesta');
+  } catch {}
+  iniciarRecorrido(true);
+  return true;
+}
+
 /** Arranca el recorrido (al entrar con el código, o desde el pie de página). */
 export function iniciarRecorrido(forzar = false) {
   try {

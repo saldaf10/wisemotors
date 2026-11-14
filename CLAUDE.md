@@ -333,6 +333,9 @@ cobertura, migración, seeds, motor de cohortes.
   "Entra al panel dinámico", que señala `[data-recorrido="panel-dinamico"]`) y `alVer` (en la ficha,
   al llegar a `[data-recorrido="contacto"]` pasa a "Compáralo con sus parecidos", que lleva hasta
   `[data-recorrido="comparar-todos"]`). No se usa amarillo: es solo de versiones.
+  Cuentas de prueba: `User.recorridoSiempre = true` (a mano en la base) → cada vez que inician
+  sesión arranca el recorrido desde el paso 1 y la encuesta vuelve a quedar pendiente
+  (`recorridoAlIngresar`). Hoy: "Miguel Olarte Prueba".
 - Encuesta al terminar el recorrido (14-nov-2026, `components/recorrido/Encuesta.tsx`): sale al
   tocar "Terminar" (no al saltarlo), 4 pantallas: búsqueda IA 1-10 + comentario; información y
   organización (Muy mala…Excelente) + comentario; comparación + facilidad de los me gusta (si es

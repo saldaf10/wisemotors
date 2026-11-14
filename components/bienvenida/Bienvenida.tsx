@@ -16,7 +16,7 @@ import { ArrowRight, Eye, EyeOff, Loader2, Search, Scale, CalendarCheck } from '
 import { useAuth } from '@/contexts/AuthContext';
 import { CarRender } from '@/components/car/CarRender';
 import { Logo, LogoMarca } from '@/components/brand/Logo';
-import { iniciarRecorrido } from '@/components/recorrido/Recorrido';
+import { iniciarRecorrido, recorridoAlIngresar } from '@/components/recorrido/Recorrido';
 import { destinoSeguro } from '@/lib/destino';
 import { formatearCodigo } from '@/lib/invitaciones-formato';
 
@@ -180,7 +180,8 @@ export function Bienvenida() {
       const d = await r.json().catch(() => null);
       if (!r.ok) throw new Error(r.status === 401 ? 'El correo o la contraseña no coinciden.' : d?.error ?? 'No pudimos ingresar.');
       login(d.user, d.token);
-      window.location.href = destinoAlIngresar();
+      // Las cuentas de prueba arrancan el recorrido cada vez: van al inicio.
+      window.location.href = recorridoAlIngresar(d.user) ? '/' : destinoAlIngresar();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No pudimos ingresar.');
       setEnviando(false);

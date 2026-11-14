@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { loginSchema, type LoginInput } from '@/lib/schemas/auth';
 import { useAuth } from '@/contexts/AuthContext';
 import { destinoDeLaUrl } from '@/lib/destino';
+import { recorridoAlIngresar } from '@/components/recorrido/Recorrido';
 
 export function LoginForm() {
   const router = useRouter();
@@ -64,7 +65,8 @@ export function LoginForm() {
         // Usar window.location.href para asegurar que la página se recargue
         // y el estado se sincronice correctamente. Vuelve a donde estaba
         // (ej. la comparación) si llegó con ?next=.
-        window.location.href = destinoDeLaUrl();
+        // Las cuentas de prueba arrancan el recorrido cada vez: van al inicio.
+        window.location.href = recorridoAlIngresar(data.user) ? '/' : destinoDeLaUrl();
       } else {
         setError(data.error || 'Error al iniciar sesión');
       }

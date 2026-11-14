@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
         password: true,
         role: true,
         username: true,
+        recorridoSiempre: true,
       }
     });
     

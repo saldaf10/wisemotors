@@ -15,6 +15,9 @@ model User {
   password  String
   username  String     @map("name")
   role      String     @default("user") // user, admin
+  // Cuenta de prueba: cada vez que inicia sesión arranca el recorrido guiado desde el
+  // paso 1 (y al final vuelve a salir la encuesta). Se prende a mano en la base.
+  recorridoSiempre Boolean @default(false)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
