@@ -11,8 +11,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowUpRight, Building2, Car, ClipboardCheck, ClipboardList, Download, Ticket, MessageCircle, Sparkles, Star, ThumbsUp, TrendingUp } from 'lucide-react';
-import { adminFetch, mensajeDeErrorDeAuth } from '@/lib/admin-fetch';
+import { ArrowUpRight, Building2, Car, ClipboardCheck, ClipboardList, Ticket, MessageCircle, Sparkles, Star, ThumbsUp, TrendingUp } from 'lucide-react';
 import { VehiclesTable } from './VehiclesTable';
 import { DealershipsTable } from './DealershipsTable';
 import { TrendingManagement } from './TrendingManagement';
@@ -35,32 +34,6 @@ const PESTANAS: { clave: Pestana; texto: string; icono: typeof Car }[] = [
   { clave: 'dealerships', texto: 'Concesionarios', icono: Building2 },
   { clave: 'trending', texto: 'Destacados', icono: Star },
 ];
-
-function BotonListaEspera() {
-  const [bajando, setBajando] = useState(false);
-  async function descargar() {
-    setBajando(true);
-    try {
-      const r = await adminFetch('/api/admin/espera');
-      if (!r.ok) throw new Error(mensajeDeErrorDeAuth(r) ?? 'No se pudo descargar la lista.');
-      const url = URL.createObjectURL(await r.blob());
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `lista-espera-${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'No se pudo descargar la lista.');
-    } finally {
-      setBajando(false);
-    }
-  }
-  return (
-    <button type="button" onClick={descargar} disabled={bajando} className="pastilla h-12 px-5 disabled:opacity-60">
-      <Download className="h-4 w-4" /> {bajando ? 'Descargando…' : 'Lista de espera'}
-    </button>
-  );
-}
 
 export function AdminDashboard() {
   const [pestana, setPestana] = useState<Pestana>('vehicles');
@@ -101,7 +74,6 @@ export function AdminDashboard() {
           <Link href="/admin/whatsapp-leads" className="pastilla h-12 px-5">
             <MessageCircle className="h-4 w-4" /> Leads de WhatsApp
           </Link>
-          <BotonListaEspera />
         </div>
       </div>
 
