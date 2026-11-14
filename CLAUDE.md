@@ -144,8 +144,11 @@ cobertura, migración, seeds, motor de cohortes.
   publicar sin ellos pide confirmación. "No lo tiene" confirmado por una persona = dato.
 - **Documentos del concesionario:** PDF o foto de la ficha en el formulario de subida
   (multipart, ≤4 MB por el límite de Vercel). Se leen primero como tier 1 y ganan empates.
-- **Fotos: cinco vistas** (lateral=portada, frontal, trasera, 3/4 delantera, interior; la
-  3/4 trasera se quitó el 12-nov-2026, las viejas se siguen mostrando). Las del concesionario se suben por vista y se procesan al elegirlas; la IA
+- **Fotos: cinco vistas** (3/4 delantera=portada desde el 14-nov-2026, lateral, frontal, trasera, interior; la
+  3/4 trasera se quitó el 12-nov-2026, las viejas se siguen mostrando). La 3/4 delantera es la imagen
+  por defecto en toda la página (`fotoDe` y `vistasDe` la ponen primero aunque la portada guardada sea otra);
+  el diagrama de medidas usa la lateral (`CarRender vista="lado"`) o el dibujo. Tarjetas del catálogo:
+  flechas/deslizar entre vistas (`FotosTarjeta` en `TarjetaCarro.tsx`). Las del concesionario se suben por vista y se procesan al elegirlas; la IA
   solo busca las vacías (`cubiertos`). Revisión por vistas con "Usar como…".
 - **Concesionario** al publicar ('¿Quién lo vende?') → `VehicleDealer`.
 - **Cola "Por revisar"** (`lib/auditoria.ts`): hechos sin revisor / confianza < 0.7 / tier 3,
@@ -155,7 +158,8 @@ cobertura, migración, seeds, motor de cohortes.
   investigación hecha con otra IA) → `lib/ingest/complementar.ts` lo reparte con citas
   verificadas CONTRA EL TEXTO → propuesta nuevo/igual/distinto → el revisor aplica (tier 2, 0.85).
   El precio no entra por aquí.
-- **Índices WiseMotors** (`lib/indices/`): Altura (por ciudad), Palmas, Hueco y Costo Real de
+- **Índices WiseMotors** (`lib/indices/`): Altura (por ciudad), Palmas (se calcula pero NO se
+  muestra en la ficha desde el 14-nov-2026), Hueco y Costo Real de
   Tenencia 5 años. Parámetros en `parametros_indices` con vigencia, sembrados en cada deploy
   desde `lib/indices/parametros.ts` (cambiar ahí el valor + fuente y desplegar). Un índice sin
   sus datos NO se muestra (nunca "nos falta" al comprador). Tests: `scripts/verify-indices.ts`.
@@ -313,13 +317,14 @@ cobertura, migración, seeds, motor de cohortes.
 - Registro sin redundancia (8-oct-2026): 253 → 214 campos (se quedaron potencia/peso, que solo se calcula, y frenado regenerativo; el equipo retiró 22 que no se van a llenar). Formato de subida sin IA en `docs/formato-subida.md` (166 líneas; 163 desde el 17-oct-2026, cuando la prueba de choque quedó solo en "Estrellas en prueba de choque" y se retiraron agencia, año y asistencias NCAP → 211 campos). Los retirados y a dónde pasó su dato están en el comentario "CAMPOS RETIRADOS" de `registry.ts`; `lib/db/fusionar-campos.ts` mueve los datos en cada deploy (idempotente, solo llena vacíos) y `scripts/fusionar-campos.ts` lo muestra a mano. La ficha/buscador/índices siguen leyendo los campos viejos como respaldo. Antes de agregar un campo: revisar que no exista ya otro con el mismo dato. En la base SOLO quedan los campos del registro: `lib/db/limpiar-campos.ts` (en cada deploy, después de partir-suspension y fusionar-campos) borra datos, definiciones y valores del JSON de cualquier campo retirado, con respaldo en `estado_sistema` (`respaldo_campos_retirados_<fecha>`). Retirar un campo del registro = se borra de la base en el siguiente deploy.
 - Ficha, tarjeta de arriba (12-nov-2026): ya NO hay pestañas de categoría ni puntos sobre el
   carro (duplicaban las secciones y no cuadraban con fotos reales). Es una galería de las fotos
-  por vista (`vistasDe` en `FichaVehiculo.tsx`: portada, 3/4, frontal, trasera, interior; la
+  por vista (`vistasDe` en `lib/vistas.ts`: 3/4 delantera, lateral, frontal, trasera, interior; la
   vista de la portada sale de su `alt`) + 4 datos clave. Sin fotos, el dibujo. La única
   navegación de categorías es `NavSecciones`. La foto `interior` acompaña el equipo en
   Tecnología. Similares: botón "Comparar los N a la vez" (`/compare?ids=`).
+- Ficha: "Hecho para Colombia" (Altura, Hueco, CRT) va de ÚLTIMA sección, después de "Su categoría" (14-nov-2026).
 - Ficha en celular (12-nov-2026): las grillas de sección son de 2 columnas; `Bloque` ocupa
   las dos salvo con `mitad` (torque+motor, tanque+ciudad/carretera, pasajeros+altura,
-  protección+airbags, Palmas+Hueco: cada par con la misma condición para que nunca quede uno
+  protección+airbags: cada par con la misma condición para que nunca quede uno
   solo a media fila). Desempeño usa esa grilla hasta `lg`. Similares: siempre 3 en una fila
   con `TarjetaCarro compacta`. Ojo: `.pastilla` y `.flecha` están fuera de las capas de
   Tailwind y pisan utilidades como `h-9`/`px-2`/`hidden`; para cambiarlas hay que usar `!`.

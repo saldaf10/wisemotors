@@ -69,7 +69,7 @@ La potencia de cada motor va en sus propios campos.
 3. **En amarillo** salen los avisos, por ejemplo un dato que no aplica a este carro. Se ignoran solos.
 4. En la tabla revisa la columna **Se guarda**: es lo que va a quedar en WiseMotors.
 5. Los datos con **E amarilla** son los estimados: revisa que de verdad no estén en la ficha oficial.
-6. Sube las fotos por vista (la lateral es la portada), marca quién lo vende y toca **Publicar**.
+6. Sube las fotos por vista (la 3/4 delantera es la portada), marca quién lo vende y toca **Publicar**.
 
 ## Opcional: llenarla con un chat de IA
 

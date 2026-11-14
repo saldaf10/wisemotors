@@ -6,7 +6,7 @@
 // elegida —la que subió el equipo, ya procesada: sin fondo,
 // recortada— o queda vacía para subirla. Debajo, las demás candidatas: se
 // pueden usar para cualquier vista.
-// La lateral es la portada por defecto.
+// La 3/4 delantera es la portada por defecto (si no hay, la lateral).
 // ============================================================================
 
 import { useState } from 'react';
@@ -37,15 +37,15 @@ export interface FotoRevision {
 
 // Cinco vistas (nov-2026: se quitó la 3/4 trasera). Las fotos viejas con esa vista se siguen viendo en la ficha.
 export const VISTAS: { angulo: string; etiqueta: string }[] = [
+  { angulo: 'tres_cuartos_frente', etiqueta: '3/4 delantera' },
   { angulo: 'lado', etiqueta: 'Lateral' },
   { angulo: 'frente', etiqueta: 'Frontal' },
   { angulo: 'atras', etiqueta: 'Trasera' },
-  { angulo: 'tres_cuartos_frente', etiqueta: '3/4 delantera' },
   { angulo: 'interior', etiqueta: 'Interior' },
 ];
 const ETIQUETA: Record<string, string> = { ...Object.fromEntries(VISTAS.map(v => [v.angulo, v.etiqueta])), detalle: 'Detalle' };
 
-/** Estado inicial: una foto por vista (la recomendada); portada = la lateral o la primera. */
+/** Estado inicial: una foto por vista (la recomendada); portada = la 3/4 delantera, la lateral o la primera. */
 export function fotosIniciales(fotos: Omit<FotoRevision, 'usar' | 'portada'>[] | undefined): FotoRevision[] {
   const ocupadas = new Set<string>();
   const lista = (fotos ?? []).map(f => {
@@ -53,7 +53,7 @@ export function fotosIniciales(fotos: Omit<FotoRevision, 'usar' | 'portada'>[] |
     if (usar) ocupadas.add(f.angulo);
     return { ...f, usar, portada: false };
   });
-  const portada = lista.find(f => f.usar && f.angulo === 'lado') ?? lista.find(f => f.usar);
+  const portada = lista.find(f => f.usar && f.angulo === 'tres_cuartos_frente') ?? lista.find(f => f.usar && f.angulo === 'lado') ?? lista.find(f => f.usar);
   if (portada) portada.portada = true;
   return lista;
 }
@@ -121,10 +121,10 @@ export function RevisionFotos({
   const cambiar = (original: string, cambio: Partial<FotoRevision>, base: FotoRevision[]) =>
     base.map(f => (f.original === original ? { ...f, ...cambio } : f));
 
-  /** Siempre hay una portada entre las que se usan: la lateral o la primera. */
+  /** Siempre hay una portada entre las que se usan: la 3/4 delantera, la lateral o la primera. */
   const conPortada = (base: FotoRevision[]) => {
     if (base.some(f => f.portada && f.usar)) return base;
-    const p = base.find(f => f.usar && f.angulo === 'lado') ?? base.find(f => f.usar);
+    const p = base.find(f => f.usar && f.angulo === 'tres_cuartos_frente') ?? base.find(f => f.usar && f.angulo === 'lado') ?? base.find(f => f.usar);
     return p ? cambiar(p.original, { portada: true }, base) : base;
   };
   /** Deja `original` como la única foto usada de su vista. */
@@ -137,8 +137,8 @@ export function RevisionFotos({
     try {
       const nueva = await subirFotoVista(archivo, angulo);
       onChange(prev => {
-        // La lateral nueva pasa a ser la portada.
-        const base = angulo === 'lado' ? [...prev, nueva].map(f => ({ ...f, portada: f.original === nueva.original })) : [...prev, nueva];
+        // La 3/4 delantera nueva pasa a ser la portada.
+        const base = angulo === 'tres_cuartos_frente' ? [...prev, nueva].map(f => ({ ...f, portada: f.original === nueva.original })) : [...prev, nueva];
         return ocupar(base, nueva.original, angulo);
       });
     } catch (err) {

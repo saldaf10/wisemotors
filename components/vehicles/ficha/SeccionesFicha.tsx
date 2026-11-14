@@ -311,12 +311,13 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
 
   const secciones = [
     { id: 'desempeno', texto: 'Desempeño', hay: potencia !== null || cero100 !== null },
-    { id: 'colombia', texto: 'Para Colombia', hay: hayIndices(indices) },
     { id: 'consumo', texto: electrico ? 'Batería' : 'Consumo', hay: alcance !== null || rinde !== null || bateria !== null },
     { id: 'espacio', texto: clase === 'auto' ? 'Espacio' : 'Espacio y carga', hay: baul !== null || largo !== null || pasajeros !== null || datosTrabajo.length > 0 },
     { id: 'seguridad', texto: 'Seguridad', hay: airbags !== null || ncap !== null || ayudas.length > 0 },
     { id: 'tecnologia', texto: 'Tecnología', hay: equipo.length > 0 },
     { id: 'categoria', texto: 'Su categoría', hay: tiras.length > 0 },
+    // Lo de Colombia va al final: primero lo que el carro es, luego cómo le va acá.
+    { id: 'colombia', texto: 'Para Colombia', hay: hayIndices(indices) },
   ].filter(x => x.hay);
 
   return (
@@ -458,9 +459,6 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
           </div>
         </section>
       )}
-
-      {/* ── ÍNDICES WISEMOTORS ─────────────────────────────────────────── */}
-      {indices && secciones.some(x => x.id === 'colombia') && <SeccionIndices indices={indices} />}
 
       {/* ── CONSUMO / BATERÍA ─────────────────────────────────────────── */}
       {secciones.some(x => x.id === 'consumo') && (
@@ -876,6 +874,9 @@ export function SeccionesFicha({ vehicle, indices = null }: { vehicle: any; indi
           </Bloque>
         </section>
       )}
+
+      {/* ── ÍNDICES WISEMOTORS ─────────────────────────────────────────── */}
+      {indices && secciones.some(x => x.id === 'colombia') && <SeccionIndices indices={indices} />}
     </div>
   );
 }
@@ -902,7 +903,7 @@ function Medidas({
   return (
     <div ref={ref} className="mt-4">
       <div className="relative mx-auto aspect-[480/230] w-full max-w-[640px]">
-        <CarRender car={vehicle} ajustado className="absolute inset-x-[6%] top-[4%] h-[78%] w-[88%]" />
+        <CarRender car={vehicle} ajustado vista="lado" className="absolute inset-x-[6%] top-[4%] h-[78%] w-[88%]" />
         {/* alto */}
         {alto !== null && (
           <div className="absolute bottom-[18%] right-0 top-[4%] flex items-center">

@@ -10,8 +10,8 @@ import type { FotoDraft } from './types';
 export const ANGULOS = ['lado', 'tres_cuartos_frente', 'tres_cuartos_atras', 'frente', 'atras', 'interior', 'detalle', 'otro'] as const;
 export type Angulo = (typeof ANGULOS)[number];
 
-/** Las cinco vistas de la ficha, en orden: la primera es la portada (la 3/4 trasera se quitó en nov-2026). */
-export const VISTAS: Angulo[] = ['lado', 'frente', 'atras', 'tres_cuartos_frente', 'interior'];
+/** Las cinco vistas de la ficha, en orden: la primera (3/4 delantera) es la portada. La 3/4 trasera se quitó en nov-2026. */
+export const VISTAS: Angulo[] = ['tres_cuartos_frente', 'lado', 'frente', 'atras', 'interior'];
 
 export const ETIQUETA_ANGULO: Record<Angulo, string> = {
   lado: 'Lateral',

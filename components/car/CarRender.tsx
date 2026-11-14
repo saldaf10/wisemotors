@@ -12,6 +12,7 @@
 // ============================================================================
 
 import { useId } from 'react';
+import { vistaDeFoto } from '@/lib/vistas';
 
 export interface CarLike {
   id?: string;
@@ -73,9 +74,16 @@ export function pinturaDe(car: CarLike) {
   return PINTURAS[h % PINTURAS.length];
 }
 
-export function fotoDe(car: CarLike): string | null {
+/**
+ * La foto principal: la 3/4 delantera si existe (la imagen por defecto de la
+ * página), si no la portada guardada. Con `vista: 'lado'` solo sirve la lateral
+ * (las medidas se dibujan sobre el perfil); sin ella, null → el dibujo.
+ */
+export function fotoDe(car: CarLike, vista: 'portada' | 'lado' = 'portada'): string | null {
   const imgs = car.images ?? [];
-  const portada = imgs.find(i => i.isThumbnail) ?? imgs.find(i => i.type === 'cover') ?? imgs[0];
+  if (vista === 'lado') return imgs.find(i => vistaDeFoto(i) === 'lado')?.url ?? null;
+  const tresCuartos = imgs.find(i => vistaDeFoto(i) === 'tres_cuartos_frente');
+  const portada = tresCuartos ?? imgs.find(i => i.isThumbnail) ?? imgs.find(i => i.type === 'cover') ?? imgs[0];
   return portada?.url ?? car.imageUrl ?? null;
 }
 
@@ -399,6 +407,7 @@ export function CarRender({
   prioridad = false,
   abajo = false,
   ajustado = false,
+  vista = 'portada',
 }: {
   car: CarLike;
   className?: string;
@@ -408,8 +417,10 @@ export function CarRender({
   abajo?: boolean;
   /** Render recortado al carro (sin margen): llena la caja como una foto recortada. */
   ajustado?: boolean;
+  /** 'lado': solo la foto lateral (o el dibujo), para lo que se mide sobre el perfil. */
+  vista?: 'portada' | 'lado';
 }) {
-  const foto = fotoDe(car);
+  const foto = fotoDe(car, vista);
   const alt = `${car.brand ?? ''} ${car.model ?? ''}`.trim();
 
   const pieza = foto ? (

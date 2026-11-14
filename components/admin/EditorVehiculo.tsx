@@ -44,7 +44,7 @@ function vistaDeAlt(alt: string): string {
   return 'lado';
 }
 
-/** Fotos publicadas → estado de la revisión de fotos (una por vista; la portada es la lateral). */
+/** Fotos publicadas → estado de la revisión de fotos (una por vista; la portada es la 3/4 delantera). */
 function fotosDeImagenes(imagenes: any[]): FotoRevision[] {
   const ordenadas = [...(imagenes ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   const ocupadas = new Set<string>();

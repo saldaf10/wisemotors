@@ -3,7 +3,8 @@
 // ============================================================================
 // Índices WiseMotors en la ficha (plan §4): lo que solo importa en Colombia.
 //
-// Altura (con selector de ciudad), Palmas, Hueco y Costo Real de Tenencia.
+// Altura (con selector de ciudad), Hueco y Costo Real de Tenencia. (El Índice
+// Palmas se quitó de la ficha en nov-2026; su cálculo sigue en lib/indices.)
 // Llegan ya calculados del servidor (lib/indices). Un índice sin los datos que
 // lo sostienen no aparece (qué falta se ve en la cola de auditoría del panel,
 // no se le cuenta al comprador).
@@ -11,14 +12,14 @@
 
 import { useState } from 'react';
 import { Coins, Mountain, MountainSnow, Waves } from 'lucide-react';
-import type { IndicesVehiculo, ResultadoAltura, ResultadoCRT, ResultadoHueco, ResultadoPalmas } from '@/lib/indices/calculo';
+import type { IndicesVehiculo, ResultadoAltura, ResultadoCRT, ResultadoHueco } from '@/lib/indices/calculo';
 import { Bloque, Cabecera, Titulito } from './SeccionesFicha';
 
 const fmt = (n: number) => new Intl.NumberFormat('es-CO').format(Math.round(n));
 const mill = (n: number) => `$${new Intl.NumberFormat('es-CO', { maximumFractionDigits: 1 }).format(n / 1_000_000)} M`;
 
 export function hayIndices(i: IndicesVehiculo | null | undefined) {
-  return !!i && (i.altura.disponible || i.palmas.disponible || i.hueco.disponible || i.crt.disponible);
+  return !!i && (i.altura.disponible || i.hueco.disponible || i.crt.disponible);
 }
 
 function Medidor({ puntaje, claro = false }: { puntaje: number; claro?: boolean }) {
@@ -61,17 +62,6 @@ function Altura({ a }: { a: ResultadoAltura }) {
         {c.perdidaPct === 0 ? 'No pierde nada.' : `Pierde ${a.aproximado ? 'hasta ' : ''}${c.perdidaPct} % de su fuerza.`}
       </p>
       <p className="mt-4 max-w-[52ch] text-[13px] leading-snug text-white/80 md:mt-6 md:text-[15px] md:leading-relaxed">{a.explicacion}</p>
-    </>
-  );
-}
-
-function Palmas({ p }: { p: ResultadoPalmas }) {
-  return (
-    <>
-      <p className="mt-4 text-[22px] font-semibold leading-none tracking-[-0.03em] md:mt-6 md:text-[32px]">{p.veredicto}</p>
-      <p className="mt-2 cifra text-[12px] leading-snug text-tinta-2 md:text-[15px]">{p.hpPorTonelada} hp por tonelada, cargado y en la cima</p>
-      <Medidor puntaje={p.puntaje} />
-      <p className="mt-4 text-[12px] leading-snug text-tinta-2 md:mt-5 md:text-[14px] md:leading-relaxed">{p.explicacion}</p>
     </>
   );
 }
@@ -142,34 +132,26 @@ function CRT({ c }: { c: ResultadoCRT }) {
 }
 
 export function SeccionIndices({ indices }: { indices: IndicesVehiculo }) {
-  const { altura, palmas, hueco, crt } = indices;
+  const { altura, hueco, crt } = indices;
   return (
     <section>
       <Cabecera
         id="colombia"
         icono={MountainSnow}
         titulo="Hecho para Colombia"
-        bajada="Lo que ninguna ficha te dice: cuánta fuerza le queda en tu ciudad, si sube a Las Palmas, si aguanta un hueco y cuánto te cuesta de verdad."
+        bajada="Lo que ninguna ficha te dice: cuánta fuerza le queda en tu ciudad, si aguanta un hueco y cuánto te cuesta de verdad."
       />
       <div className="grid grid-cols-2 gap-3 md:grid-cols-12 md:gap-4">
         {altura.disponible && (
-          <Bloque tono="tinta" className={
-              !palmas.disponible && !hueco.disponible ? 'md:col-span-12' : palmas.disponible && hueco.disponible ? 'md:col-span-7 md:row-span-2' : 'md:col-span-7'
-            }>
+          <Bloque tono="tinta" className={hueco.disponible ? 'md:col-span-7' : 'md:col-span-12'}>
             <Titulito icono={Mountain} claro>
               Índice Altura
             </Titulito>
             <Altura a={altura} />
           </Bloque>
         )}
-        {palmas.disponible && (
-          <Bloque tono="lila" mitad={hueco.disponible} className={altura.disponible ? 'md:col-span-5' : hueco.disponible ? 'md:col-span-6' : 'md:col-span-12'}>
-            <Titulito icono={Mountain}>Índice Palmas</Titulito>
-            <Palmas p={palmas} />
-          </Bloque>
-        )}
         {hueco.disponible && (
-          <Bloque mitad={palmas.disponible} className={altura.disponible ? 'md:col-span-5' : palmas.disponible ? 'md:col-span-6' : 'md:col-span-12'}>
+          <Bloque tono="lila" className={altura.disponible ? 'md:col-span-5' : 'md:col-span-12'}>
             <Titulito icono={Waves}>Índice Hueco</Titulito>
             <Hueco h={hueco} />
           </Bloque>
