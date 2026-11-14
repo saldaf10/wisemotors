@@ -10,12 +10,14 @@
 // avanza solo (`avanzaCuando`: buscar, entrar a un carro, comparar…); igual
 // siempre hay un botón para seguir. El paso vive en localStorage para seguir
 // entre páginas. Es un mensaje emergente en la esquina con un brillo suave en
-// lo que menciona: no oscurece, no desplaza ni persigue nada.
+// lo que menciona: no oscurece, no desplaza ni persigue nada. Al terminarlo
+// (no al saltarlo) sale la encuesta (Encuesta.tsx).
 // ============================================================================
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { X } from 'lucide-react';
+import { pedirEncuesta } from './Encuesta';
 
 const CLAVE_ESTADO = 'wm_recorrido'; // 'activo' | 'hecho'
 const CLAVE_PASO = 'wm_recorrido_paso';
@@ -209,6 +211,7 @@ export function Recorrido() {
     while (n !== null && n < PASOS.length && PASOS[n].avanzaCuando?.(l)) n++;
     if (n !== null && n >= PASOS.length) {
       guardarPaso('hecho');
+      pedirEncuesta();
       n = null;
     } else if (n !== null) guardarPaso(n);
     setPaso(p => (p === n ? p : n));
@@ -261,6 +264,7 @@ export function Recorrido() {
     if (n >= PASOS.length) {
       guardarPaso('hecho');
       setPaso(null);
+      pedirEncuesta();
     } else {
       guardarPaso(n);
       setPaso(n);

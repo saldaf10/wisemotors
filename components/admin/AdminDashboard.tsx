@@ -11,23 +11,25 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowUpRight, Building2, Car, ClipboardCheck, Download, MessageCircle, Sparkles, Star, ThumbsUp, TrendingUp } from 'lucide-react';
+import { ArrowUpRight, Building2, Car, ClipboardCheck, ClipboardList, Download, MessageCircle, Sparkles, Star, ThumbsUp, TrendingUp } from 'lucide-react';
 import { adminFetch, mensajeDeErrorDeAuth } from '@/lib/admin-fetch';
 import { VehiclesTable } from './VehiclesTable';
 import { DealershipsTable } from './DealershipsTable';
 import { TrendingManagement } from './TrendingManagement';
 import { ColaAuditoria } from './ColaAuditoria';
 import { Calificaciones } from './Calificaciones';
+import { Encuestas } from './Encuestas';
 import { Demanda } from './Demanda';
 import { specsDe } from '@/lib/vehiculo-datos';
 
-type Pestana = 'vehicles' | 'auditoria' | 'demanda' | 'calificaciones' | 'dealerships' | 'trending';
+type Pestana = 'vehicles' | 'auditoria' | 'demanda' | 'calificaciones' | 'encuesta' | 'dealerships' | 'trending';
 
 const PESTANAS: { clave: Pestana; texto: string; icono: typeof Car }[] = [
   { clave: 'vehicles', texto: 'Vehículos', icono: Car },
   { clave: 'auditoria', texto: 'Por revisar', icono: ClipboardCheck },
   { clave: 'demanda', texto: 'Demanda', icono: TrendingUp },
   { clave: 'calificaciones', texto: 'Calificaciones', icono: ThumbsUp },
+  { clave: 'encuesta', texto: 'Encuesta', icono: ClipboardList },
   { clave: 'dealerships', texto: 'Concesionarios', icono: Building2 },
   { clave: 'trending', texto: 'Destacados', icono: Star },
 ];
@@ -154,6 +156,8 @@ export function AdminDashboard() {
           <Demanda />
         ) : pestana === 'calificaciones' ? (
           <Calificaciones />
+        ) : pestana === 'encuesta' ? (
+          <Encuestas />
         ) : pestana === 'dealerships' ? (
           <DealershipsTable />
         ) : (

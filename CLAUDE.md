@@ -303,6 +303,13 @@ cobertura, migración, seeds, motor de cohortes.
   `/register` y `/login` quedan libres. Con `SITIO_ABIERTO=1` no aplica. Al volver al inicio
   arranca el recorrido guiado (`components/recorrido/Recorrido.tsx`, 12 pasos, mensaje
   emergente + brillo `.recorrido-brillo`; se repite desde el pie).
+- Encuesta al terminar el recorrido (14-nov-2026, `components/recorrido/Encuesta.tsx`): sale al
+  tocar "Terminar" (no al saltarlo), 4 pantallas: búsqueda IA 1-10 + comentario; información y
+  organización (Muy mala…Excelente) + comentario; comparación + facilidad de los me gusta (si es
+  difícil, "¿por qué?" obligatorio); rendimiento 1-10, diseño y funcionamiento 1-10, comentarios.
+  `POST /api/encuesta` (exige cuenta, una por cuenta: upsert) → tabla `encuestas_recorrido`.
+  "Ahora no" la cierra para siempre (localStorage `wm_encuesta`). Panel: pestaña "Encuesta"
+  (promedios, reparto, comentarios, CSV en `/api/admin/encuestas?formato=csv`).
 
 ## Convenciones y trampas del repo
 

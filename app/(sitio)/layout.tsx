@@ -1,6 +1,7 @@
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { Recorrido } from '@/components/recorrido/Recorrido'
+import { Encuesta } from '@/components/recorrido/Encuesta'
 import { ExigirCuenta } from '@/components/auth/ExigirCuenta'
 import { sitioAbierto } from '@/lib/acceso'
 
@@ -15,6 +16,7 @@ export default function SitioLayout({ children }: { children: React.ReactNode })
         <main className="flex-1">{children}</main>
         <Footer />
         <Recorrido />
+        <Encuesta />
       </div>
     </ExigirCuenta>
   )

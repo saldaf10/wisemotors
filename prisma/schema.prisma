@@ -286,6 +286,30 @@ model ParametroIndice {
 // Calificaciones de las respuestas de la IA (búsqueda y veredicto del
 // comparador): 👍/👎 + comentario opcional, para mejorar el sistema.
 // Una por navegador y respuesta (sesion anónima): votar de nuevo la cambia.
+// Encuesta al terminar el recorrido guiado (nov-2026): una por cuenta (se
+// puede volver a responder y se reemplaza). Notas de 1 a 10 y escalas de 1 a 5
+// (1 = muy mala / muy difícil, 5 = excelente / muy fácil).
+model EncuestaRecorrido {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  busquedaIA             Int // 1-10
+  busquedaComentario     String?
+  informacion            Int // 1-5
+  organizacion           Int // 1-5 (orden y cómo se ve)
+  organizacionComentario String?
+  comparacion            Int // 1-5
+  likesFacilidad         Int // 1 muy difícil … 5 muy fácil
+  likesPorQue            String? // obligatorio si fue difícil
+  rendimiento            Int // 1-10
+  diseno                 Int // 1-10 (diseño y funcionamiento)
+  comentarios            String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([createdAt])
+  @@map("encuestas_recorrido")
+}
+
 model CalificacionIA {
   id         String   @id @default(cuid())
   tipo       String // busqueda | comparacion
